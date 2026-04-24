@@ -12,7 +12,7 @@ from app.api.run import router as run_router
 from app.api.shop import router as shop_router
 from app.api.user import router as user_router
 from app.core.config import settings
-from app.core.database import Base, async_session_factory, engine
+from app.core.database import Base, async_session_factory, engine, sync_database_schema
 
 import app.models  # noqa: F401  ensure all models are registered
 
@@ -53,47 +53,80 @@ async def _auto_seed() -> None:
     from seed import ARTIFACTS, CARDS, ENEMIES, INGREDIENTS, SHOP_ITEMS
 
     async with async_session_factory() as session:
-        seeded: list[str] = []
+        updated: list[str] = []
 
-        has_cards = (await session.execute(select(Card).limit(1))).scalar_one_or_none()
-        if has_cards is None:
-            for card_data in CARDS:
+        # Cards - insert or update
+        for card_data in CARDS:
+            result = await session.execute(
+                select(Card).where(Card.name == card_data["name"])
+            )
+            existing = result.scalar_one_or_none()
+            if existing is None:
                 session.add(Card(**card_data))
-            seeded.append("cards")
+            else:
+                for key, value in card_data.items():
+                    setattr(existing, key, value)
+        updated.append("cards")
 
-        has_enemies = (await session.execute(select(Enemy).limit(1))).scalar_one_or_none()
-        if has_enemies is None:
-            for enemy_data in ENEMIES:
+        # Enemies - insert or update
+        for enemy_data in ENEMIES:
+            result = await session.execute(
+                select(Enemy).where(Enemy.name == enemy_data["name"])
+            )
+            existing = result.scalar_one_or_none()
+            if existing is None:
                 session.add(Enemy(**enemy_data))
-            seeded.append("enemies")
+            else:
+                for key, value in enemy_data.items():
+                    setattr(existing, key, value)
+        updated.append("enemies")
 
-        has_ingredients = (await session.execute(select(Ingredient).limit(1))).scalar_one_or_none()
-        if has_ingredients is None:
-            for ing_data in INGREDIENTS:
+        # Ingredients - insert or update
+        for ing_data in INGREDIENTS:
+            result = await session.execute(
+                select(Ingredient).where(Ingredient.name == ing_data["name"])
+            )
+            existing = result.scalar_one_or_none()
+            if existing is None:
                 session.add(Ingredient(**ing_data))
-            seeded.append("ingredients")
+            else:
+                for key, value in ing_data.items():
+                    setattr(existing, key, value)
+        updated.append("ingredients")
 
-        has_shop = (await session.execute(select(ShopItem).limit(1))).scalar_one_or_none()
-        if has_shop is None:
-            for shop_data in SHOP_ITEMS:
+        # Shop items - insert or update
+        for shop_data in SHOP_ITEMS:
+            result = await session.execute(
+                select(ShopItem).where(ShopItem.name == shop_data["name"])
+            )
+            existing = result.scalar_one_or_none()
+            if existing is None:
                 session.add(ShopItem(**shop_data))
-            seeded.append("shop_items")
+            else:
+                for key, value in shop_data.items():
+                    setattr(existing, key, value)
+        updated.append("shop_items")
 
-        has_artifacts = (await session.execute(select(Artifact).limit(1))).scalar_one_or_none()
-        if has_artifacts is None:
-            for art_data in ARTIFACTS:
+        # Artifacts - insert or update
+        for art_data in ARTIFACTS:
+            result = await session.execute(
+                select(Artifact).where(Artifact.name == art_data["name"])
+            )
+            existing = result.scalar_one_or_none()
+            if existing is None:
                 session.add(Artifact(**art_data))
-            seeded.append("artifacts")
+            else:
+                for key, value in art_data.items():
+                    setattr(existing, key, value)
+        updated.append("artifacts")
 
-        if seeded:
-            await session.commit()
-            print(f"[auto-seed] Seeded: {', '.join(seeded)}")
-        else:
-            print("[auto-seed] All tables already populated, skipping.")
+        await session.commit()
+        print(f"[auto-seed] Updated: {', '.join(updated)}")
 
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
+    await sync_database_schema()
     await _migrate_schema()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

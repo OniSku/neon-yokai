@@ -413,39 +413,60 @@ async def seed() -> None:
 
     async with async_session_factory() as session:
         for card_data in CARDS:
-            exists = await session.execute(
+            result = await session.execute(
                 select(Card).where(Card.name == card_data["name"])
             )
-            if exists.scalar_one_or_none() is None:
+            existing = result.scalar_one_or_none()
+            if existing is None:
                 session.add(Card(**card_data))
+            else:
+                # Обновляем существующую карту новыми данными
+                for key, value in card_data.items():
+                    setattr(existing, key, value)
 
         for enemy_data in ENEMIES:
-            exists = await session.execute(
+            result = await session.execute(
                 select(Enemy).where(Enemy.name == enemy_data["name"])
             )
-            if exists.scalar_one_or_none() is None:
+            existing = result.scalar_one_or_none()
+            if existing is None:
                 session.add(Enemy(**enemy_data))
+            else:
+                for key, value in enemy_data.items():
+                    setattr(existing, key, value)
 
         for ing_data in INGREDIENTS:
-            exists = await session.execute(
+            result = await session.execute(
                 select(Ingredient).where(Ingredient.name == ing_data["name"])
             )
-            if exists.scalar_one_or_none() is None:
+            existing = result.scalar_one_or_none()
+            if existing is None:
                 session.add(Ingredient(**ing_data))
+            else:
+                for key, value in ing_data.items():
+                    setattr(existing, key, value)
 
         for shop_data in SHOP_ITEMS:
-            exists = await session.execute(
+            result = await session.execute(
                 select(ShopItem).where(ShopItem.name == shop_data["name"])
             )
-            if exists.scalar_one_or_none() is None:
+            existing = result.scalar_one_or_none()
+            if existing is None:
                 session.add(ShopItem(**shop_data))
+            else:
+                for key, value in shop_data.items():
+                    setattr(existing, key, value)
 
         for art_data in ARTIFACTS:
-            exists = await session.execute(
+            result = await session.execute(
                 select(Artifact).where(Artifact.name == art_data["name"])
             )
-            if exists.scalar_one_or_none() is None:
+            existing = result.scalar_one_or_none()
+            if existing is None:
                 session.add(Artifact(**art_data))
+            else:
+                for key, value in art_data.items():
+                    setattr(existing, key, value)
 
         await session.commit()
 
