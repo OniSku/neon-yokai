@@ -321,6 +321,7 @@ async def run_action(
 
     if body.action == "end_turn":
         enemy_dmg = await end_turn(state, artifacts=run.artifacts)
+        is_dead = False
         if state.finished:
             run.current_hp = state.player.hp
             run.combo_effects = []
@@ -331,12 +332,16 @@ async def run_action(
                 run.reward_phase = True
                 run.pending_rewards = rewards
             else:
+                # Player died - zero credits per GDD
                 run.run_finished = True
+                is_dead = True
+                user.credits = 0
                 await apply_interest(session, user)
         await save_run_state(session, run)
         return RunActionResponse(
             message=f"Ход завершен. {state.enemy.name} нанес {enemy_dmg} урона",
             enemy_damage=enemy_dmg,
+            is_dead=is_dead,
             run=run,
         )
 

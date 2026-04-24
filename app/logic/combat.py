@@ -1,3 +1,5 @@
+import random
+
 from app.logic.artifacts import on_card_played, on_damage_taken
 from app.logic.deck import discard_hand, draw_cards, play_card
 from app.schemas.battle import ArtifactInstance, BattleState, Buff, CardInstance, EnemyAction, EnemyIntent, EnemyState, Fighter, ParryResult
@@ -63,6 +65,57 @@ async def apply_damage(target: Fighter, damage: int) -> int:
     remaining = damage - absorbed
     target.hp = max(target.hp - remaining, 0)
     return remaining
+
+
+def update_enemy_intents(state: BattleState) -> None:
+    """Обновление намерений врагов на следующий ход."""
+    enemies = state.enemies if state.enemies else []
+    if not enemies and state.enemy:
+        # Legacy single enemy mode
+        enemies = [EnemyState(fighter=state.enemy)]
+
+    for es in enemies:
+        if not es.alive or es.fighter.hp <= 0:
+            es.intent = None
+            continue
+
+        name = es.fighter.name
+        r = random.random()
+
+        if "Гаки" in name:
+            # Гаки: 70% атака (7), 30% кража (10 кр)
+            if r < 0.7:
+                es.intent = EnemyIntent(type="attack", value=7, description="Атака 7")
+            else:
+                es.intent = EnemyIntent(type="steal", value=10, description="Кража 10 кр")
+
+        elif "Каппа" in name:
+            # Каппа: 50% атака (5), 50% блок (6)
+            if r < 0.5:
+                es.intent = EnemyIntent(type="attack", value=5, description="Атака 5")
+            else:
+                es.intent = EnemyIntent(type="defend", value=6, description="Блок 6")
+
+        elif "Рокурокуби" in name:
+            # Рокурокуби: всегда атака с вариацией
+            dmg = random.randint(4, 8)
+            es.intent = EnemyIntent(type="attack", value=dmg, description=f"Атака {dmg}")
+
+        elif "Они" in name:
+            # Они: тяжелая атака
+            es.intent = EnemyIntent(type="attack", value=12, description="Атака 12")
+
+        elif "Тэнгу" in name:
+            # Тэнгу: быстрая атака + уклонение
+            es.intent = EnemyIntent(type="attack", value=6, description="Атака 6")
+
+        elif "Нурарихён" in name:
+            # Босс: сильная атака
+            es.intent = EnemyIntent(type="attack", value=15, description="Атака 15")
+
+        else:
+            # Default: атака
+            es.intent = EnemyIntent(type="attack", value=5, description="Атака 5")
 
 
 async def apply_damage_with_artifacts(
@@ -490,7 +543,7 @@ async def start_turn(state: BattleState) -> None:
             state.hand.remove(card)
 
     if state.enemies:
-        await generate_intents(state)
+        update_enemy_intents(state)
 
 
 async def end_turn(

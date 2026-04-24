@@ -75,6 +75,7 @@ class RunActionResponse(BaseModel):
     enemy_damage: int | None = None
     loot: list[LootItem] = Field(default_factory=list)
     credits_earned: int = 0
+    is_dead: bool = False
     run: RunState
 
 

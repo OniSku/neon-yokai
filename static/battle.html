@@ -175,6 +175,44 @@
             color: #000;
         }
 
+        /* Intent Bubble */
+        .intent-bubble {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+            z-index: 10;
+        }
+        .intent-bubble.attack { border-color: var(--accent); color: var(--accent); }
+        .intent-bubble.defend { border-color: var(--block); color: var(--block); }
+        .intent-bubble.steal { border-color: var(--energy); color: var(--energy); }
+        .intent-icon { font-size: 1rem; }
+
+        /* Shake Animation for Damage */
+        .shake {
+            animation: shake-anim 0.2s ease-in-out;
+        }
+        @keyframes shake-anim {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* HP Bar Transition */
+        .token-hp-fill {
+            transition: width 0.3s ease;
+        }
+
         /* Bottom Area - Cards & Controls */
         .bottom-area {
             height: 280px;
@@ -344,7 +382,10 @@
 
             <!-- Enemy Token -->
             <div class="token-circle enemy" id="enemy-token">
-                <div class="enemy-intent" id="enemy-intent">&#9876; Атака 12</div>
+                <div class="intent-bubble attack" id="intent-bubble">
+                    <span class="intent-icon">&#9876;</span>
+                    <span id="intent-text">Атака 7</span>
+                </div>
                 <div class="token-hp-text enemy" id="enemy-hp-text">50/50</div>
                 <div class="token-placeholder" id="enemy-avatar">&#128121;</div>
                 <div class="token-hp-bar">
@@ -423,21 +464,38 @@
             // Update energy
             document.getElementById("energy-text").textContent = `${p.energy} / ${p.max_energy}`;
 
-            // Update enemy intent
-            const intentEl = document.getElementById("enemy-intent");
-            if (state.enemy_intent) {
-                const intent = state.enemy_intent;
+            // Update enemy intent from enemy state
+            const es = state.enemies && state.enemies[0];
+            const intentBubble = document.getElementById("intent-bubble");
+            const intentText = document.getElementById("intent-text");
+            if (es && es.intent) {
+                const intent = es.intent;
+                intentBubble.className = "intent-bubble " + (intent.type || "attack");
                 if (intent.type === "attack") {
-                    intentEl.innerHTML = `&#9876; Атака ${intent.value}`;
+                    intentText.textContent = `Атака ${intent.value}`;
                 } else if (intent.type === "defend") {
-                    intentEl.innerHTML = `&#128737; Защита ${intent.value}`;
+                    intentText.textContent = `Блок ${intent.value}`;
+                } else if (intent.type === "steal") {
+                    intentText.textContent = `Кража ${intent.value}`;
                 } else {
-                    intentEl.innerHTML = intent.description || "???";
+                    intentText.textContent = intent.description || "???";
                 }
+                intentBubble.style.display = "flex";
+            } else {
+                intentBubble.style.display = "none";
             }
 
             // Render hand
             renderHand(state.hand || [], p.energy);
+        }
+
+        // Trigger shake animation on element
+        function triggerShake(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.classList.add("shake");
+                setTimeout(() => el.classList.remove("shake"), 200);
+            }
         }
 
         // Render card hand
@@ -473,17 +531,86 @@
 
         // End turn
         async function endTurn() {
-            // API call to end turn
-            console.log("Ending turn");
+            const prevHp = battleState ? battleState.player.hp : 80;
+
+            try {
+                const res = await fetch("/api/run/action", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "end_turn" })
+                });
+                const data = await res.json();
+
+                if (data.is_dead) {
+                    alert("Вы погибли! Кредиты обнулены. Возвращение к тележке.");
+                    window.location.href = "/";
+                    return;
+                }
+
+                if (data.run && data.run.battle) {
+                    battleState = data.run.battle;
+                    renderBattle(battleState);
+
+                    // Shake if player took damage
+                    if (battleState.player.hp < prevHp) {
+                        triggerShake("player-token");
+                    }
+                }
+            } catch (e) {
+                console.error("Ошибка end_turn:", e);
+            }
         }
 
         // Surrender
-        function surrender() {
+        async function surrender() {
             if (confirm("Сдаться и потерять забег?")) {
-                // API call to surrender
-                console.log("Surrendering");
+                try {
+                    const res = await fetch("/api/run/action", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "abandon" })
+                    });
+                    window.location.href = "/";
+                } catch (e) {
+                    console.error("Ошибка surrender:", e);
+                }
             }
         }
+
+        // Play card
+        async function playCard(handIndex) {
+            try {
+                const res = await fetch("/api/run/action", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "play_card", hand_index: handIndex })
+                });
+                const data = await res.json();
+                if (data.run && data.run.battle) {
+                    battleState = data.run.battle;
+                    renderBattle(battleState);
+                }
+            } catch (e) {
+                console.error("Ошибка play_card:", e);
+            }
+        }
+
+        // Initialize battle on load
+        async function initBattle() {
+            try {
+                const res = await fetch("/api/run/state");
+                const data = await res.json();
+                if (data.run && data.run.battle) {
+                    battleState = data.run.battle;
+                    renderBattle(battleState);
+                }
+            } catch (e) {
+                console.error("Ошибка initBattle:", e);
+            }
+        }
+
+        // Load battle on page load
+        initBattle();
     </script>
 </body>
 </html>
