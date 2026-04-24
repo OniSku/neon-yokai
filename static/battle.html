@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Yokai - Battle</title>
+    <style>
+        :root {
+            --bg: #0d0d0d;
+            --surface: #1a1a2e;
+            --surface2: #16213e;
+            --accent: #e94560;
+            --accent2: #0f3460;
+            --neon: #00fff5;
+            --neon2: #ff00e4;
+            --text: #eee;
+            --muted: #888;
+            --hp: #e94560;
+            --enemy-hp: #ff6b35;
+            --energy: #ffd700;
+            --block: #5bc0eb;
+            --green: #2ecc71;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Top Info Bar */
+        .top-info {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 20px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+        .turn-info {
+            font-size: 0.9rem;
+            color: var(--neon);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .phase-indicator {
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+        .escape-btn {
+            padding: 8px 16px;
+            background: var(--accent);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+
+        /* Main Battle Area */
+        .battle-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 70px 20px 20px;
+        }
+
+        /* Token Area - Middle */
+        .token-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 80px;
+            position: relative;
+        }
+
+        /* Token Circle */
+        .token-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 3px solid var(--accent2);
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .token-circle.player { border-color: var(--neon); }
+        .token-circle.enemy { border-color: var(--accent); }
+
+        .token-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--surface2);
+        }
+        .token-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--surface2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--muted);
+        }
+
+        .token-name {
+            position: absolute;
+            bottom: -30px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .token-name.player { color: var(--neon); }
+        .token-name.enemy { color: var(--accent); }
+
+        /* HP Bar on Token */
+        .token-hp-bar {
+            position: absolute;
+            bottom: 12px;
+            width: 100px;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .token-hp-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        .token-hp-fill.player { background: var(--neon); }
+        .token-hp-fill.enemy { background: var(--accent); }
+
+        /* HP Text */
+        .token-hp-text {
+            position: absolute;
+            top: -25px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .token-hp-text.player { color: var(--neon); }
+        .token-hp-text.enemy { color: var(--accent); }
+
+        /* Block Indicator */
+        .token-block {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--block);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #000;
+        }
+
+        /* Bottom Area - Cards & Controls */
+        .bottom-area {
+            height: 280px;
+            background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, transparent 100%);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Energy Bar */
+        .energy-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+        .energy-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--energy);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #000;
+        }
+        .energy-text {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--energy);
+        }
+
+        /* Card Hand */
+        .card-hand {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .battle-card {
+            width: 80px;
+            height: 110px;
+            background: var(--surface);
+            border: 2px solid var(--accent2);
+            border-radius: 10px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .battle-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--neon);
+            box-shadow: 0 0 20px rgba(0,255,245,0.3);
+        }
+        .battle-card.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .battle-card.disabled:hover {
+            transform: none;
+            border-color: var(--accent2);
+            box-shadow: none;
+        }
+        .card-cost {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: 20px;
+            height: 20px;
+            background: var(--energy);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #000;
+        }
+        .card-name {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-align: center;
+            margin-top: 22px;
+            line-height: 1.2;
+        }
+        .card-type {
+            font-size: 0.6rem;
+            color: var(--muted);
+            text-align: center;
+            margin-top: 4px;
+        }
+        .card-power {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* End Turn Button */
+        .end-turn-btn {
+            align-self: center;
+            padding: 12px 40px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.2s;
+        }
+        .end-turn-btn:hover {
+            box-shadow: 0 0 20px rgba(233,69,96,0.5);
+            transform: scale(1.05);
+        }
+
+        /* Enemy Intent */
+        .enemy-intent {
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Info Bar -->
+    <div class="top-info">
+        <div>
+            <div class="turn-info">ХОД <span id="turn-number">1</span></div>
+            <div class="phase-indicator" id="phase-text">Ваша фаза</div>
+        </div>
+        <button class="escape-btn" onclick="surrender()">Сдаться</button>
+    </div>
+
+    <!-- Main Battle Container -->
+    <div class="battle-container">
+        <!-- Token Area (Middle) -->
+        <div class="token-area">
+            <!-- Player Token -->
+            <div class="token-circle player" id="player-token">
+                <div class="token-hp-text player" id="player-hp-text">80/80</div>
+                <div class="token-placeholder" id="player-avatar">&#128104;</div>
+                <div class="token-hp-bar">
+                    <div class="token-hp-fill player" id="player-hp-bar" style="width: 100%"></div>
+                </div>
+                <div class="token-block" id="player-block" style="display: none;">0</div>
+                <div class="token-name player">ПОВАР</div>
+            </div>
+
+            <!-- Enemy Token -->
+            <div class="token-circle enemy" id="enemy-token">
+                <div class="enemy-intent" id="enemy-intent">&#9876; Атака 12</div>
+                <div class="token-hp-text enemy" id="enemy-hp-text">50/50</div>
+                <div class="token-placeholder" id="enemy-avatar">&#128121;</div>
+                <div class="token-hp-bar">
+                    <div class="token-hp-fill enemy" id="enemy-hp-bar" style="width: 100%"></div>
+                </div>
+                <div class="token-block" id="enemy-block" style="display: none;">0</div>
+                <div class="token-name enemy" id="enemy-name">ГАКИ</div>
+            </div>
+        </div>
+
+        <!-- Bottom Area (Cards & Controls) -->
+        <div class="bottom-area">
+            <!-- Energy Bar -->
+            <div class="energy-bar">
+                <div class="energy-icon">&#9889;</div>
+                <div class="energy-text" id="energy-text">3 / 3</div>
+            </div>
+
+            <!-- Card Hand -->
+            <div class="card-hand" id="card-hand">
+                <!-- Cards will be rendered here -->
+            </div>
+
+            <!-- End Turn Button -->
+            <button class="end-turn-btn" id="end-turn-btn" onclick="endTurn()">ЗАВЕРШИТЬ ХОД</button>
+        </div>
+    </div>
+
+    <script>
+        // Battle state
+        let battleState = null;
+
+        // Initialize battle UI
+        function initBattleUI() {
+            // Will be populated from API
+        }
+
+        // Render battle state
+        function renderBattle(state) {
+            battleState = state;
+
+            // Update turn info
+            document.getElementById("turn-number").textContent = state.turn;
+            document.getElementById("phase-text").textContent =
+                state.phase === "player_turn" ? "Ваша фаза" : "Фаза врага";
+
+            // Update player
+            const p = state.player;
+            document.getElementById("player-hp-text").textContent = `${p.hp}/${p.max_hp}`;
+            document.getElementById("player-hp-bar").style.width = `${(p.hp / p.max_hp * 100)}%`;
+
+            const pBlock = document.getElementById("player-block");
+            if (p.block > 0) {
+                pBlock.textContent = p.block;
+                pBlock.style.display = "flex";
+            } else {
+                pBlock.style.display = "none";
+            }
+
+            // Update enemy
+            const e = state.enemy || (state.enemies && state.enemies[0] && state.enemies[0].fighter);
+            if (e) {
+                document.getElementById("enemy-hp-text").textContent = `${e.hp}/${e.max_hp}`;
+                document.getElementById("enemy-hp-bar").style.width = `${(e.hp / e.max_hp * 100)}%`;
+                document.getElementById("enemy-name").textContent = e.name.toUpperCase();
+
+                const eBlock = document.getElementById("enemy-block");
+                if (e.block > 0) {
+                    eBlock.textContent = e.block;
+                    eBlock.style.display = "flex";
+                } else {
+                    eBlock.style.display = "none";
+                }
+            }
+
+            // Update energy
+            document.getElementById("energy-text").textContent = `${p.energy} / ${p.max_energy}`;
+
+            // Update enemy intent
+            const intentEl = document.getElementById("enemy-intent");
+            if (state.enemy_intent) {
+                const intent = state.enemy_intent;
+                if (intent.type === "attack") {
+                    intentEl.innerHTML = `&#9876; Атака ${intent.value}`;
+                } else if (intent.type === "defend") {
+                    intentEl.innerHTML = `&#128737; Защита ${intent.value}`;
+                } else {
+                    intentEl.innerHTML = intent.description || "???";
+                }
+            }
+
+            // Render hand
+            renderHand(state.hand || [], p.energy);
+        }
+
+        // Render card hand
+        function renderHand(hand, energy) {
+            const container = document.getElementById("card-hand");
+            container.innerHTML = "";
+
+            hand.forEach((card, index) => {
+                const div = document.createElement("div");
+                const canPlay = card.cost <= energy;
+                div.className = "battle-card" + (canPlay ? "" : " disabled");
+
+                div.innerHTML = `
+                    <div class="card-cost">${card.cost}</div>
+                    <div class="card-name">${card.name}</div>
+                    <div class="card-type">${card.type}</div>
+                    <div class="card-power">${card.power}</div>
+                `;
+
+                if (canPlay) {
+                    div.onclick = () => playCard(index);
+                }
+
+                container.appendChild(div);
+            });
+        }
+
+        // Play card
+        async function playCard(handIndex) {
+            // API call to play card
+            console.log("Playing card at index:", handIndex);
+        }
+
+        // End turn
+        async function endTurn() {
+            // API call to end turn
+            console.log("Ending turn");
+        }
+
+        // Surrender
+        function surrender() {
+            if (confirm("Сдаться и потерять забег?")) {
+                // API call to surrender
+                console.log("Surrendering");
+            }
+        }
+    </script>
+</body>
+</html>

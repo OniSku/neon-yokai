@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Yokai</title>
+    <style>
+        :root {
+            --bg: #0d0d0d;
+            --surface: #1a1a2e;
+            --surface2: #16213e;
+            --accent: #e94560;
+            --accent2: #0f3460;
+            --neon: #00fff5;
+            --neon2: #ff00e4;
+            --text: #eee;
+            --muted: #888;
+            --hp: #e94560;
+            --enemy-hp: #ff6b35;
+            --energy: #ffd700;
+            --block: #5bc0eb;
+            --green: #2ecc71;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .screen { display: none; flex-direction: column; align-items: center; padding: 16px; min-height: 100vh; }
+        .screen.active { display: flex; }
+        .wrap { width: 100%; max-width: 600px; }
+        h1 { font-size: 1.5rem; text-transform: uppercase; letter-spacing: 4px; color: var(--neon); text-shadow: 0 0 12px var(--neon); margin-bottom: 14px; text-align: center; }
+        h2 { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 2px; color: var(--neon); margin-bottom: 10px; }
+        .btn { display: inline-block; padding: 10px 16px; border: none; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; text-align: center; }
+        .btn:hover { opacity: 0.85; transform: scale(1.02); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .btn-primary { background: var(--neon); color: #000; }
+        .btn-danger { background: var(--accent); color: #fff; }
+        .btn-secondary { background: var(--accent2); color: var(--text); }
+        .btn-muted { background: #333; color: var(--muted); }
+        .btn-block { display: block; width: 100%; margin-top: 8px; }
+        .card-surface { background: var(--surface); border: 1px solid var(--accent2); border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; }
+        .row { display: flex; justify-content: space-between; align-items: center; }
+        .label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+        .val { font-size: 1.1rem; font-weight: 700; }
+        .val-neon { color: var(--neon); }
+        .val-gold { color: var(--energy); }
+        .val-red { color: var(--accent); }
+        .val-green { color: var(--green); }
+        .gap8 { gap: 8px; }
+        .mt8 { margin-top: 8px; }
+        .mt14 { margin-top: 14px; }
+        .mb8 { margin-bottom: 8px; }
+
+        /* Menu profile */
+        .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+        .profile-cell { text-align: center; }
+
+        /* Shop items */
+        .shop-item { display: flex; justify-content: space-between; align-items: center; }
+        .shop-item-info { flex: 1; }
+        .shop-item-name { font-weight: 700; font-size: 0.9rem; }
+        .shop-item-desc { font-size: 0.7rem; color: var(--muted); }
+        .shop-item-price { color: var(--energy); font-weight: 700; font-size: 0.9rem; min-width: 70px; text-align: right; }
+
+        /* Cart / inventory */
+        .inv-item { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #222; }
+        .inv-item.selected { background: rgba(0,255,245,0.08); border-radius: 6px; padding: 6px 8px; }
+        .inv-item-name { font-weight: 600; font-size: 0.85rem; }
+        .inv-item-qty { color: var(--muted); font-size: 0.8rem; }
+        .inv-item-check { width: 18px; height: 18px; border: 2px solid var(--accent2); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: var(--neon); }
+        .inv-item.selected .inv-item-check { border-color: var(--neon); background: var(--accent2); }
+
+        /* Map */
+        .map-nodes { display: flex; flex-direction: column; gap: 6px; }
+        .map-floor-row { display: flex; gap: 6px; justify-content: center; margin-bottom: 4px; }
+        .map-floor-label { font-size: 0.6rem; color: var(--muted); text-align: center; min-width: 30px; display: flex; align-items: center; justify-content: center; }
+        .map-node { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--accent2); transition: all 0.2s; min-width: 120px; flex: 1; cursor: default; }
+        .map-node.current { border-color: var(--neon); box-shadow: 0 0 10px rgba(0,255,245,0.3); }
+        .map-node.completed { opacity: 0.5; }
+        .map-node.locked { opacity: 0.3; }
+        .map-node.reachable { border-color: var(--energy); cursor: pointer; box-shadow: 0 0 8px rgba(255,215,0,0.25); }
+        .map-node.reachable:hover { box-shadow: 0 0 14px rgba(255,215,0,0.5); transform: scale(1.03); }
+        .node-idx { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.65rem; flex-shrink: 0; }
+        .node-idx.combat { background: var(--accent); color: #fff; }
+        .node-idx.rest { background: var(--green); color: #000; }
+        .node-idx.boss { background: var(--neon2); color: #fff; }
+        .node-idx.ambush { background: #ff0; color: #000; }
+        .node-idx.event { background: #b44aff; color: #fff; }
+        .node-idx.elite { background: #ff4444; color: #fff; }
+        .node-idx.treasure { background: var(--energy); color: #000; }
+.node-idx.hub { background: var(--neon); color: #000; }
+        .map-node.elite-node { border-color: #ff4444; box-shadow: 0 0 8px rgba(255,68,68,0.3); }
+        /* Enemy targets */
+        .enemies-container { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+        .enemy-slot { background: var(--surface); border: 1px solid var(--accent2); border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: visible; }
+        .enemy-slot.targeted { border-color: var(--accent); box-shadow: 0 0 10px rgba(233,69,96,0.4); }
+        .enemy-slot.dead { opacity: 0.3; cursor: default; }
+        .enemy-slot .target-label { font-size: 0.6rem; color: var(--accent); font-weight: 700; text-transform: uppercase; }
+        .enemy-intent { font-size: 0.75rem; font-weight: 700; margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+        .enemy-intent.intent-attack { color: var(--accent); }
+        .enemy-intent.intent-defend { color: var(--block); }
+        .enemy-intent.intent-buff { color: var(--energy); }
+        .enemy-intent.intent-debuff { color: var(--neon2); }
+        .event-choice-btn { display: block; width: 100%; text-align: left; background: var(--surface2); border: 1px solid var(--accent2); border-radius: 8px; padding: 12px 16px; color: var(--text); cursor: pointer; margin-bottom: 6px; transition: all 0.2s; }
+        .event-choice-btn:hover { border-color: var(--neon); box-shadow: 0 0 8px rgba(0,255,245,0.3); }
+        .event-choice-label { font-weight: 700; font-size: 0.9rem; }
+        .event-choice-desc { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+        .event-choice-cost { font-size: 0.7rem; color: var(--accent); margin-top: 2px; }
+        .node-info { flex: 1; }
+        .node-type { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; }
+        .node-name { font-weight: 700; font-size: 0.85rem; }
+
+        /* Battle */
+        .fighter-row { background: var(--surface); border: 1px solid var(--accent2); border-radius: 10px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; overflow: visible; }
+        .fighter-name { font-weight: 700; font-size: 1.05rem; }
+        .fighter-stats { display: flex; gap: 14px; font-size: 0.9rem; }
+        .stat-hp { color: var(--hp); }
+        .stat-enemy-hp { color: var(--enemy-hp); }
+        .stat-energy { color: var(--energy); }
+        .stat-block { color: var(--block); }
+        .bar-bg { width: 120px; height: 8px; background: #333; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+        .bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+        .bar-fill.hp { background: var(--hp); }
+        .bar-fill.enemy-hp { background: var(--enemy-hp); }
+        .buffs { display: flex; gap: 4px; margin-top: 4px; }
+        .buff-tag { font-size: 0.65rem; background: var(--accent2); color: var(--neon); padding: 2px 6px; border-radius: 4px; }
+        .hand { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .card-btn { background: var(--surface2); border: 1px solid var(--accent2); border-radius: 8px; padding: 10px 12px; color: var(--text); cursor: pointer; min-width: 100px; text-align: center; transition: all 0.2s; position: relative; }
+        .card-btn:hover { border-color: var(--neon); box-shadow: 0 0 10px var(--neon); transform: translateY(-3px); }
+        .card-btn:active { transform: translateY(0); }
+        .card-btn .card-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 4px; }
+        .card-btn .card-info { font-size: 0.7rem; color: var(--muted); }
+        .card-btn .card-cost { position: absolute; top: -6px; right: -6px; background: var(--energy); color: #000; font-weight: 800; font-size: 0.7rem; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .card-btn .card-dtype { font-size: 0.6rem; color: var(--neon2); }
+        .card-btn .card-rarity { font-size: 0.55rem; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
+        .rarity-common { border-color: #666; }
+        .rarity-common .card-rarity { color: #aaa; }
+        .rarity-rare { border-color: #4a9eff; box-shadow: 0 0 6px rgba(74,158,255,0.3); }
+        .rarity-rare .card-rarity { color: #4a9eff; }
+        .rarity-epic { border-color: #b44aff; box-shadow: 0 0 8px rgba(180,74,255,0.4); }
+        .rarity-epic .card-rarity { color: #b44aff; }
+        .rarity-legendary { border-color: #ffd700; box-shadow: 0 0 12px rgba(255,215,0,0.5); }
+        .rarity-legendary .card-rarity { color: #ffd700; }
+        .artifacts-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; margin-bottom: 4px; }
+        .artifact-tag { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: var(--energy); cursor: default; position: relative; }
+        .artifact-tag .art-charges { font-size: 0.55rem; color: var(--muted); margin-left: 4px; }
+        .artifact-tag.art-rare { border-color: rgba(74,158,255,0.4); background: rgba(74,158,255,0.08); color: #4a9eff; }
+        .artifact-tag.art-legendary { border-color: rgba(255,215,0,0.5); background: rgba(255,215,0,0.15); color: #ffd700; }
+        .artifact-tag.art-inactive { opacity: 0.35; text-decoration: line-through; }
+        .battle-actions { display: flex; gap: 10px; margin-top: 12px; }
+        .battle-actions .btn { flex: 1; }
+        #log { background: var(--surface); border: 1px solid var(--accent2); border-radius: 8px; padding: 12px; height: 160px; overflow-y: auto; font-family: "Cascadia Code", "Fira Code", monospace; font-size: 0.72rem; line-height: 1.6; color: var(--muted); margin-top: 10px; }
+        #log .log-line { margin-bottom: 2px; }
+        #log .log-player { color: var(--neon); }
+        #log .log-enemy { color: var(--accent); }
+        #log .log-system { color: var(--energy); }
+
+        /* Upgrades */
+        .upgrade-branch { background: var(--surface); border: 1px solid var(--accent2); border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; }
+        .upgrade-branch.branch-maxed { border-color: var(--energy); opacity: 0.7; }
+        .upgrade-name { font-weight: 700; font-size: 1rem; color: var(--neon); }
+        .upgrade-desc { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+        .upgrade-level { font-size: 0.8rem; color: var(--energy); margin-top: 4px; font-weight: 600; }
+        .upgrade-pips { display: flex; gap: 4px; margin-top: 6px; margin-bottom: 6px; }
+        .upgrade-pip { width: 24px; height: 8px; border-radius: 3px; background: #333; }
+        .upgrade-pip.filled { background: var(--neon); box-shadow: 0 0 6px rgba(0,255,245,0.4); }
+        .upgrade-cost { font-size: 0.7rem; color: var(--muted); }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10% { transform: translateX(-6px) rotate(-0.5deg); }
+            20% { transform: translateX(5px) rotate(0.5deg); }
+            30% { transform: translateX(-4px); }
+            40% { transform: translateX(4px); }
+            50% { transform: translateX(-2px); }
+            60% { transform: translateX(2px); }
+        }
+        .screen-shake { animation: shake 0.4s ease-out; }
+
+        @keyframes float-up {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            60% { opacity: 1; transform: translateY(-40px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-70px) scale(0.8); }
+        }
+        .dmg-popup {
+            position: absolute;
+            font-weight: 900;
+            font-size: 1.4rem;
+            pointer-events: none;
+            z-index: 50;
+            text-shadow: 0 0 8px currentColor, 0 2px 4px rgba(0,0,0,0.6);
+            animation: float-up 0.9s ease-out forwards;
+        }
+        .dmg-popup.dmg-enemy { color: var(--accent); }
+        .dmg-popup.dmg-heal { color: var(--green); }
+        .dmg-popup.dmg-block { color: var(--block); }
+
+        .card-btn.card-playable {
+            box-shadow: 0 0 10px rgba(0,255,245,0.4), inset 0 0 6px rgba(0,255,245,0.1);
+            border-color: var(--neon);
+        }
+        .card-btn.card-playable:hover {
+            box-shadow: 0 0 18px rgba(0,255,245,0.6), inset 0 0 10px rgba(0,255,245,0.15);
+        }
+        .card-btn.card-unplayable { opacity: 0.45; }
+        .card-tooltip { position: fixed; z-index: 200; background: var(--surface); border: 1px solid var(--neon); border-radius: 10px; padding: 12px 16px; max-width: 220px; font-size: 0.75rem; color: var(--text); pointer-events: none; box-shadow: 0 0 16px rgba(0,255,245,0.3); display: none; }
+        .card-tooltip .tt-name { font-weight: 700; font-size: 0.85rem; color: var(--neon); margin-bottom: 4px; }
+        .card-tooltip .tt-type { font-size: 0.7rem; color: var(--muted); }
+        .card-tooltip .tt-desc { margin-top: 6px; line-height: 1.4; }
+
+        /* Buff icons */
+        .buff-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.65rem;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+        .buff-icon .buff-dur { font-weight: 400; opacity: 0.7; }
+        .buff-SPICY_BUFF, .buff-COMBO_BURN { background: rgba(255,80,20,0.2); color: #ff6b35; border: 1px solid rgba(255,80,20,0.3); }
+        .buff-COMBO_REGEN, .buff-SWEET_BUFF { background: rgba(46,204,113,0.15); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+        .buff-COMBO_THORNS, .buff-BITTER_BUFF { background: rgba(91,192,235,0.15); color: #5bc0eb; border: 1px solid rgba(91,192,235,0.3); }
+        .buff-SOUR_BUFF { background: rgba(255,255,0,0.12); color: #ffe066; border: 1px solid rgba(255,255,0,0.25); }
+        .buff-RAGE, .buff-FRENZY { background: rgba(233,69,96,0.2); color: #e94560; border: 1px solid rgba(233,69,96,0.35); }
+        .buff-STEALTH { background: rgba(180,74,255,0.15); color: #b44aff; border: 1px solid rgba(180,74,255,0.3); }
+        .buff-POISON, .buff-TOXIC, .buff-BLEED { background: rgba(0,255,0,0.08); color: #66ff66; border: 1px solid rgba(0,255,0,0.2); }
+        .buff-ARMOR_BREAK, .buff-SLOW { background: rgba(255,255,255,0.06); color: #aaa; border: 1px solid rgba(255,255,255,0.15); }
+        .buff-SHARPEN { background: rgba(255,215,0,0.12); color: var(--energy); border: 1px solid rgba(255,215,0,0.25); }
+
+        /* Result overlay */
+        .result-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; }
+        .result-overlay.active { display: flex; }
+        .result-box { background: var(--surface); border: 2px solid var(--neon); border-radius: 16px; padding: 32px 48px; text-align: center; }
+        .result-box h2 { font-size: 1.8rem; text-shadow: 0 0 20px var(--neon); margin-bottom: 8px; }
+        .result-loot { font-size: 0.8rem; color: var(--green); margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+
+<!-- ========== SCREEN: MENU ========== -->
+<div id="screen-menu" class="screen active">
+    <div class="wrap">
+        <h1>Neon Yokai</h1>
+        <div class="card-surface">
+            <div class="row mb8"><span class="label">Агент</span><span class="val val-neon" id="menu-username">...</span></div>
+            <div class="profile-grid">
+                <div class="profile-cell"><div class="label">Кредиты</div><div class="val val-gold" id="menu-credits">0</div></div>
+                <div class="profile-cell"><div class="label">Долг</div><div class="val val-red" id="menu-debt-amount">0</div></div>
+                <div class="profile-cell"><div class="label">Статус</div><div class="val val-red" id="menu-debt-name" style="font-size:0.8rem">Чисто</div></div>
+                <div class="profile-cell"><div class="label">Опыт</div><div class="val val-neon" id="menu-xp">0</div></div>
+            </div>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="goTo('shop')">Склад Поставщика</button>
+        <button class="btn btn-secondary btn-block" onclick="goTo('cart')">Тележка (крафт)</button>
+        <button class="btn btn-secondary btn-block" style="background:var(--neon);color:#000" onclick="goTo('upgrades')">Прокачка Тележки</button>
+        <button class="btn btn-danger btn-block" onclick="startRun()">В ночную смену</button>
+    </div>
+</div>
+
+<!-- ========== SCREEN: UPGRADES ========== -->
+<div id="screen-upgrades" class="screen">
+    <div class="wrap">
+        <h2>Прокачка Тележки</h2>
+        <div class="card-surface">
+            <div class="row"><span class="label">XP</span><span class="val val-neon" id="upgrades-xp">0</span></div>
+        </div>
+        <div id="upgrade-branches"></div>
+        <button class="btn btn-muted btn-block mt14" onclick="goTo('menu')">Назад</button>
+    </div>
+</div>
+
+<!-- ========== SCREEN: SHOP (Supplier's Warehouse) ========== -->
+<div id="screen-shop" class="screen">
+    <div class="wrap">
+        <h2>Склад Поставщика</h2>
+        <div class="card-surface">
+            <div class="row mb8"><span class="label">Баланс</span><span class="val val-gold" id="shop-credits">0</span></div>
+            <div class="row"><span class="label">Долг</span><span class="val val-red" id="shop-debt">0</span></div>
+        </div>
+        <div id="shop-items"></div>
+        <div class="mt14">
+            <button class="btn btn-secondary btn-block" onclick="takeKit()">Взять набор продуктов под реализацию</button>
+            <button class="btn btn-muted btn-block" onclick="promptPay()">Погасить долг</button>
+            <button class="btn btn-warning btn-block" onclick="showRemoveCardUI()">Удалить карту <span id="remove-card-price">(50 кр)</span></button>
+            <button class="btn btn-primary btn-block" onclick="goTo('cart')">К Тележке</button>
+            <button class="btn btn-muted btn-block" onclick="goTo('menu')">Назад</button>
+        </div>
+        <div id="shop-remove-card-ui" style="display:none" class="mt8">
+            <p class="label mb8">Выберите карту для удаления:</p>
+            <div id="shop-remove-card-list" class="card-list"></div>
+            <button class="btn btn-muted btn-block mt8" onclick="hideRemoveCardUI()">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== SCREEN: CART / CRAFT ========== -->
+<div id="screen-cart" class="screen">
+    <div class="wrap">
+        <h2>Тележка</h2>
+        <div class="card-surface">
+            <div class="label mb8">Инвентарь (выберите до 3 предметов) <span id="inv-limit-text" style="color:var(--muted);font-size:0.7rem"></span></div>
+            <div id="cart-inventory"></div>
+        </div>
+        <button class="btn btn-primary btn-block" id="btn-craft" onclick="doCraft()" disabled>Приготовить блюдо (0/3)</button>
+        <div id="craft-result" class="card-surface mt8" style="display:none">
+            <div class="label">Результат крафта</div>
+            <div id="craft-result-text"></div>
+        </div>
+        <button class="btn btn-danger btn-block mt14" onclick="startRun()">В ночную смену</button>
+        <button class="btn btn-muted btn-block" onclick="goTo('menu')">Назад</button>
+    </div>
+</div>
+
+<!-- ========== SCREEN: MAP ========== -->
+<div id="screen-map" class="screen">
+    <div class="wrap">
+        <h2>Карта Района</h2>
+        <div class="card-surface mb8">
+            <div class="row mb8"><span class="label">Этаж</span><span class="val val-neon" id="map-current-floor">1</span></div>
+            <div class="row"><span class="label">HP</span><span class="val val-red" id="map-hp">80 / 80</span></div>
+        </div>
+        <div class="map-nodes" id="map-nodes"></div>
+        <div class="mt14">
+            <button class="btn btn-muted btn-block" onclick="abandonRun()">Бросить забег</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== SCREEN: EVENT ========== -->
+<div id="screen-event" class="screen">
+    <div class="wrap">
+        <h2 id="event-title" style="color:var(--neon2)">Event</h2>
+        <div class="card-surface mb8">
+            <p id="event-description" style="font-size:0.85rem;color:var(--muted);line-height:1.6"></p>
+        </div>
+        <div id="event-choices"></div>
+        <div id="event-result" class="card-surface mt8" style="display:none">
+            <div id="event-result-text" style="font-size:0.85rem;color:var(--neon)"></div>
+        </div>
+        <button class="btn btn-muted btn-block mt14" id="btn-event-continue" style="display:none" onclick="eventContinue()">Продолжить</button>
+    </div>
+</div>
+
+<!-- ========== SCREEN: REST ========== -->
+<div id="screen-rest" class="screen">
+    <div class="wrap">
+        <h2 style="color:var(--neon3)">Тележка повара</h2>
+        <div class="card-surface mb8">
+            <p style="font-size:0.85rem;color:var(--muted);line-height:1.6">Выберите действие:</p>
+        </div>
+        <div id="rest-choices">
+            <button class="btn btn-success btn-block mb8" onclick="restSleep()">Сон (восстановить 30% HP)</button>
+            <button class="btn btn-primary btn-block mb8" onclick="restUpgrade()">Заточка ножей (улучшить карту)</button>
+        </div>
+        <div id="rest-upgrade-ui" style="display:none">
+            <p class="label mb8">Выберите карту для улучшения (+3 урона/блока):</p>
+            <div id="rest-upgrade-cards" class="card-list"></div>
+            <button class="btn btn-muted btn-block mt8" onclick="restCancelUpgrade()">Отмена</button>
+        </div>
+        <button class="btn btn-muted btn-block mt14" id="btn-rest-continue" style="display:none" onclick="restContinue()">Продолжить</button>
+    </div>
+</div>
+
+<!-- ========== SCREEN: BATTLE ========== -->
+<div id="screen-battle" class="screen">
+    <div class="wrap">
+        <div class="row mb8">
+            <span class="label">Ход <span id="turn">0</span></span>
+            <span class="label">Фаза: <span id="phase" style="color:var(--neon)">-</span></span>
+        </div>
+        <div class="enemies-container" id="enemies-container"></div>
+        <div class="fighter-row" id="enemy-row" style="display:none">
+            <div><div class="fighter-name" id="enemy-name">Враг</div><div class="enemy-intent" id="enemy-single-intent"></div><div class="buffs" id="enemy-buffs"></div></div>
+            <div>
+                <div class="fighter-stats"><span class="stat-enemy-hp" id="enemy-hp-text">50/50</span><span class="stat-block" id="enemy-block-text">Блок: 0</span></div>
+                <div class="bar-bg"><div class="bar-fill enemy-hp" id="enemy-hp-bar" style="width:100%"></div></div>
+            </div>
+        </div>
+        <div class="fighter-row" id="player-row">
+            <div><div class="fighter-name">Игрок</div><div class="buffs" id="player-buffs"></div></div>
+            <div>
+                <div class="fighter-stats"><span class="stat-hp" id="player-hp-text">80/80</span><span class="stat-energy" id="player-energy-text">Энергия: 3</span><span class="stat-block" id="player-block-text">Блок: 0</span></div>
+                <div class="bar-bg"><div class="bar-fill hp" id="player-hp-bar" style="width:100%"></div></div>
+            </div>
+        </div>
+        <div class="buffs mt8" id="combo-effects" style="margin-bottom:6px"></div>
+        <div class="artifacts-row" id="artifacts-row"></div>
+        <div class="label mt8">Рука</div>
+        <div class="hand" id="hand"></div>
+        <div class="row mt8" style="font-size:0.75rem;color:var(--muted)">
+            <span>Колода: <span id="draw-count" class="val-neon">0</span></span>
+            <span>Сброс: <span id="discard-count" style="color:var(--accent)">0</span></span>
+            <span>Удалено: <span id="exhaust-count" style="color:#666">0</span></span>
+        </div>
+        <div class="battle-actions">
+            <button class="btn btn-danger" id="btn-end-turn" onclick="endTurn()">Завершить ход</button>
+            <button class="btn btn-muted" id="btn-abandon" onclick="abandonRun()">Бросить</button>
+        </div>
+        <div id="log"></div>
+    </div>
+</div>
+
+<!-- Result overlay -->
+<div class="result-overlay" id="result-overlay">
+    <div class="result-box">
+        <h2 id="result-text"></h2>
+        <div class="result-loot" id="result-loot"></div>
+        <div id="reward-section" style="display:none">
+            <div class="label mt8" style="color:var(--gold)">Награды</div>
+            <div id="reward-credits" style="font-size:0.85rem;color:var(--gold)"></div>
+            <div id="reward-loot" style="font-size:0.8rem;color:var(--muted);margin-bottom:8px"></div>
+            <div class="label mt8">Выберите карту (или пропустите)</div>
+            <div id="reward-cards" class="hand" style="margin-bottom:8px"></div>
+            <button class="btn btn-muted btn-block" onclick="claimReward(null)">Пропустить выбор карты</button>
+        </div>
+        <button class="btn btn-primary" id="btn-close-result" onclick="closeResult()">Далее</button>
+    </div>
+</div>
+
+<div class="card-tooltip" id="card-tooltip"><div class="tt-name"></div><div class="tt-type"></div><div class="tt-desc"></div></div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+const API = window.location.origin;
+let currentRun = null;
+let selectedIngredients = [];
+
+function getInitData() {
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+        return window.Telegram.WebApp.initData;
+    }
+    return "";
+}
+
+function headers() {
+    return {
+        "Content-Type": "application/json",
+        "X-Init-Data": getInitData(),
+        "ngrok-skip-browser-warning": "true"
+    };
+}
+
+const DTYPE_RU = { slashing: "Режущий", piercing: "Колющий", blunt: "Дробящий", none: "" };
+const RARITY_RU = { common: "Обычная", rare: "Редкая", epic: "Эпическая", legendary: "Легендарная" };
+const CTYPE_RU = { attack: "Атака", skill: "Навык", curse: "Проклятие" };
+
+function buildCardDesc(card) {
+    const t = CTYPE_RU[card.type] || card.type;
+    const dt = DTYPE_RU[card.damage_type] || card.damage_type;
+    let desc = t;
+    if (card.type === "attack") desc += ": наносит " + card.power + " урона" + (dt ? " (" + dt + ")" : "");
+    else if (card.type === "skill") desc += ": +" + card.power + " блок" + (dt && dt !== "" ? " (" + dt + " парирование)" : "");
+    else if (card.type === "curse") desc = "Проклятие: нельзя разыграть, засоряет руку";
+    if (card.tags && card.tags.length) {
+        const vis = card.tags.filter(t => !t.startsWith("DRAW_") && !t.startsWith("DISCARD_") && t !== "AOE");
+        if (card.tags.includes("AOE")) desc += "\nПоражает всех врагов";
+        const draws = card.tags.filter(t => t.startsWith("DRAW_"));
+        if (draws.length) desc += "\nДобор: +" + draws[0].split("_")[1] + " карт";
+    }
+    if (card.is_exhaust) desc += "\nСжигание: удаляется после использования";
+    return desc;
+}
+
+let tooltipTimer = null;
+function showCardTooltip(card, e) {
+    const tt = document.getElementById("card-tooltip");
+    tt.querySelector(".tt-name").textContent = card.name;
+    tt.querySelector(".tt-type").textContent = (CTYPE_RU[card.type] || card.type) + " | " + (RARITY_RU[card.rarity] || card.rarity) + " | " + card.cost + " энергии";
+    tt.querySelector(".tt-desc").textContent = buildCardDesc(card);
+    tt.style.display = "block";
+    const x = Math.min(e.clientX + 10, window.innerWidth - 240);
+    const y = Math.max(e.clientY - 100, 10);
+    tt.style.left = x + "px";
+    tt.style.top = y + "px";
+}
+function hideCardTooltip() {
+    clearTimeout(tooltipTimer);
+    document.getElementById("card-tooltip").style.display = "none";
+}
+
+function goTo(screenId) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById("screen-" + screenId).classList.add("active");
+    if (screenId === "menu") loadProfile();
+    if (screenId === "shop") loadShop();
+    if (screenId === "cart") loadInventory();
+    if (screenId === "upgrades") loadUpgrades();
+    if (screenId === "map") renderMap();
+}
+
+function log(msg, cls = "log-system") {
+    const el = document.getElementById("log");
+    if (!el) return;
+    const line = document.createElement("div");
+    line.className = "log-line " + cls;
+    line.textContent = "> " + msg;
+    el.appendChild(line);
+    el.scrollTop = el.scrollHeight;
+}
+
+/* ===== PROFILE ===== */
+async function loadProfile() {
+    try {
+        const res = await fetch(API + "/user/profile", { headers: headers() });
+        if (!res.ok) return;
+        const p = await res.json();
+        document.getElementById("menu-username").textContent = p.username || "Агент #" + p.id;
+        document.getElementById("menu-credits").textContent = p.credits;
+        document.getElementById("menu-debt-amount").textContent = p.debt + " кр";
+        document.getElementById("menu-debt-name").textContent = p.debt_level_name || "Чисто";
+        document.getElementById("menu-xp").textContent = p.experience;
+    } catch (e) { console.error(e); }
+}
+
+/* ===== UPGRADES ===== */
+const BRANCH_ICONS = { kitchen: "\uD83C\uDF73", fridge: "\u2744\uFE0F", ads: "\uD83D\uDCE3" };
+
+async function loadUpgrades() {
+    try {
+        const res = await fetch(API + "/user/profile", { headers: headers() });
+        if (!res.ok) return;
+        const p = await res.json();
+        document.getElementById("upgrades-xp").textContent = p.experience;
+        const el = document.getElementById("upgrade-branches");
+        el.innerHTML = "";
+        if (!p.meta) return;
+        for (const key of ["kitchen", "fridge", "ads"]) {
+            const b = p.meta[key];
+            const maxed = b.level >= b.max_level;
+            const div = document.createElement("div");
+            div.className = "upgrade-branch" + (maxed ? " branch-maxed" : "");
+            let pips = "";
+            for (let i = 0; i < b.max_level; i++) {
+                pips += '<div class="upgrade-pip' + (i < b.level ? " filled" : "") + '"></div>';
+            }
+            const costText = maxed ? "MAX" : b.next_cost + " XP";
+            const canAfford = !maxed && p.experience >= b.next_cost;
+            div.innerHTML =
+                '<div class="upgrade-name">' + (BRANCH_ICONS[key] || "") + " " + b.name + '</div>' +
+                '<div class="upgrade-desc">' + b.description + '</div>' +
+                '<div class="upgrade-level">Ур. ' + b.level + ' / ' + b.max_level + '</div>' +
+                '<div class="upgrade-pips">' + pips + '</div>' +
+                '<div class="upgrade-cost">Цена: ' + costText + '</div>' +
+                (maxed ? '' : '<button class="btn btn-block mt8 ' + (canAfford ? 'btn-primary' : 'btn-muted') + '" ' +
+                    (canAfford ? 'onclick="doUpgrade(\'' + key + '\')"' : 'disabled') +
+                    '>Улучшить</button>');
+            el.appendChild(div);
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function doUpgrade(branch) {
+    try {
+        const res = await fetch(API + "/user/upgrade", {
+            method: "POST",
+            headers: headers(),
+            body: JSON.stringify({ branch: branch })
+        });
+        const data = await res.json();
+        if (!res.ok) { alert(data.detail || "Ошибка"); return; }
+        loadUpgrades();
+    } catch (e) { alert("Ошибка сети: " + e.message); }
+}
+
+/* ===== SHOP ===== */
+async function loadShop() {
+    try {
+        const [itemsRes, profileRes] = await Promise.all([
+            fetch(API + "/shop/items", { headers: headers() }),
+            fetch(API + "/user/profile", { headers: headers() })
+        ]);
+        const items = await itemsRes.json();
+        const profile = await profileRes.json();
+        document.getElementById("shop-credits").textContent = profile.credits;
+        document.getElementById("shop-debt").textContent = profile.debt + " кр";
+
+        const el = document.getElementById("shop-items");
+        el.innerHTML = "";
+        for (const item of items) {
+            const div = document.createElement("div");
+            div.className = "card-surface shop-item";
+            div.innerHTML =
+                '<div class="shop-item-info"><div class="shop-item-name">' + item.name + '</div><div class="shop-item-desc">' + (item.description || "") + '</div></div>' +
+                '<div class="shop-item-price">' + item.price + ' кр</div>' +
+                '<button class="btn btn-secondary" style="margin-left:10px;padding:6px 12px;font-size:0.75rem" onclick="buyItem(' + item.id + ')">\u041a\u0443\u043f\u0438\u0442\u044c</button>';
+            el.appendChild(div);
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function buyItem(itemId) {
+    try {
+        const res = await fetch(API + "/shop/buy", { method: "POST", headers: headers(), body: JSON.stringify({ item_id: itemId }) });
+        const data = await res.json();
+        if (!res.ok) { alert(data.detail || "Ошибка"); return; }
+        document.getElementById("shop-credits").textContent = data.credits;
+        alert(data.message);
+    } catch (e) { alert("Ошибка сети"); }
+}
+
+async function takeKit() {
+    if (!confirm("Взять набор продуктов под реализацию? (+50 кр долга)")) return;
+    try {
+        const res = await fetch(API + "/shop/debt", { method: "POST", headers: headers() });
+        const data = await res.json();
+        if (!res.ok) { alert(data.detail || "Ошибка"); return; }
+        document.getElementById("shop-debt").textContent = data.debt + " кр";
+        alert(data.message + " | " + data.debt_level_name + " (ур" + data.debt_level + ")");
+    } catch (e) { alert("Ошибка сети"); }
+}
+
+async function promptPay() {
+    const amt = prompt("Сколько кредитов выплатить?");
+    if (!amt || isNaN(amt) || +amt <= 0) return;
+    try {
+        const res = await fetch(API + "/shop/pay", { method: "POST", headers: headers(), body: JSON.stringify({ amount: +amt }) });
+        const data = await res.json();
+        if (!res.ok) { alert(data.detail || "Ошибка"); return; }
+        document.getElementById("shop-credits").textContent = data.credits;
+        document.getElementById("shop-debt").textContent = data.debt + " кр";
+        alert(data.message + " | " + data.debt_level_name);
+    } catch (e) { alert("Ошибка сети"); }
+}
+
+async function showRemoveCardUI() {
+    const runRes = await fetch(API + "/run/state", { headers: headers() });
+    if (!runRes.ok) { alert("Нет активного забега"); return; }
+    const runData = await runRes.json();
+    const removalCount = runData.card_removals_this_run || 0;
+    const cost = 50 + (25 * removalCount);
+    document.getElementById("remove-card-price").textContent = `(${cost} кр)`;
+
+    const container = document.getElementById("shop-remove-card-list");
+    container.innerHTML = "";
+
+    if (!runData.battle) { alert("Нет активного забега"); return; }
+
+    const allCards = [...runData.battle.draw_pile, ...runData.battle.discard_pile, ...runData.battle.exhaust_pile];
+    const uniqueCards = [];
+    const seen = new Set();
+    for (const c of allCards) {
+        if (!seen.has(c.card_id)) {
+            seen.add(c.card_id);
+            uniqueCards.push(c);
+        }
+    }
+
+    for (const c of uniqueCards) {
+        const div = document.createElement("div");
+        div.className = "card-item";
+        const upgradedMark = c.is_upgraded ? "+" : "";
+        div.innerHTML = `<b>${c.name}${upgradedMark}</b> (${c.type}, ${c.power} сила)`;
+        div.onclick = () => doRemoveCard(c.card_id, cost);
+        container.appendChild(div);
+    }
+
+    document.getElementById("shop-remove-card-ui").style.display = "block";
+}
+
+function hideRemoveCardUI() {
+    document.getElementById("shop-remove-card-ui").style.display = "none";
+}
+
+async function doRemoveCard(cardId, cost) {
+    if (!confirm(`Удалить карту за ${cost} кредитов?`)) return;
+    try {
+        const res = await fetch(API + "/shop/remove-card?card_id=" + cardId, { method: "POST", headers: headers() });
+        if (!res.ok) { const err = await res.json(); alert(err.detail || "Ошибка"); return; }
+        const data = await res.json();
+        alert(data.message);
+        document.getElementById("shop-credits").textContent = data.credits;
+        hideRemoveCardUI();
+    } catch (e) { alert("Ошибка сети: " + e.message); }
+}
+
+/* ===== CART / CRAFT ===== */
+async function loadInventory() {
+    selectedIngredients = [];
+    updateCraftBtn();
+    document.getElementById("craft-result").style.display = "none";
+    try {
+        const [res, profileRes] = await Promise.all([
+            fetch(API + "/user/inventory", { headers: headers() }),
+            fetch(API + "/user/profile", { headers: headers() })
+        ]);
+        if (!res.ok) return;
+        const items = await res.json();
+        const profile = profileRes.ok ? await profileRes.json() : null;
+        const totalQty = items.reduce((s, i) => s + i.quantity, 0);
+        const limit = profile ? profile.inventory_limit : 5;
+        document.getElementById("inv-limit-text").textContent = "[" + totalQty + "/" + limit + "]";
+        const el = document.getElementById("cart-inventory");
+        el.innerHTML = "";
+        if (!items.length) { el.innerHTML = '<div style="color:var(--muted);font-size:0.8rem">Инвентарь пуст. Победите врагов для получения ингредиентов.</div>'; return; }
+        for (const item of items) {
+            const row = document.createElement("div");
+            row.className = "inv-item";
+            row.dataset.id = item.ingredient_id;
+            row.innerHTML =
+                '<div><div class="inv-item-name">' + item.ingredient_name + '</div><div class="inv-item-qty">x' + item.quantity + '</div></div>' +
+                '<div class="inv-item-check"></div>';
+            row.onclick = () => toggleIngredient(item.ingredient_id, row);
+            el.appendChild(row);
+        }
+    } catch (e) { console.error(e); }
+}
+
+function toggleIngredient(id, row) {
+    const idx = selectedIngredients.indexOf(id);
+    if (idx >= 0) {
+        selectedIngredients.splice(idx, 1);
+        row.classList.remove("selected");
+        row.querySelector(".inv-item-check").textContent = "";
+    } else {
+        if (selectedIngredients.length >= 3) return;
+        selectedIngredients.push(id);
+        row.classList.add("selected");
+        row.querySelector(".inv-item-check").textContent = "\u2713";
+    }
+    updateCraftBtn();
+}
+
+function updateCraftBtn() {
+    const btn = document.getElementById("btn-craft");
+    btn.textContent = "Приготовить блюдо (" + selectedIngredients.length + "/3)";
+    btn.disabled = selectedIngredients.length === 0;
+}
+
+async function doCraft() {
+    if (!selectedIngredients.length) return;
+    try {
+        const res = await fetch(API + "/craft/cook", { method: "POST", headers: headers(), body: JSON.stringify({ ingredient_ids: selectedIngredients }) });
+        const data = await res.json();
+        if (!res.ok) { alert(data.detail || "Ошибка"); return; }
+        const r = data.result;
+        const box = document.getElementById("craft-result");
+        box.style.display = "block";
+        const FLAVOR_RU = {spicy: "Острый", sour: "Кислый", sweet: "Сладкий", bitter: "Горький"};
+        document.getElementById("craft-result-text").innerHTML =
+            '<div style="color:var(--neon);font-weight:700">' + (r.dominant_flavor ? "Доминантный: " + (FLAVOR_RU[r.dominant_flavor] || r.dominant_flavor) : "Нет доминантного вкуса") + '</div>' +
+            '<div style="font-size:0.75rem;color:var(--muted)">Баффы: ' + (r.buffs.length ? r.buffs.join(", ") : "нет") + '</div>' +
+            (r.combo_effects && r.combo_effects.length ? '<div style="font-size:0.8rem;color:var(--gold);margin-top:4px;font-weight:700">Комбо: ' + r.combo_effects.join(", ") + '</div>' : '') +
+            '<div style="font-size:0.7rem;color:var(--muted);margin-top:4px">Остр:' + r.profile.spicy + ' Кисл:' + r.profile.sour + ' Слад:' + r.profile.sweet + ' Горьк:' + r.profile.bitter + '</div>';
+        await loadInventory();
+    } catch (e) { alert("Ошибка сети"); }
+}
+
+/* ===== RUN / MAP ===== */
+async function startRun() {
+    try {
+        const res = await fetch(API + "/run/start", { method: "POST", headers: headers(), body: JSON.stringify({}) });
+        const data = await res.json();
+        if (!res.ok) { alert(data.detail || "Ошибка"); return; }
+        currentRun = data.run;
+        goTo("map");
+        renderMap();
+        const node = currentRun.map_nodes.find(n => n.index === currentRun.current_node_index) || currentRun.map_nodes[0];
+        if (currentRun.battle && !currentRun.battle.finished) {
+            goTo("battle");
+            initBattleUI();
+        } else if (currentRun.reward_phase) {
+            goTo("map");
+            renderMap();
+            showRewardOverlay();
+        }
+    } catch (e) { alert("Ошибка сети: " + e.message); }
+}
+
+function _findNode(idx) {
+    if (!currentRun) return null;
+    return currentRun.map_nodes.find(n => n.index === idx) || null;
+}
+
+function renderMap() {
+    if (!currentRun) return;
+
+    renderDAGMap(currentRun, "map-nodes", async (nodeIndex) => {
+        await enterNode(nodeIndex);
+    });
+
+    const currentNode = _findNode(currentRun.current_node_index);
+    const currentFloor = currentNode ? (currentNode.floor || 0) + 1 : 1;
+    document.getElementById("map-current-floor").textContent = currentFloor + " / 10";
+    const maxHp = (currentRun.battle && currentRun.battle.player) ? currentRun.battle.player.max_hp : (currentRun.current_hp || 80);
+    document.getElementById("map-hp").textContent = (currentRun.current_hp || maxHp) + " / " + maxHp;
+
+    if (currentRun.reward_phase) {
+        showRewardOverlay();
+    }
+}
+
+function showRewardOverlay() {
+    const overlay = document.getElementById("result-overlay");
+    const text = document.getElementById("result-text");
+    text.textContent = "НАГРАДЫ";
+    text.style.color = "var(--energy)";
+    document.getElementById("result-loot").textContent = "";
+    document.getElementById("btn-close-result").style.display = "none";
+    overlay.classList.add("active");
+    loadRewards();
+}
+
+async function goToNode(nodeIndex) {
+    if (!currentRun) return;
+    try {
+        const res = await fetch(API + "/run/next_node", {
+            method: "POST", headers: headers(),
+            body: JSON.stringify({ chosen_node_index: nodeIndex })
+        });
+        const data = await res.json();
+        if (!res.ok) { alert(data.detail || "Ошибка"); return; }
+        currentRun = data.run;
+        renderMap();
+        if (data.node.node_type === "event" && currentRun.active_event) {
+            goTo("event");
+            initEventUI(currentRun.active_event);
+        } else if (data.node.node_type === "rest" && data.run.rest_choice_pending) {
+            log(data.message, "log-system");
+            goTo("rest");
+            initRestUI();
+        } else if (data.node.node_type === "treasure" && currentRun.reward_phase) {
+            renderMap();
+        } else if (currentRun.battle && !currentRun.battle.finished) {
+            goTo("battle");
+            initBattleUI();
+        } else if (currentRun.run_finished) {
+            alert("Забег завершен!");
+            goTo("menu");
+        }
+    } catch (e) { alert("Ошибка сети: " + e.message); }
+}
+
+async function abandonRun() {
+    if (!confirm("Бросить забег?")) return;
+    try {
+        await fetch(API + "/run/action", { method: "POST", headers: headers(), body: JSON.stringify({ action: "abandon" }) });
+        currentRun = null;
+        goTo("menu");
+    } catch (e) { alert("Ошибка сети"); }
+}
+
+/* ===== EVENT ===== */
+function initEventUI(event) {
+    document.getElementById("event-title").textContent = event.title;
+    document.getElementById("event-description").textContent = event.description;
+    document.getElementById("event-result").style.display = "none";
+    document.getElementById("btn-event-continue").style.display = "none";
+    const el = document.getElementById("event-choices");
+    el.innerHTML = "";
+    for (const ch of event.choices) {
+        const btn = document.createElement("button");
+        btn.className = "event-choice-btn";
+        let costText = "";
+        if (ch.cost_type === "hp" && ch.cost_value > 0) costText = " (-" + ch.cost_value + " HP)";
+        else if (ch.cost_type === "credits" && ch.cost_value > 0) costText = " (-" + ch.cost_value + " cr)";
+        btn.innerHTML =
+            '<div class="event-choice-label">' + ch.label + '</div>' +
+            '<div class="event-choice-desc">' + ch.description + '</div>' +
+            (costText ? '<div class="event-choice-cost">' + costText + '</div>' : '');
+        btn.onclick = () => makeEventChoice(ch.choice_id);
+        el.appendChild(btn);
+    }
+}
+
+async function makeEventChoice(choiceId) {
+    try {
+        const res = await fetch(API + "/run/event_choice", { method: "POST", headers: headers(), body: JSON.stringify({ choice_id: choiceId }) });
+        const data = await res.json();
+        if (!res.ok) { alert(data.detail || "Ошибка"); return; }
+        currentRun = data.run;
+        document.getElementById("event-choices").innerHTML = "";
+        const resultEl = document.getElementById("event-result");
+        resultEl.style.display = "block";
+        let text = data.message;
+        if (data.hp_delta !== 0) text += " (HP " + (data.hp_delta > 0 ? "+" : "") + data.hp_delta + ")";
+        if (data.credits_delta !== 0) text += " (Кредиты " + (data.credits_delta > 0 ? "+" : "") + data.credits_delta + ")";
+        if (data.card_reward) text += "<br>Получена карта: <b>" + data.card_reward.name + "</b> (" + (RARITY_RU[data.card_reward.rarity] || data.card_reward.rarity) + ")";
+        if (data.artifact_reward) text += "<br>Получен артефакт: <b>" + data.artifact_reward.name + "</b> (" + (RARITY_RU[data.artifact_reward.rarity] || data.artifact_reward.rarity) + ")";
+        document.getElementById("event-result-text").innerHTML = text;
+        document.getElementById("btn-event-continue").style.display = "block";
+    } catch (e) { alert("Ошибка сети: " + e.message); }
+}
+
+function eventContinue() {
+    if (currentRun && currentRun.battle && !currentRun.battle.finished) {
+        goTo("battle");
+        initBattleUI();
+    } else {
+        goTo("map");
+        renderMap();
+    }
+}
+
+/* ===== BATTLE ===== */
+let selectedTarget = 0;
+
+function initBattleUI() {
+    document.getElementById("log").innerHTML = "";
+    if (!currentRun || !currentRun.battle) return;
+    selectedTarget = currentRun.battle.target_index || 0;
+    const comboEl = document.getElementById("combo-effects");
+    comboEl.innerHTML = "";
+    if (currentRun.combo_effects && currentRun.combo_effects.length) {
+        for (const c of currentRun.combo_effects) {
+            const tag = document.createElement("span");
+            tag.className = "buff-tag";
+            tag.style.background = "rgba(255,215,0,0.15)";
+            tag.style.color = "var(--gold)";
+            tag.textContent = c.name + " - " + c.description;
+            comboEl.appendChild(tag);
+        }
+    }
+    renderArtifacts();
+    prevPlayerHp = currentRun.battle.player.hp;
+    prevEnemyHp = currentRun.battle.enemy.hp;
+    log("Бой начался", "log-system");
+    updateBattleUI(currentRun.battle);
+}
+
+function renderArtifacts() {
+    const el = document.getElementById("artifacts-row");
+    el.innerHTML = "";
+    if (!currentRun || !currentRun.artifacts || !currentRun.artifacts.length) return;
+    for (const art of currentRun.artifacts) {
+        const tag = document.createElement("span");
+        let cls = "artifact-tag";
+        if (art.rarity === "rare") cls += " art-rare";
+        else if (art.rarity === "legendary") cls += " art-legendary";
+        if (!art.is_active) cls += " art-inactive";
+        tag.className = cls;
+        tag.title = art.description;
+        let text = art.name;
+        if (art.charges > 0) text += '<span class="art-charges">x' + art.charges + '</span>';
+        tag.innerHTML = text;
+        el.appendChild(tag);
+    }
+}
+
+const BUFF_LABELS = {
+    SPICY_BUFF: {icon: "\uD83D\uDD25", name: "Поджог"},
+    COMBO_BURN: {icon: "\uD83D\uDD25", name: "Ожог"},
+    COMBO_REGEN: {icon: "\uD83D\uDC9A", name: "Реген"},
+    COMBO_VULN: {icon: "\uD83E\uDD22", name: "Уязвимость"},
+    COMBO_THORNS: {icon: "\uD83C\uDF35", name: "Шипы"},
+    SWEET_BUFF: {icon: "\u2728", name: "Сладость"},
+    BITTER_BUFF: {icon: "\uD83D\uDEE1\uFE0F", name: "Горечь"},
+    SOUR_BUFF: {icon: "\uD83E\uDD22", name: "Кислота"},
+    RAGE: {icon: "\uD83D\uDCA2", name: "Ярость"},
+    FRENZY: {icon: "\uD83D\uDCA2", name: "Безумие"},
+    STEALTH: {icon: "\uD83D\uDC7B", name: "Невидимость"},
+    POISON: {icon: "\u2620\uFE0F", name: "Яд"},
+    TOXIC: {icon: "\u2620\uFE0F", name: "Токсин"},
+    BLEED: {icon: "\uD83E\uDE78", name: "Кровотечение"},
+    ARMOR_BREAK: {icon: "\uD83D\uDD28", name: "Пробивание брони"},
+    SLOW: {icon: "\uD83D\uDC22", name: "Замедление"},
+    SHARPEN: {icon: "\uD83D\uDDE1\uFE0F", name: "Заточка"},
+    BURN: {icon: "\uD83D\uDD25", name: "Ожог"},
+    POWER: {icon: "\u2B50", name: "Мощь"},
+    VULNERABLE: {icon: "\uD83D\uDCA5", name: "Уязвимость"},
+    FEAR: {icon: "\uD83D\uDE28", name: "Страх"},
+};
+
+function renderBuffs(containerId, buffs) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = "";
+    for (const b of buffs) {
+        const tag = document.createElement("span");
+        const info = BUFF_LABELS[b.tag];
+        tag.className = "buff-icon buff-" + b.tag;
+        if (info) {
+            tag.innerHTML = info.icon + " " + info.name + ' <span class="buff-dur">' + b.duration + '</span>';
+        } else {
+            tag.innerHTML = b.tag + ' <span class="buff-dur">' + b.duration + '</span>';
+        }
+        tag.title = b.tag + " - " + b.duration + " ходов" + (b.multiplier !== 1 ? " (x" + b.multiplier + ")" : "") + (b.flat_bonus ? " (+" + b.flat_bonus + ")" : "");
+        el.appendChild(tag);
+    }
+}
+
+function spawnDamagePopup(targetId, amount, type) {
+    const anchor = document.getElementById(targetId);
+    if (!anchor) return;
+    const popup = document.createElement("div");
+    popup.className = "dmg-popup" + (type ? " dmg-" + type : " dmg-enemy");
+    const prefix = type === "heal" ? "+" : "-";
+    popup.textContent = prefix + amount;
+    popup.style.right = "20px";
+    popup.style.top = "-8px";
+    anchor.appendChild(popup);
+    setTimeout(() => popup.remove(), 950);
+}
+
+function triggerShake() {
+    const screen = document.getElementById("screen-battle");
+    screen.classList.remove("screen-shake");
+    void screen.offsetWidth;
+    screen.classList.add("screen-shake");
+    setTimeout(() => screen.classList.remove("screen-shake"), 500);
+}
+
+let prevPlayerHp = null;
+let prevEnemyHp = null;
+
+function updateBattleUI(state) {
+    if (!state) return;
+    document.getElementById("turn").textContent = state.turn;
+    document.getElementById("phase").textContent = state.phase;
+
+    const p = state.player;
+    const e = state.enemy;
+
+    // Multi-enemy rendering
+    const container = document.getElementById("enemies-container");
+    const singleRow = document.getElementById("enemy-row");
+    if (state.enemies && state.enemies.length > 0) {
+        singleRow.style.display = "none";
+        container.innerHTML = "";
+        const alive = state.enemies.filter(es => es.alive);
+        state.enemies.forEach((es, idx) => {
+            const slot = document.createElement("div");
+            let cls = "enemy-slot";
+            if (!es.alive) cls += " dead";
+            const aliveIdx = alive.indexOf(es);
+            if (es.alive && aliveIdx === (selectedTarget % alive.length)) cls += " targeted";
+            slot.className = cls;
+            if (es.alive) {
+                slot.onclick = () => { selectedTarget = alive.indexOf(es); updateBattleUI(state); };
+            }
+            const f = es.fighter;
+            const hpPct = f.max_hp > 0 ? (f.hp / f.max_hp * 100) : 0;
+            let buffsHtml = "";
+            if (f.buffs && f.buffs.length) {
+                buffsHtml = '<div class="buffs" style="margin-top:4px">';
+                for (const b of f.buffs) {
+                    const info = BUFF_LABELS[b.tag];
+                    buffsHtml += '<span class="buff-icon buff-' + b.tag + '">' + (info ? info.icon + " " + info.name : b.tag) + ' <span class="buff-dur">' + b.duration + '</span></span>';
+                }
+                buffsHtml += '</div>';
+            }
+            let intentHtml = "";
+            if (es.alive && es.intent) {
+                const itype = es.intent.type || "attack";
+                const INTENT_ICONS = {attack: "\uD83D\uDDE1\uFE0F", defend: "\uD83D\uDEE1\uFE0F", buff: "\u2728", debuff: "\u2728"};
+                const icon = INTENT_ICONS[itype] || "\u2753";
+                const valText = itype === "attack" ? " " + es.intent.value : "";
+                intentHtml = '<div class="enemy-intent intent-' + itype + '" title="' + (es.intent.description || "") + '">' + icon + valText + '</div>';
+            }
+            slot.innerHTML =
+                '<div><div class="fighter-name" style="font-size:0.9rem">' + f.name + (es.alive && aliveIdx === (selectedTarget % alive.length) ? ' <span class="target-label">[\u0426\u0415\u041b\u042c]</span>' : '') + '</div>' + intentHtml + buffsHtml + '</div>' +
+                '<div><div class="fighter-stats"><span class="stat-enemy-hp">' + f.hp + '/' + f.max_hp + '</span><span class="stat-block">\u0411\u043b\u043e\u043a: ' + f.block + '</span></div>' +
+                '<div class="bar-bg"><div class="bar-fill enemy-hp" style="width:' + hpPct + '%"></div></div></div>';
+            container.appendChild(slot);
+        });
+    } else {
+        container.innerHTML = "";
+        singleRow.style.display = "flex";
+        if (prevEnemyHp !== null && e.hp < prevEnemyHp) {
+            spawnDamagePopup("enemy-row", prevEnemyHp - e.hp, "enemy");
+        }
+        document.getElementById("enemy-name").textContent = e.name;
+        document.getElementById("enemy-hp-text").textContent = e.hp + "/" + e.max_hp;
+        document.getElementById("enemy-block-text").textContent = "Блок: " + e.block;
+        document.getElementById("enemy-hp-bar").style.width = (e.hp / e.max_hp * 100) + "%";
+        renderBuffs("enemy-buffs", e.buffs);
+        const singleIntent = document.getElementById("enemy-single-intent");
+        const intentSrc = (state.enemies && state.enemies.length > 0 && state.enemies[0].intent) ? state.enemies[0].intent : null;
+        if (intentSrc) {
+            const INTENT_ICONS = {attack: "\uD83D\uDDE1\uFE0F", defend: "\uD83D\uDEE1\uFE0F", buff: "\u2728", debuff: "\u2728"};
+            const itype = intentSrc.type || "attack";
+            const icon = INTENT_ICONS[itype] || "\u2753";
+            const valText = itype === "attack" ? " " + intentSrc.value : "";
+            singleIntent.className = "enemy-intent intent-" + itype;
+            singleIntent.title = intentSrc.description || "";
+            singleIntent.innerHTML = icon + valText;
+        } else {
+            singleIntent.innerHTML = "";
+        }
+    }
+    prevEnemyHp = e.hp;
+
+    if (prevPlayerHp !== null && p.hp < prevPlayerHp) {
+        const dmg = prevPlayerHp - p.hp;
+        spawnDamagePopup("player-row", dmg, "enemy");
+        if (dmg > 10) triggerShake();
+    }
+    if (prevPlayerHp !== null && p.hp > prevPlayerHp) {
+        spawnDamagePopup("player-row", p.hp - prevPlayerHp, "heal");
+    }
+    prevPlayerHp = p.hp;
+
+    document.getElementById("player-hp-text").textContent = p.hp + "/" + p.max_hp;
+    document.getElementById("player-energy-text").textContent = "Энергия: " + p.energy;
+    document.getElementById("player-block-text").textContent = "Блок: " + p.block;
+    document.getElementById("player-hp-bar").style.width = (p.hp / p.max_hp * 100) + "%";
+    renderBuffs("player-buffs", p.buffs);
+
+    const handEl = document.getElementById("hand");
+    handEl.innerHTML = "";
+    state.hand.forEach((card, idx) => {
+        const btn = document.createElement("button");
+        const rarity = card.rarity || "common";
+        const canPlay = card.type !== "curse" && card.cost <= p.energy && !state.finished;
+        btn.className = "card-btn rarity-" + rarity + (canPlay ? " card-playable" : " card-unplayable");
+        if (card.type === "curse") { btn.style.cursor = "not-allowed"; }
+        else { btn.onclick = () => playCard(idx); }
+
+        const dtype = card.damage_type !== "none" ? (DTYPE_RU[card.damage_type] || card.damage_type) : "";
+        const upgradedPower = card.power + (card.is_upgraded ? 3 : 0);
+        const typeLabel = card.type === "attack" ? "АТК " + upgradedPower : card.type === "curse" ? "ПРОКЛЯТИЕ" : "ЗАЩ " + upgradedPower;
+        const tags = card.tags.length ? card.tags.filter(t => !t.startsWith("DRAW_") && !t.startsWith("DISCARD_")).join(", ") : "";
+        const rarityRu = RARITY_RU[rarity] || rarity;
+        const upgradedMark = card.is_upgraded ? "+" : "";
+
+        btn.innerHTML =
+            '<div class="card-cost">' + card.cost + '</div>' +
+            '<div class="card-name">' + card.name + upgradedMark + '</div>' +
+            '<div class="card-info">' + typeLabel + '</div>' +
+            (dtype ? '<div class="card-dtype">' + dtype + '</div>' : '') +
+            (tags ? '<div class="card-info">' + tags + '</div>' : '') +
+            '<div class="card-rarity">' + rarityRu + '</div>';
+        btn.addEventListener("mouseenter", (e) => showCardTooltip(card, e));
+        btn.addEventListener("mouseleave", () => hideCardTooltip());
+        btn.addEventListener("touchstart", (e) => { tooltipTimer = setTimeout(() => showCardTooltip(card, e.touches[0]), 400); }, {passive: true});
+        btn.addEventListener("touchend", () => hideCardTooltip());
+        handEl.appendChild(btn);
+    });
+
+    document.getElementById("draw-count").textContent = (state.draw_pile || []).length;
+    document.getElementById("discard-count").textContent = (state.discard_pile || []).length;
+    document.getElementById("exhaust-count").textContent = (state.exhaust_pile || []).length;
+    document.getElementById("btn-end-turn").disabled = state.finished;
+    document.getElementById("btn-abandon").disabled = state.finished;
+}
+
+function handleBattleResult(data) {
+    currentRun = data.run;
+    const state = data.run.battle;
+    if (!state) return;
+    updateBattleUI(state);
+    if (state.finished) {
+        const overlay = document.getElementById("result-overlay");
+        const text = document.getElementById("result-text");
+        const lootEl = document.getElementById("result-loot");
+        const rewardSection = document.getElementById("reward-section");
+        const closeBtn = document.getElementById("btn-close-result");
+        rewardSection.style.display = "none";
+        closeBtn.style.display = "block";
+        if (state.winner === "player") {
+            text.textContent = "ПОБЕДА";
+            text.style.color = "var(--neon)";
+            lootEl.textContent = "";
+            if (currentRun.reward_phase) {
+                closeBtn.style.display = "none";
+                loadRewards();
+            }
+        } else {
+            text.textContent = "ПОРАЖЕНИЕ";
+            text.style.color = "var(--accent)";
+            lootEl.textContent = "";
+        }
+        overlay.classList.add("active");
+    }
+}
+
+async function loadRewards() {
+    try {
+        const res = await fetch(API + "/run/rewards", { headers: headers() });
+        const data = await res.json();
+        if (!res.ok) { alert(data.detail || "Ошибка"); return; }
+
+        const section = document.getElementById("reward-section");
+        section.style.display = "block";
+        let creditsText = "+" + data.credits + " кредитов, +" + data.experience + " опыта";
+        if (data.artifact_reward) {
+            creditsText += "  |  Артефакт: " + data.artifact_reward.name + " (" + (RARITY_RU[data.artifact_reward.rarity] || data.artifact_reward.rarity) + ")";
+        }
+        document.getElementById("reward-credits").textContent = creditsText;
+        const lootText = data.loot && data.loot.length ? data.loot.map(l => l.name + " x" + l.quantity).join(", ") : "";
+        document.getElementById("reward-loot").textContent = lootText;
+
+        const cardsEl = document.getElementById("reward-cards");
+        cardsEl.innerHTML = "";
+        for (const card of data.card_choices) {
+            const btn = document.createElement("button");
+            const rarity = card.rarity || "common";
+            btn.className = "card-btn rarity-" + rarity;
+            btn.onclick = () => claimReward(card.card_id);
+            const typeLabel = card.type === "attack" ? "АТК " + card.power : "ЗАЩ " + card.power;
+            const tags = card.tags && card.tags.length ? card.tags.filter(t => !t.startsWith("DRAW_") && !t.startsWith("DISCARD_")).join(", ") : "";
+            const rarityRu = RARITY_RU[rarity] || rarity;
+            btn.innerHTML =
+                '<div class="card-cost">' + card.cost + '</div>' +
+                '<div class="card-name">' + card.name + '</div>' +
+                '<div class="card-info">' + typeLabel + '</div>' +
+                (card.is_exhaust ? '<div class="card-info" style="color:var(--accent)">Сжигание</div>' : '') +
+                (tags ? '<div class="card-info">' + tags + '</div>' : '') +
+                '<div class="card-rarity">' + rarityRu + '</div>';
+            btn.addEventListener("mouseenter", (e) => showCardTooltip(card, e));
+            btn.addEventListener("mouseleave", () => hideCardTooltip());
+            cardsEl.appendChild(btn);
+        }
+    } catch (e) { alert("Ошибка сети: " + e.message); }
+}
+
+async function claimReward(cardId) {
+    try {
+        const body = {};
+        if (cardId !== null) body.chosen_card_id = cardId;
+        const res = await fetch(API + "/run/claim_reward", { method: "POST", headers: headers(), body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) { alert(data.detail || "Ошибка"); return; }
+        currentRun = data.run;
+        renderArtifacts();
+        document.getElementById("reward-section").style.display = "none";
+        document.getElementById("btn-close-result").style.display = "block";
+        document.getElementById("result-loot").textContent = data.message;
+    } catch (e) { alert("Ошибка сети: " + e.message); }
+}
+
+async function playCard(handIndex) {
+    try {
+        const res = await fetch(API + "/run/action", {
+            method: "POST", headers: headers(),
+            body: JSON.stringify({ action: "play_card", hand_index: handIndex, target_index: selectedTarget })
+        });
+        if (!res.ok) { const err = await res.json(); log("Ошибка: " + (err.detail || res.statusText), "log-enemy"); return; }
+        const data = await res.json();
+        log(data.message, "log-player");
+        handleBattleResult(data);
+    } catch (e) { log("Ошибка сети: " + e.message, "log-enemy"); }
+}
+
+async function endTurn() {
+    try {
+        const res = await fetch(API + "/run/action", { method: "POST", headers: headers(), body: JSON.stringify({ action: "end_turn" }) });
+        if (!res.ok) { const err = await res.json(); log("Ошибка: " + (err.detail || res.statusText), "log-enemy"); return; }
+        const data = await res.json();
+        log(data.message, "log-enemy");
+        handleBattleResult(data);
+    } catch (e) { log("Ошибка сети: " + e.message, "log-enemy"); }
+}
+
+function closeResult() {
+    document.getElementById("result-overlay").classList.remove("active");
+    if (currentRun && !currentRun.run_finished) {
+        goTo("map");
+        renderMap();
+    } else {
+        currentRun = null;
+        goTo("menu");
+    }
+}
+
+/* ===== REST ===== */
+function initRestUI() {
+    document.getElementById("rest-choices").style.display = "block";
+    document.getElementById("rest-upgrade-ui").style.display = "none";
+    document.getElementById("btn-rest-continue").style.display = "none";
+}
+
+async function restSleep() {
+    try {
+        const res = await fetch(API + "/run/rest/sleep", { method: "POST", headers: headers() });
+        if (!res.ok) { const err = await res.json(); alert(err.detail || "Ошибка"); return; }
+        const data = await res.json();
+        currentRun = data.run;
+        log(data.message, "log-system");
+        document.getElementById("rest-choices").style.display = "none";
+        document.getElementById("btn-rest-continue").style.display = "block";
+    } catch (e) { alert("Ошибка сети: " + e.message); }
+}
+
+function restUpgrade() {
+    document.getElementById("rest-choices").style.display = "none";
+    document.getElementById("rest-upgrade-ui").style.display = "block";
+    renderUpgradeCards();
+}
+
+async function renderUpgradeCards() {
+    const container = document.getElementById("rest-upgrade-cards");
+    container.innerHTML = "";
+
+    try {
+        const res = await fetch(API + "/user/deck", { headers: headers() });
+        if (!res.ok) return;
+        const deckCards = await res.json();
+
+        for (const c of deckCards) {
+            const qty = c.quantity || 1;
+            for (let i = 0; i < qty; i++) {
+                const div = document.createElement("div");
+                div.className = "card-item";
+                const upgradedMark = c.is_upgraded ? "+" : "";
+                div.innerHTML = `<b>${c.name}${upgradedMark}</b> (${c.type}, ${c.power} сила)`;
+                div.onclick = () => doUpgrade(c.card_id);
+                container.appendChild(div);
+            }
+        }
+    } catch (e) { console.error("Ошибка загрузки колоды:", e); }
+}
+
+async function doUpgrade(cardId) {
+    try {
+        const res = await fetch(API + "/run/rest/upgrade?card_id=" + cardId, { method: "POST", headers: headers() });
+        if (!res.ok) { const err = await res.json(); alert(err.detail || "Ошибка"); return; }
+        const data = await res.json();
+        currentRun = data.run;
+        log(data.message, "log-system");
+        document.getElementById("rest-upgrade-ui").style.display = "none";
+        document.getElementById("btn-rest-continue").style.display = "block";
+    } catch (e) { alert("Ошибка сети: " + e.message); }
+}
+
+function restCancelUpgrade() {
+    document.getElementById("rest-upgrade-ui").style.display = "none";
+    document.getElementById("rest-choices").style.display = "block";
+}
+
+function restContinue() {
+    goTo("map");
+    renderMap();
+}
+
+/* ===== INIT ===== */
+if (window.Telegram && window.Telegram.WebApp) {
+    window.Telegram.WebApp.ready();
+    window.Telegram.WebApp.expand();
+}
+loadProfile();
+</script>
+<script src="map.js"></script>
+</body>
+</html>
