@@ -1,4 +1,14 @@
+from enum import Enum
+
 from pydantic import BaseModel, Field
+
+
+class ActionType(str, Enum):
+    """Действия в бою - всегда UPPERCASE."""
+    PLAY_CARD = "PLAY_CARD"
+    END_TURN = "END_TURN"
+    USE_POTION = "USE_POTION"
+    SURRENDER = "SURRENDER"
 
 
 class RunStartRequest(BaseModel):

@@ -161,14 +161,47 @@
 
         .token-name {
             position: absolute;
-            bottom: -30px;
-            font-size: 0.85rem;
+            bottom: -28px;
+            font-size: 0.7rem;
             font-weight: 700;
-            text-align: center;
-            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         .token-name.player { color: var(--neon); }
         .token-name.enemy { color: var(--accent); }
+
+        /* Artifacts row under player token */
+        .artifacts-row {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            max-width: 140px;
+            flex-wrap: wrap;
+        }
+        .artifact-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            background: var(--surface2);
+            border: 1px solid var(--accent2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: help;
+        }
+        .artifact-icon.active {
+            border-color: var(--neon);
+            box-shadow: 0 0 5px rgba(0, 255, 245, 0.3);
+        }
+        .artifact-icon.inactive {
+            opacity: 0.4;
+            filter: grayscale(1);
+        }
 
         /* HP Bar on Token */
         .token-hp-bar {
@@ -421,6 +454,7 @@
                 </div>
                 <div class="token-block" id="player-block" style="display: none;">0</div>
                 <div class="token-name player">ПОВАР</div>
+                <div class="artifacts-row" id="player-artifacts"></div>
             </div>
 
             <!-- Enemy Token -->
@@ -547,6 +581,9 @@
                 intentBubble.style.display = "none";
             }
 
+            // Render artifacts
+            renderArtifacts(state.artifacts || []);
+
             // Render hand
             renderHand(state.hand || [], p.energy);
         }
@@ -558,6 +595,32 @@
                 el.classList.add("shake");
                 setTimeout(() => el.classList.remove("shake"), 200);
             }
+        }
+
+        // Render player artifacts
+        function renderArtifacts(artifacts) {
+            const container = document.getElementById("player-artifacts");
+            container.innerHTML = "";
+
+            const emojiMap = {
+                "Энергетик": "⚡",
+                "Острый соус": "🌶️",
+                "Бронежилет шефа": "🦺",
+                "Магнитная доска": "🧲",
+                "Точильный камень": "🗡️",
+                "Дефибриллятор": "💓",
+                "Шипованный фартук": "🦔",
+                "Свинья-копилка": "🐷",
+                "Разбитая копилка": "🐽"
+            };
+
+            artifacts.forEach(art => {
+                const div = document.createElement("div");
+                div.className = "artifact-icon " + (art.is_active ? "active" : "inactive");
+                div.textContent = emojiMap[art.name] || "🔹";
+                div.title = `${art.name}: ${art.description}`;
+                container.appendChild(div);
+            });
         }
 
         // Render card hand

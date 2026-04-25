@@ -74,8 +74,34 @@
         .inv-item.selected .inv-item-check { border-color: var(--neon); background: var(--accent2); }
 
         /* Map */
-        .map-nodes { display: flex; flex-direction: column; gap: 6px; }
+        .map-nodes {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 70vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent2) var(--surface);
+        }
+        .map-nodes::-webkit-scrollbar { width: 6px; }
+        .map-nodes::-webkit-scrollbar-track { background: var(--surface); }
+        .map-nodes::-webkit-scrollbar-thumb { background: var(--accent2); border-radius: 3px; }
         .map-floor-row { display: flex; gap: 6px; justify-content: center; margin-bottom: 4px; }
+
+        /* Map node buttons (HTML buttons for better TMA touch) */
+        .map-node-btn {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .map-node-btn:active {
+            transform: scale(0.95);
+        }
+        .map-node-btn:disabled {
+            filter: grayscale(0.5);
+        }
         .map-floor-label { font-size: 0.6rem; color: var(--muted); text-align: center; min-width: 30px; display: flex; align-items: center; justify-content: center; }
         .map-node { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--accent2); transition: all 0.2s; min-width: 120px; flex: 1; cursor: default; }
         .map-node.current { border-color: var(--neon); box-shadow: 0 0 10px rgba(0,255,245,0.3); }

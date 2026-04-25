@@ -110,8 +110,22 @@ def update_enemy_intents(state: BattleState) -> None:
             es.intent = EnemyIntent(type="attack", value=6, description="Атака 6")
 
         elif "Нурарихён" in name:
-            # Босс: сильная атака
-            es.intent = EnemyIntent(type="attack", value=15, description="Атака 15")
+            # Босс Нурарихён: проверяем наличие мертвых Гаки и живых
+            has_dead_gaki = any(
+                not e.alive and "Гаки" in e.fighter.name
+                for e in enemies
+            )
+            has_alive_gaki = any(
+                e.alive and "Гаки" in e.fighter.name
+                for e in enemies
+            )
+
+            if has_dead_gaki and r < 0.4:
+                es.intent = EnemyIntent(type="summon", value=0, description="Воскрешение Гаки")
+            elif has_alive_gaki and r < 0.5:
+                es.intent = EnemyIntent(type="buff", value=8, description="Ярость Гаки + Блок")
+            else:
+                es.intent = EnemyIntent(type="attack", value=15, description="Атака 15")
 
         else:
             # Default: атака
@@ -365,6 +379,30 @@ async def _get_enemy_action_from(
     state: BattleState,
     es: EnemyState,
 ) -> EnemyAction:
+    # Специальная логика для босса Нурарихён на основе intent
+    if es.intent and "Нурарихён" in es.fighter.name:
+        intent_type = es.intent.type
+
+        if intent_type == "summon":
+            # Воскрешение всех мертвых Гаки
+            return EnemyAction(
+                action="summon_gaki",
+                damage=0,
+                damage_type="none",
+            )
+
+        elif intent_type == "buff":
+            # Ярость всем Гаки + блок боссу
+            return EnemyAction(
+                action="buff_all_gaki",
+                buff_tag="RAGE",
+                duration=2,
+                multiplier=1.5,
+                self_block=8,
+                damage=0,
+                damage_type="none",
+            )
+
     if not es.ai_pattern:
         return EnemyAction(
             action="attack",

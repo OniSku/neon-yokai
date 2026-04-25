@@ -23,7 +23,14 @@ from app.models.enemy import Enemy
 from app.models.user import User
 from app.models.user_deck_card import UserDeckCard
 from app.schemas.battle import ArtifactInstance, BattleState, CardInstance, EnemyAction, EnemyState, EnemySlot, Fighter, MapNode, PendingRewards, RunState
-from app.schemas.requests import ClaimRewardRequest, EventChoiceRequest, NextNodeRequest, RunActionRequest, RunStartRequest
+from app.schemas.requests import (
+    ActionType,
+    ClaimRewardRequest,
+    EventChoiceRequest,
+    NextNodeRequest,
+    RunActionRequest,
+    RunStartRequest,
+)
 from app.schemas.responses import (
     ClaimRewardResponse,
     EventChoiceResponse,
@@ -293,7 +300,7 @@ async def run_action(
     state = run.battle
     current_node = _find_node(run)
 
-    if body.action == "play_card":
+    if body.action.upper() == ActionType.PLAY_CARD.value:
         if body.hand_index is None:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -319,7 +326,7 @@ async def run_action(
             run=run,
         )
 
-    if body.action == "end_turn":
+    if body.action.upper() == ActionType.END_TURN.value:
         enemy_dmg = await end_turn(state, artifacts=run.artifacts)
         is_dead = False
         if state.finished:
@@ -345,7 +352,7 @@ async def run_action(
             run=run,
         )
 
-    if body.action == "abandon":
+    if body.action.upper() == ActionType.SURRENDER.value:
         run.combo_effects = []
         await delete_run_state(session, user.id)
         await apply_interest(session, user)

@@ -8,7 +8,6 @@ from app.schemas.battle import EnemySlot, MapNode
 
 NUM_FLOORS: int = 10
 NUM_LANES: int = 3
-NUM_PATHS: int = 4
 
 ELITE_HP_MULT: float = 1.5
 ELITE_ENEMY_NAMES: set[str] = {
@@ -79,20 +78,49 @@ def _make_enemy_slots(
     return slots
 
 
-def _carve_paths() -> dict[tuple[int, int], set[tuple[int, int]]]:
-    grid: dict[tuple[int, int], set[tuple[int, int]]] = {}
-    for _ in range(NUM_PATHS):
-        lane = random.randint(0, NUM_LANES - 1)
-        for floor_idx in range(NUM_FLOORS - 1):
-            pos = (floor_idx, lane)
-            delta = random.choice([-1, 0, 0, 1])
-            next_lane = max(0, min(NUM_LANES - 1, lane + delta))
-            next_pos = (floor_idx + 1, next_lane)
-            grid.setdefault(pos, set()).add(next_pos)
-            grid.setdefault(next_pos, set())
-            lane = next_lane
-        grid.setdefault((NUM_FLOORS - 1, lane), set())
-    return grid
+def _build_1_3_1_structure() -> dict[tuple[int, int], list[tuple[int, int]]]:
+    """Структура карты 1-3-1: Hub (1) -> 3 пути -> Boss (1).
+
+    - Этаж 0: 1 HUB (lane=1)
+    - Этажи 1-8: 3 узла (lanes 0,1,2) со связями
+    - Этаж 9: 1 BOSS (lane=1)
+
+    Связи:
+    - С HUB (0,1) -> все 3 узла этажа 1
+    - Этажи 1-7: каждый узел соединяется с соседними и своей lane на следующем этаже
+    - Этаж 8: все 3 узла ведут к BOSS (9,1)
+    """
+    connections: dict[tuple[int, int], list[tuple[int, int]]] = {}
+
+    # Этаж 0: HUB
+    connections[(0, 1)] = [(1, 0), (1, 1), (1, 2)]
+
+    # Этажи 1-7: переплетения
+    for floor in range(1, 8):
+        for lane in range(3):
+            next_floor = floor + 1
+            next_nodes: list[tuple[int, int]] = []
+
+            # Связь с той же lane
+            next_nodes.append((next_floor, lane))
+
+            # Связь с соседней lane (если есть)
+            if lane > 0:
+                next_nodes.append((next_floor, lane - 1))
+            if lane < 2:
+                next_nodes.append((next_floor, lane + 1))
+
+            connections[(floor, lane)] = list(set(next_nodes))
+
+    # Этаж 8: все ведут к BOSS
+    connections[(8, 0)] = [(9, 1)]
+    connections[(8, 1)] = [(9, 1)]
+    connections[(8, 2)] = [(9, 1)]
+
+    # Этаж 9: BOSS (нет исходящих)
+    connections[(9, 1)] = []
+
+    return connections
 
 
 def _assign_node_type(
@@ -138,28 +166,37 @@ async def generate_map(
     result = await session.execute(select(Enemy))
     all_enemies = list(result.scalars().all())
 
-    grid = _carve_paths()
+    connections = _build_1_3_1_structure()
 
-    pos_to_idx: dict[tuple[int, int], int] = {}
+    # Фиксированная структура позиций
+    positions: list[tuple[int, int]] = [
+        (0, 1),  # HUB
+        (1, 0), (1, 1), (1, 2),
+        (2, 0), (2, 1), (2, 2),
+        (3, 0), (3, 1), (3, 2),
+        (4, 0), (4, 1), (4, 2),
+        (5, 0), (5, 1), (5, 2),
+        (6, 0), (6, 1), (6, 2),
+        (7, 0), (7, 1), (7, 2),
+        (8, 0), (8, 1), (8, 2),
+        (9, 1),  # BOSS
+    ]
+
+    pos_to_idx: dict[tuple[int, int], int] = {pos: i for i, pos in enumerate(positions)}
     nodes: list[MapNode] = []
-
-    sorted_positions = sorted(grid.keys())
-    for i, pos in enumerate(sorted_positions):
-        pos_to_idx[pos] = i
 
     prev_types: dict[int, str] = {}
 
-    for pos in sorted_positions:
+    for pos in positions:
         idx = pos_to_idx[pos]
         floor_idx, lane = pos
 
         nt = _assign_node_type(floor_idx, prev_types.get(lane))
         prev_types[lane] = nt
 
-        next_indices = sorted(pos_to_idx[np] for np in grid[pos] if np in pos_to_idx)
-
-        if floor_idx == 9:
-            next_indices = []
+        # Получаем next_indices из структуры 1-3-1
+        next_positions = connections.get(pos, [])
+        next_indices = sorted(pos_to_idx[np] for np in next_positions if np in pos_to_idx)
 
         enemy: Enemy | None = None
         enemy_slots: list[EnemySlot] = []
@@ -173,16 +210,17 @@ async def generate_map(
                 hp=ehp,
                 max_hp=ehp,
             )
+            # Два мертвых Гаки для механики некромантии
             gaki_slot_1 = EnemySlot(
                 enemy_id=None,
                 name="Голодный Гаки",
-                hp=25,
+                hp=0,  # Мертв
                 max_hp=25,
             )
             gaki_slot_2 = EnemySlot(
                 enemy_id=None,
                 name="Голодный Гаки",
-                hp=0,
+                hp=0,  # Мертв
                 max_hp=25,
             )
             enemy_slots = [boss_slot, gaki_slot_1, gaki_slot_2]
@@ -226,13 +264,6 @@ async def generate_map(
             next_nodes=next_indices,
         )
         nodes.append(node)
-
-    if nodes:
-        boss_indices = [n.index for n in nodes if n.node_type == "boss"]
-        if boss_indices:
-            for n in nodes:
-                if n.floor == 8:
-                    n.next_nodes = boss_indices
 
     if debt_level >= 4 and nodes:
         first = nodes[0]

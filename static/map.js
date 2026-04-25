@@ -18,6 +18,7 @@ function renderDAGMap(run, containerId, onNodeClick) {
     const nodes = run.map_nodes;
     const currentId = run.current_node_index;
 
+    // Группируем узлы по этажам
     const nodesByFloor = {};
     nodes.forEach(n => {
         const f = n.floor || 0;
@@ -25,114 +26,110 @@ function renderDAGMap(run, containerId, onNodeClick) {
         nodesByFloor[f].push(n);
     });
 
-    const svgNS = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(svgNS, "svg");
-    svg.setAttribute("width", "100%");
-    svg.setAttribute("height", "600");
-    svg.style.display = "block";
-    container.appendChild(svg);
-
-    const floorHeight = 55;
-    const startY = 30;
-    const centerX = 300;
-
-    const nodePositions = {};
-
-    Object.keys(nodesByFloor).sort((a, b) => parseInt(a) - parseInt(b)).forEach(floorKey => {
-        const floorNodes = nodesByFloor[floorKey];
-        const f = parseInt(floorKey);
-        const y = startY + f * floorHeight;
-
-        const count = floorNodes.length;
-        const spacing = count > 1 ? 140 : 0;
-        const startX = centerX - (spacing * (count - 1)) / 2;
-
-        floorNodes.forEach((node, i) => {
-            const x = startX + i * spacing;
-            nodePositions[node.index] = { x, y, node };
-        });
-    });
-
-    nodes.forEach(n => {
-        if (n.next_nodes) {
-            n.next_nodes.forEach(nextId => {
-                const target = nodePositions[nextId];
-                const source = nodePositions[n.index];
-                if (target && source) {
-                    const line = document.createElementNS(svgNS, "line");
-                    line.setAttribute("x1", source.x);
-                    line.setAttribute("y1", source.y + 18);
-                    line.setAttribute("x2", target.x);
-                    line.setAttribute("y2", target.y - 18);
-                    line.setAttribute("stroke", "#333");
-                    line.setAttribute("stroke-width", "2");
-                    svg.appendChild(line);
-                }
-            });
-        }
-    });
-
+    // Определяем достижимые узлы
     const currentNode = nodes.find(n => n.index === currentId);
     const reachableIndices = new Set();
     if (currentNode && currentNode.next_nodes) {
         currentNode.next_nodes.forEach(id => reachableIndices.add(id));
     }
 
-    nodes.forEach(n => {
-        const pos = nodePositions[n.index];
-        if (!pos) return;
+    // Создаем контейнер для этажей
+    const floorsContainer = document.createElement("div");
+    floorsContainer.className = "floors-container";
+    floorsContainer.style.display = "flex";
+    floorsContainer.style.flexDirection = "column";
+    floorsContainer.style.gap = "12px";
+    floorsContainer.style.padding = "10px";
+    container.appendChild(floorsContainer);
 
-        const style = NODE_COLORS[n.node_type] || NODE_COLORS.combat;
-        const isCurrent = n.index === currentId;
-        const isCompleted = n.completed;
-        const isReachable = reachableIndices.has(n.index);
+    // Рендерим каждый этаж
+    const sortedFloors = Object.keys(nodesByFloor).sort((a, b) => parseInt(a) - parseInt(b));
 
-        const g = document.createElementNS(svgNS, "g");
-        g.style.cursor = isReachable ? "pointer" : "default";
+    sortedFloors.forEach(floorKey => {
+        const floorNodes = nodesByFloor[floorKey];
+        const f = parseInt(floorKey);
 
-        const circle = document.createElementNS(svgNS, "circle");
-        circle.setAttribute("cx", pos.x);
-        circle.setAttribute("cy", pos.y);
-        circle.setAttribute("r", "18");
-        circle.setAttribute("fill", style.bg);
-        circle.setAttribute("stroke", isCurrent ? "#fff" : (isReachable ? "#ffd700" : "#333"));
-        circle.setAttribute("stroke-width", isCurrent ? "3" : (isReachable ? "2" : "1"));
+        // Строка этажа
+        const floorRow = document.createElement("div");
+        floorRow.className = "floor-row";
+        floorRow.style.display = "flex";
+        floorRow.style.justifyContent = "center";
+        floorRow.style.alignItems = "center";
+        floorRow.style.gap = "16px";
+        floorRow.style.minHeight = "60px";
 
-        if (isReachable) {
-            circle.setAttribute("filter", "drop-shadow(0 0 6px rgba(255,215,0,0.6))");
-        }
+        // Сортируем узлы по lane для консистентности
+        floorNodes.sort((a, b) => (a.lane || 0) - (b.lane || 0));
 
-        if (isCompleted) {
-            circle.setAttribute("opacity", "0.5");
-        }
+        floorNodes.forEach(n => {
+            const style = NODE_COLORS[n.node_type] || NODE_COLORS.combat;
+            const isCurrent = n.index === currentId;
+            const isCompleted = n.completed;
+            const isReachable = reachableIndices.has(n.index);
 
-        g.appendChild(circle);
+            // HTML кнопка вместо SVG
+            const btn = document.createElement("button");
+            btn.className = "map-node-btn";
+            btn.style.width = "80px";
+            btn.style.height = "80px";
+            btn.style.borderRadius = "50%";
+            btn.style.border = isCurrent ? "3px solid #fff" : (isReachable ? "2px solid #ffd700" : "2px solid #333");
+            btn.style.backgroundColor = style.bg;
+            btn.style.color = style.color;
+            btn.style.fontSize = "11px";
+            btn.style.fontWeight = "bold";
+            btn.style.cursor = isReachable ? "pointer" : "default";
+            btn.style.display = "flex";
+            btn.style.flexDirection = "column";
+            btn.style.alignItems = "center";
+            btn.style.justifyContent = "center";
+            btn.style.position = "relative";
+            btn.style.boxShadow = isReachable ? "0 0 10px rgba(255,215,0,0.6)" : "none";
+            btn.style.opacity = isCompleted ? "0.5" : "1";
+            btn.style.transition = "transform 0.2s, box-shadow 0.2s";
+            btn.style.touchAction = "manipulation"; // Важно для TMA
+            btn.style.webkitTapHighlightColor = "transparent";
 
-        const text = document.createElementNS(svgNS, "text");
-        text.setAttribute("x", pos.x);
-        text.setAttribute("y", pos.y + 4);
-        text.setAttribute("text-anchor", "middle");
-        text.setAttribute("fill", style.color);
-        text.setAttribute("font-size", "9");
-        text.setAttribute("font-weight", "bold");
-        text.textContent = style.label;
-        g.appendChild(text);
+            // Номер этажа сверху
+            const floorLabel = document.createElement("span");
+            floorLabel.textContent = "Э" + (n.floor + 1);
+            floorLabel.style.fontSize = "9px";
+            floorLabel.style.position = "absolute";
+            floorLabel.style.top = "4px";
+            floorLabel.style.color = "#666";
+            btn.appendChild(floorLabel);
 
-        const floorText = document.createElementNS(svgNS, "text");
-        floorText.setAttribute("x", pos.x);
-        floorText.setAttribute("y", pos.y - 26);
-        floorText.setAttribute("text-anchor", "middle");
-        floorText.setAttribute("fill", "#666");
-        floorText.setAttribute("font-size", "10");
-        floorText.textContent = "Э" + (n.floor + 1);
-        g.appendChild(floorText);
+            // Основной лейбл
+            const label = document.createElement("span");
+            label.textContent = style.label;
+            btn.appendChild(label);
 
-        if (isReachable) {
-            g.addEventListener("click", () => {
-                if (onNodeClick) onNodeClick(n.index);
-            });
-        }
+            // Индикатор текущего узла
+            if (isCurrent) {
+                const indicator = document.createElement("span");
+                indicator.textContent = "●";
+                indicator.style.fontSize = "8px";
+                indicator.style.position = "absolute";
+                indicator.style.bottom = "4px";
+                indicator.style.color = "#00fff5";
+                btn.appendChild(indicator);
+            }
 
-        svg.appendChild(g);
+            // Обработчик клика только для достижимых
+            if (isReachable) {
+                btn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (onNodeClick) onNodeClick(n.index);
+                });
+            } else {
+                btn.disabled = true;
+                btn.style.pointerEvents = "none";
+            }
+
+            floorRow.appendChild(btn);
+        });
+
+        floorsContainer.appendChild(floorRow);
     });
 }
