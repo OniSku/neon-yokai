@@ -73,34 +73,87 @@
         .inv-item-check { width: 18px; height: 18px; border: 2px solid var(--accent2); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: var(--neon); }
         .inv-item.selected .inv-item-check { border-color: var(--neon); background: var(--accent2); }
 
-        /* Map */
+        /* Map - Slay the Spire style (column-reverse, bottom to top growth) */
         .map-nodes {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            max-height: 70vh;
-            overflow-y: auto;
+            height: 70vh;
+            overflow-y: scroll;
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
             scrollbar-color: var(--accent2) var(--surface);
+            position: relative;
         }
         .map-nodes::-webkit-scrollbar { width: 6px; }
         .map-nodes::-webkit-scrollbar-track { background: var(--surface); }
         .map-nodes::-webkit-scrollbar-thumb { background: var(--accent2); border-radius: 3px; }
-        .map-floor-row { display: flex; gap: 6px; justify-content: center; margin-bottom: 4px; }
 
-        /* Map node buttons (HTML buttons for better TMA touch) */
+        /* STS wrapper - карта растет снизу вверх */
+        .map-sts-wrapper {
+            display: flex;
+            flex-direction: column-reverse !important; /* HUB снизу, BOSS сверху */
+            gap: 60px;
+            padding: 20px 10px;
+            min-height: 100%;
+            position: relative;
+        }
+
+        /* SVG слой для линий */
+        .map-svg-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Строка этажа */
+        .floor-row {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Map node buttons (STS style) */
         .map-node-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 2px solid #444;
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: default;
+            transition: transform 0.15s;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
             -webkit-user-select: none;
+            touch-action: manipulation;
+            z-index: 3;
         }
         .map-node-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.92);
         }
-        .map-node-btn:disabled {
-            filter: grayscale(0.5);
+        .map-node-btn.current {
+            border-color: #fff;
+            box-shadow: 0 0 8px rgba(0, 255, 245, 0.5);
+        }
+        .map-node-btn.reachable {
+            border-color: #ffd700;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.7);
+            animation: pulse-reachable 2s infinite;
+        }
+        @keyframes pulse-reachable {
+            0%, 100% { box-shadow: 0 0 12px rgba(255, 215, 0, 0.7); }
+            50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.9); }
         }
         .map-floor-label { font-size: 0.6rem; color: var(--muted); text-align: center; min-width: 30px; display: flex; align-items: center; justify-content: center; }
         .map-node { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--accent2); transition: all 0.2s; min-width: 120px; flex: 1; cursor: default; }
@@ -807,7 +860,7 @@ function renderMap() {
     if (!currentRun) return;
 
     renderDAGMap(currentRun, "map-nodes", async (nodeIndex) => {
-        await enterNode(nodeIndex);
+        await goToNode(nodeIndex);
     });
 
     const currentNode = _findNode(currentRun.current_node_index);

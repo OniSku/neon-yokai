@@ -78,46 +78,58 @@ def _make_enemy_slots(
     return slots
 
 
-def _build_1_3_1_structure() -> dict[tuple[int, int], list[tuple[int, int]]]:
-    """Структура карты 1-3-1: Hub (1) -> 3 пути -> Boss (1).
+def _build_sts_structure() -> dict[tuple[int, int], list[tuple[int, int]]]:
+    """Структура карты Slay the Spire style.
 
-    - Этаж 0: 1 HUB (lane=1)
-    - Этажи 1-8: 3 узла (lanes 0,1,2) со связями
-    - Этаж 9: 1 BOSS (lane=1)
-
-    Связи:
-    - С HUB (0,1) -> все 3 узла этажа 1
-    - Этажи 1-7: каждый узел соединяется с соседними и своей lane на следующем этаже
-    - Этаж 8: все 3 узла ведут к BOSS (9,1)
+    - Этаж 0: 1 узел (HUB, lane=1)
+    - Этаж 1: 3 узла (lanes 0,1,2). Узел 0 связан со всеми тремя.
+    - Этажи 2-8: 3 узла. Каждый узел (f,l) связан с (f+1,l) [прямо],
+      и с 50% шансом с (f+1,l-1) или (f+1,l+1) [диагональ].
+    - Этаж 9: 1 узел (BOSS, lane=1). Все 3 узла этажа 8 связаны с ним.
     """
     connections: dict[tuple[int, int], list[tuple[int, int]]] = {}
 
-    # Этаж 0: HUB
+    # Этаж 0: HUB -> все 3 узла этажа 1
     connections[(0, 1)] = [(1, 0), (1, 1), (1, 2)]
 
-    # Этажи 1-7: переплетения
-    for floor in range(1, 8):
+    # Этажи 1-8: связи согласно правилам
+    for floor in range(1, 9):
         for lane in range(3):
             next_floor = floor + 1
             next_nodes: list[tuple[int, int]] = []
 
-            # Связь с той же lane
+            # Гарантированная прямая связь
             next_nodes.append((next_floor, lane))
 
-            # Связь с соседней lane (если есть)
-            if lane > 0:
-                next_nodes.append((next_floor, lane - 1))
-            if lane < 2:
-                next_nodes.append((next_floor, lane + 1))
+            # Случайная диагональ с 50% шансом
+            if random.random() < 0.5:
+                # Выбираем направление диагонали
+                if lane == 0:
+                    # Только вправо
+                    next_nodes.append((next_floor, 1))
+                elif lane == 2:
+                    # Только влево
+                    next_nodes.append((next_floor, 1))
+                else:  # lane == 1
+                    # Лево или право с равным шансом
+                    if random.random() < 0.5:
+                        next_nodes.append((next_floor, 0))
+                    else:
+                        next_nodes.append((next_floor, 2))
 
             connections[(floor, lane)] = list(set(next_nodes))
 
-    # Этаж 8: все ведут к BOSS
-    connections[(8, 0)] = [(9, 1)]
-    connections[(8, 1)] = [(9, 1)]
-    connections[(8, 2)] = [(9, 1)]
+    # Этаж 9: BOSS - гарантируем связь от всех узлов этажа 8
+    # Сначала добавляем обратные связи к боссу
+    for lane in range(3):
+        if (8, lane) in connections:
+            # Добавляем босса в next_nodes каждого узла этажа 8
+            if (9, 1) not in connections[(8, lane)]:
+                connections[(8, lane)].append((9, 1))
+        else:
+            connections[(8, lane)] = [(9, 1)]
 
-    # Этаж 9: BOSS (нет исходящих)
+    # Босс не имеет исходящих связей
     connections[(9, 1)] = []
 
     return connections
@@ -166,7 +178,7 @@ async def generate_map(
     result = await session.execute(select(Enemy))
     all_enemies = list(result.scalars().all())
 
-    connections = _build_1_3_1_structure()
+    connections = _build_sts_structure()
 
     # Фиксированная структура позиций
     positions: list[tuple[int, int]] = [
