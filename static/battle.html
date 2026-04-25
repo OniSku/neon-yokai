@@ -500,6 +500,19 @@
             // Will be populated from API
         }
 
+        // Check if run is finished (player died)
+        function checkRunFinished(data) {
+            if (!data.run) return false;
+
+            // Если забег завершен или игрок побежден
+            if (data.run.run_finished || data.run.battle?.winner === "enemy") {
+                alert("Вы погибли! Возврат в меню...");
+                window.location.href = "/";
+                return true;
+            }
+            return false;
+        }
+
         // Render battle state
         function renderBattle(state) {
             battleState = state;
@@ -666,6 +679,11 @@
                 });
                 const data = await res.json();
 
+                // Проверяем смерть или завершение забега
+                if (checkRunFinished(data)) {
+                    return;
+                }
+
                 if (data.is_dead) {
                     alert("Вы погибли! Кредиты обнулены. Возвращение к тележке.");
                     window.location.href = "/";
@@ -711,6 +729,12 @@
                     body: JSON.stringify({ action: "play_card", hand_index: handIndex })
                 });
                 const data = await res.json();
+
+                // Проверяем смерть или завершение забега
+                if (checkRunFinished(data)) {
+                    return;
+                }
+
                 if (data.run && data.run.battle) {
                     battleState = data.run.battle;
                     renderBattle(battleState);
@@ -725,6 +749,12 @@
             try {
                 const res = await fetch("/api/run/state");
                 const data = await res.json();
+
+                // Проверяем смерть или завершение забега
+                if (checkRunFinished(data)) {
+                    return;
+                }
+
                 if (data.run && data.run.battle) {
                     battleState = data.run.battle;
                     renderBattle(battleState);

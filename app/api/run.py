@@ -8,7 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.core.dependencies import get_current_user
 from app.logic.artifacts import on_combat_start, on_rest
-from app.logic.meta import get_inventory_limit, get_max_hp_bonus, parse_meta, save_meta
+from app.logic.meta import (
+    get_inventory_limit,
+    get_max_hp_bonus,
+    get_max_hp_bonus_async,
+    parse_meta,
+    save_meta,
+)
 from app.logic.combat import end_turn, execute_card, start_turn
 from app.logic.events import pick_random_event, resolve_event_choice
 from app.logic.debt import generate_debt_cards
@@ -258,7 +264,7 @@ async def run_start(
 
     map_nodes = await generate_map(session, debt_level=user.debt_level)
     starter_arts = await _load_starter_artifacts(session)
-    hp_bonus = get_max_hp_bonus(user)
+    hp_bonus = await get_max_hp_bonus_async(session, user)
     base_max_hp = 80 + hp_bonus
 
     first_node = map_nodes[0] if map_nodes else None
@@ -441,7 +447,7 @@ async def next_node(
     node = target_node
 
     if node.node_type in ("combat", "boss", "ambush", "elite"):
-        hp_bonus = get_max_hp_bonus(user)
+        hp_bonus = await get_max_hp_bonus_async(session, user)
         await _start_node_battle(session, run, user.debt_level, max_hp=80 + hp_bonus)
         tag = "☠ ЭЛИТА: " if node.node_type == "elite" else ""
         enemy_count = len(node.enemies) if node.enemies else 1
@@ -556,7 +562,7 @@ async def event_choice_endpoint(
             detail="No active event",
         )
 
-    max_hp = 80 + get_max_hp_bonus(user)
+    max_hp = 80 + await get_max_hp_bonus_async(session, user)
 
     msg, hp_delta, credits_delta, card_reward, artifact_reward = await resolve_event_choice(
         session, run, body.choice_id, user.credits, max_hp=max_hp,
@@ -707,7 +713,7 @@ async def rest_sleep(
     if not run.rest_choice_pending:
         raise HTTPException(status_code=400, detail="No rest choice pending")
 
-    max_hp = 80 + get_max_hp_bonus(user)
+    max_hp = 80 + await get_max_hp_bonus_async(session, user)
     heal_amount = int(max_hp * 0.3)
     run.current_hp = min(run.current_hp + heal_amount, max_hp)
 

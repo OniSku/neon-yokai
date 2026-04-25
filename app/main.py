@@ -5,8 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import select, text
+from sqlalchemy import delete, select, text
 
+from app.api.cart import router as cart_router
 from app.api.craft import router as craft_router
 from app.api.run import router as run_router
 from app.api.shop import router as shop_router
@@ -67,6 +68,10 @@ async def _auto_seed() -> None:
                 for key, value in card_data.items():
                     setattr(existing, key, value)
         updated.append("cards")
+
+        # Enemies - полная очистка перед сидированием (удаляем призрачных врагов)
+        await session.execute(delete(Enemy))
+        await session.flush()
 
         # Enemies - insert or update
         for enemy_data in ENEMIES:
@@ -161,6 +166,7 @@ app.include_router(user_router)
 app.include_router(run_router)
 app.include_router(craft_router)
 app.include_router(shop_router)
+app.include_router(cart_router)
 
 _static_dir = Path(__file__).resolve().parent.parent / "static"
 app.mount("/static", StaticFiles(directory=str(_static_dir), html=True), name="static")

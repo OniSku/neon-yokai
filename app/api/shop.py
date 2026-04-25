@@ -8,7 +8,7 @@ from app.core.database import get_session
 from app.core.dependencies import get_current_user
 from app.logic.debt import can_buy, get_debt_level_info
 from app.logic.loot import get_total_ingredient_count
-from app.logic.meta import get_inventory_limit, get_shop_discount
+from app.logic.meta import get_inventory_limit, get_shop_discount_async
 from app.logic.economy import pay_debt as do_pay_debt, take_ingredient_kit
 from app.models.inventory_item import InventoryItem
 from app.models.shop_item import ShopItem
@@ -66,7 +66,7 @@ async def buy_item(
             detail="Item not found",
         )
 
-    discount = get_shop_discount(user)
+    discount = await get_shop_discount_async(session, user)
     final_price = max(1, int(item.price * (1.0 - discount)))
 
     if user.credits < final_price:

@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import json
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.cart_upgrade import CartUpgrade
 from app.models.user import User
 
 
@@ -99,3 +103,30 @@ def get_inventory_limit(user: User) -> int:
 def get_shop_discount(user: User) -> float:
     meta = parse_meta(user)
     return meta["ads"] * UPGRADE_BRANCHES["ads"]["bonus_per_level"]
+
+
+# Новые асинхронные функции для работы с cart_upgrades
+async def _get_or_create_cart_upgrade(
+    session: AsyncSession, user_id: int
+) -> CartUpgrade:
+    result = await session.execute(
+        select(CartUpgrade).where(CartUpgrade.user_id == user_id)
+    )
+    cart = result.scalar_one_or_none()
+    if cart is None:
+        cart = CartUpgrade(user_id=user_id)
+        session.add(cart)
+        await session.flush()
+    return cart
+
+
+async def get_max_hp_bonus_async(session: AsyncSession, user: User) -> int:
+    """Получить бонус HP от улучшений тележки (асинхронная версия)."""
+    cart = await _get_or_create_cart_upgrade(session, user.id)
+    return cart.get_max_hp_bonus()
+
+
+async def get_shop_discount_async(session: AsyncSession, user: User) -> float:
+    """Получить скидку магазина от улучшений тележки (асинхронная версия)."""
+    cart = await _get_or_create_cart_upgrade(session, user.id)
+    return cart.get_shop_discount_percent() / 100.0

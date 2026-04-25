@@ -322,7 +322,7 @@ def _peek_enemy_action_from(
     if not es.ai_pattern:
         return EnemyAction(
             action="attack",
-            damage=8 + state.turn,
+            damage=5,
             damage_type="slashing",
         )
     action = es.ai_pattern[es.ai_index % len(es.ai_pattern)]
@@ -330,7 +330,7 @@ def _peek_enemy_action_from(
         branch = action.if_true if _evaluate_condition(state, action.condition, es.fighter, es) else action.if_false
         if branch:
             return EnemyAction(**branch)
-        return EnemyAction(action="attack", damage=8, damage_type="slashing")
+        return EnemyAction(action="attack", damage=5, damage_type="slashing")
     if action.action == "flee" and action.condition:
         if _evaluate_condition(state, action.condition, es.fighter, es):
             return EnemyAction(action="flee")
@@ -346,7 +346,7 @@ def _peek_enemy_action_from(
 
 def _build_intent(action: EnemyAction, turn: int) -> EnemyIntent:
     if action.action == "attack":
-        dmg = max(action.damage + turn, 0)
+        dmg = max(action.damage, 0)
         desc = f"Собирается нанести {dmg} урона"
         if getattr(action, "steal", 0) > 0:
             desc += f" (крадет {action.steal} кредитов)"
@@ -397,7 +397,7 @@ async def _get_enemy_action_from(
                 action="buff_all_gaki",
                 buff_tag="RAGE",
                 duration=2,
-                multiplier=1.5,
+                multiplier=1.25,
                 self_block=8,
                 damage=0,
                 damage_type="none",
@@ -406,7 +406,7 @@ async def _get_enemy_action_from(
     if not es.ai_pattern:
         return EnemyAction(
             action="attack",
-            damage=8 + state.turn,
+            damage=5,
             damage_type="slashing",
         )
 
@@ -417,7 +417,7 @@ async def _get_enemy_action_from(
         branch = action.if_true if _evaluate_condition(state, action.condition, es.fighter) else action.if_false
         if branch:
             return EnemyAction(**branch)
-        return EnemyAction(action="attack", damage=8, damage_type="slashing")
+        return EnemyAction(action="attack", damage=5, damage_type="slashing")
 
     return action
 
@@ -426,7 +426,7 @@ async def _get_enemy_action(state: BattleState) -> EnemyAction:
     if not state.ai_pattern:
         return EnemyAction(
             action="attack",
-            damage=8 + state.turn,
+            damage=5,
             damage_type="slashing",
         )
 
@@ -437,7 +437,7 @@ async def _get_enemy_action(state: BattleState) -> EnemyAction:
         branch = action.if_true if _evaluate_condition(state, action.condition) else action.if_false
         if branch:
             return EnemyAction(**branch)
-        return EnemyAction(action="attack", damage=8, damage_type="slashing")
+        return EnemyAction(action="attack", damage=5, damage_type="slashing")
 
     return action
 
@@ -452,7 +452,7 @@ async def _do_enemy_action(
     dealt = 0
 
     if action.action == "attack":
-        damage = max(action.damage + state.turn, 0)
+        damage = max(action.damage, 0)
         dtype = action.damage_type
 
         parry = await resolve_parry(state, damage, dtype)

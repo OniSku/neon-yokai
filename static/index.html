@@ -510,6 +510,20 @@ const API = window.location.origin;
 let currentRun = null;
 let selectedIngredients = [];
 
+// Проверка состояния забега (FSM)
+function checkRunFinished(data) {
+    if (!data || !data.run) return false;
+
+    // Если забег завершен или игрок побежден
+    if (data.run.run_finished || data.run.battle?.winner === "enemy") {
+        alert("Забег завершен! Возврат в меню...");
+        currentRun = null;
+        goTo("menu");
+        return true;
+    }
+    return false;
+}
+
 function getInitData() {
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
         return window.Telegram.WebApp.initData;
@@ -894,6 +908,12 @@ async function goToNode(nodeIndex) {
         });
         const data = await res.json();
         if (!res.ok) { alert(data.detail || "Ошибка"); return; }
+
+        // Проверяем завершение забега
+        if (checkRunFinished(data)) {
+            return;
+        }
+
         currentRun = data.run;
         renderMap();
         if (data.node.node_type === "event" && currentRun.active_event) {
@@ -1311,6 +1331,12 @@ async function playCard(handIndex) {
         });
         if (!res.ok) { const err = await res.json(); log("Ошибка: " + (err.detail || res.statusText), "log-enemy"); return; }
         const data = await res.json();
+
+        // Проверяем завершение забега
+        if (checkRunFinished(data)) {
+            return;
+        }
+
         log(data.message, "log-player");
         handleBattleResult(data);
     } catch (e) { log("Ошибка сети: " + e.message, "log-enemy"); }
@@ -1321,6 +1347,12 @@ async function endTurn() {
         const res = await fetch(API + "/run/action", { method: "POST", headers: headers(), body: JSON.stringify({ action: "end_turn" }) });
         if (!res.ok) { const err = await res.json(); log("Ошибка: " + (err.detail || res.statusText), "log-enemy"); return; }
         const data = await res.json();
+
+        // Проверяем завершение забега
+        if (checkRunFinished(data)) {
+            return;
+        }
+
         log(data.message, "log-enemy");
         handleBattleResult(data);
     } catch (e) { log("Ошибка сети: " + e.message, "log-enemy"); }

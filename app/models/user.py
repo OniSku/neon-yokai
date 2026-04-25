@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import BigInteger, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.cart_upgrade import CartUpgrade
 
 
 class User(Base):
@@ -15,3 +20,6 @@ class User(Base):
     debt: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     debt_level: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     meta_progress: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Связи
+    cart_upgrade: Mapped["CartUpgrade"] = relationship(back_populates="user")
