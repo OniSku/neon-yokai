@@ -616,28 +616,36 @@ const BRANCH_ICONS = { kitchen: "\uD83C\uDF73", fridge: "\u2744\uFE0F", ads: "\u
 
 async function loadUpgrades() {
     try {
-        const res = await fetch(API + "/user/profile", { headers: headers() });
+        const res = await fetch(API + "/hub/cart/status", { headers: headers() });
         if (!res.ok) return;
-        const p = await res.json();
-        document.getElementById("upgrades-xp").textContent = p.experience;
+        const data = await res.json();
+        document.getElementById("upgrades-xp").textContent = data.user_experience;
         const el = document.getElementById("upgrade-branches");
         el.innerHTML = "";
-        if (!p.meta) return;
+
+        const BRANCH_NAMES = {
+            kitchen: { name: "Кухня", desc: "+5 к макс. HP за уровень" },
+            fridge: { name: "Холодильник", desc: "+1 слот ингредиента за уровень" },
+            ads: { name: "Реклама", desc: "-5% цены в магазине за уровень" }
+        };
+        const MAX_LEVEL = 5;
+
         for (const key of ["kitchen", "fridge", "ads"]) {
-            const b = p.meta[key];
-            const maxed = b.level >= b.max_level;
+            const level = data[key + "_level"];
+            const canUpgrade = data["can_upgrade_" + key];
+            const maxed = level >= MAX_LEVEL;
             const div = document.createElement("div");
             div.className = "upgrade-branch" + (maxed ? " branch-maxed" : "");
             let pips = "";
-            for (let i = 0; i < b.max_level; i++) {
-                pips += '<div class="upgrade-pip' + (i < b.level ? " filled" : "") + '"></div>';
+            for (let i = 0; i < MAX_LEVEL; i++) {
+                pips += '<div class="upgrade-pip' + (i < level ? " filled" : "") + '"></div>';
             }
-            const costText = maxed ? "MAX" : b.next_cost + " XP";
-            const canAfford = !maxed && p.experience >= b.next_cost;
+            const costText = maxed ? "MAX" : data.upgrade_cost + " XP";
+            const canAfford = !maxed && canUpgrade;
             div.innerHTML =
-                '<div class="upgrade-name">' + (BRANCH_ICONS[key] || "") + " " + b.name + '</div>' +
-                '<div class="upgrade-desc">' + b.description + '</div>' +
-                '<div class="upgrade-level">Ур. ' + b.level + ' / ' + b.max_level + '</div>' +
+                '<div class="upgrade-name">' + (BRANCH_ICONS[key] || "") + " " + BRANCH_NAMES[key].name + '</div>' +
+                '<div class="upgrade-desc">' + BRANCH_NAMES[key].desc + '</div>' +
+                '<div class="upgrade-level">Ур. ' + level + ' / ' + MAX_LEVEL + '</div>' +
                 '<div class="upgrade-pips">' + pips + '</div>' +
                 '<div class="upgrade-cost">Цена: ' + costText + '</div>' +
                 (maxed ? '' : '<button class="btn btn-block mt8 ' + (canAfford ? 'btn-primary' : 'btn-muted') + '" ' +
@@ -650,7 +658,7 @@ async function loadUpgrades() {
 
 async function doUpgrade(branch) {
     try {
-        const res = await fetch(API + "/user/upgrade", {
+        const res = await fetch(API + "/hub/cart/upgrade", {
             method: "POST",
             headers: headers(),
             body: JSON.stringify({ branch: branch })
@@ -923,6 +931,10 @@ async function goToNode(nodeIndex) {
             log(data.message, "log-system");
             goTo("rest");
             initRestUI();
+        } else if (data.node.node_type === "shop") {
+            log("Магазин Поставщика", "log-system");
+            goTo("shop");
+            loadShop();
         } else if (data.node.node_type === "treasure" && currentRun.reward_phase) {
             renderMap();
         } else if (currentRun.battle && !currentRun.battle.finished) {

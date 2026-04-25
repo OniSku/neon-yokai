@@ -429,9 +429,108 @@
             font-size: 0.75rem;
             white-space: nowrap;
         }
+
+        /* Combo Counter (5 Flavors) */
+        .combo-counter {
+            position: fixed;
+            bottom: 220px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 50;
+        }
+        .combo-slot {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            border: 2px solid;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.7);
+            transition: all 0.3s ease;
+        }
+        .combo-slot .stack-count {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .combo-slot .flavor-icon {
+            font-size: 0.7rem;
+        }
+        /* HOT - Red */
+        .combo-slot.hot { border-color: #ff4444; box-shadow: 0 0 10px rgba(255,68,68,0.3); }
+        .combo-slot.hot .stack-count { color: #ff4444; }
+        /* SOUR - Green */
+        .combo-slot.sour { border-color: #44ff44; box-shadow: 0 0 10px rgba(68,255,68,0.3); }
+        .combo-slot.sour .stack-count { color: #44ff44; }
+        /* SWEET - Pink */
+        .combo-slot.sweet { border-color: #ff69b4; box-shadow: 0 0 10px rgba(255,105,180,0.3); }
+        .combo-slot.sweet .stack-count { color: #ff69b4; }
+        /* BITTER - Purple */
+        .combo-slot.bitter { border-color: #9944ff; box-shadow: 0 0 10px rgba(153,68,255,0.3); }
+        .combo-slot.bitter .stack-count { color: #9944ff; }
+        /* SALTY - Blue */
+        .combo-slot.salty { border-color: #4444ff; box-shadow: 0 0 10px rgba(68,68,255,0.3); }
+        .combo-slot.salty .stack-count { color: #4444ff; }
+
+        /* Card flavor borders */
+        .battle-card.hot { border-color: #ff4444; box-shadow: 0 0 15px rgba(255,68,68,0.2); }
+        .battle-card.sour { border-color: #44ff44; box-shadow: 0 0 15px rgba(68,255,68,0.2); }
+        .battle-card.sweet { border-color: #ff69b4; box-shadow: 0 0 15px rgba(255,105,180,0.2); }
+        .battle-card.bitter { border-color: #9944ff; box-shadow: 0 0 15px rgba(153,68,255,0.2); }
+        .battle-card.salty { border-color: #4444ff; box-shadow: 0 0 15px rgba(68,68,255,0.2); }
+
+        /* Battle Arena Background */
+        .battle-arena {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #0d0d0d 0%, #1a1a2e 50%, #16213e 100%);
+            z-index: -1;
+        }
+        .battle-arena::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('/static/img/market_bg.png') center/cover;
+            opacity: 0.15;
+        }
     </style>
 </head>
 <body>
+    <!-- Battle Arena Background -->
+    <div class="battle-arena"></div>
+
+    <!-- Combo Counter -->
+    <div class="combo-counter" id="combo-counter">
+        <div class="combo-slot hot" data-flavor="hot">
+            <span class="stack-count" id="hot-stacks">0</span>
+            <span class="flavor-icon">🌶️</span>
+        </div>
+        <div class="combo-slot sour" data-flavor="sour">
+            <span class="stack-count" id="sour-stacks">0</span>
+            <span class="flavor-icon">🍋</span>
+        </div>
+        <div class="combo-slot sweet" data-flavor="sweet">
+            <span class="stack-count" id="sweet-stacks">0</span>
+            <span class="flavor-icon">🍯</span>
+        </div>
+        <div class="combo-slot bitter" data-flavor="bitter">
+            <span class="stack-count" id="bitter-stacks">0</span>
+            <span class="flavor-icon">☕</span>
+        </div>
+        <div class="combo-slot salty" data-flavor="salty">
+            <span class="stack-count" id="salty-stacks">0</span>
+            <span class="flavor-icon">🧂</span>
+        </div>
+    </div>
     <!-- Top Info Bar -->
     <div class="top-info">
         <div>

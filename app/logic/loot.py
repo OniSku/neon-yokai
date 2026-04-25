@@ -74,14 +74,25 @@ async def _roll_reward_cards(
     if not all_cards:
         return []
 
+    # Фильтрация: убираем проклятия и стартовые карты
+    reward_cards = [
+        c for c in all_cards
+        if c.type != "curse" and not c.is_starting
+    ]
+    if not reward_cards:
+        return []
+
     by_rarity: dict[str, list[Card]] = {}
-    for c in all_cards:
+    for c in reward_cards:
         by_rarity.setdefault(c.rarity, []).append(c)
+
+    # Шанс легендарки: 1-2% (обычный бой), гарантированно с босса
+    legendary_chance = 0.02 if node_type == "combat" else 0.01
 
     if node_type == "boss":
         pool = by_rarity.get("legendary", [])
         if not pool:
-            pool = by_rarity.get("rare", all_cards)
+            pool = by_rarity.get("rare", reward_cards)
         chosen = random.sample(pool, k=min(REWARD_CARD_CHOICES, len(pool)))
         return [_card_to_reward(c) for c in chosen]
 
@@ -91,14 +102,14 @@ async def _roll_reward_cards(
     legendary_pool = by_rarity.get("legendary", [])
 
     for _ in range(REWARD_CARD_CHOICES):
-        if legendary_pool and random.random() < LEGENDARY_UPGRADE_CHANCE:
+        if legendary_pool and random.random() < legendary_chance:
             c = random.choice(legendary_pool)
         elif rare_pool and random.random() < RARITY_WEIGHTS_NORMAL["rare"]:
             c = random.choice(rare_pool)
         elif common_pool:
             c = random.choice(common_pool)
         else:
-            c = random.choice(all_cards)
+            c = random.choice(reward_cards)
         cards.append(_card_to_reward(c))
 
     seen_ids: set[int] = set()

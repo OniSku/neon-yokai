@@ -16,14 +16,14 @@ CARDS: list[dict] = [
     {
         "name": "Удар тесаком",
         "cost": 1, "type": "attack", "power": 7,
-        "damage_type": "slashing", "tags": "HOT",
+        "damage_type": "none", "tags": "HOT",
         "is_exhaust": False, "rarity": "common",
         "is_starting": True,
     },
     {
         "name": "Чугунная крышка",
         "cost": 1, "type": "skill", "power": 6,
-        "damage_type": "blunt", "tags": "",
+        "damage_type": "none", "tags": "",
         "is_exhaust": False, "rarity": "common",
         "is_starting": True,
     },
@@ -38,35 +38,28 @@ CARDS: list[dict] = [
     {
         "name": "Быстрый порез",
         "cost": 0, "type": "attack", "power": 4,
-        "damage_type": "slashing", "tags": "",
+        "damage_type": "none", "tags": "HOT",
         "is_exhaust": False, "rarity": "common",
         "is_starting": False,
     },
     {
         "name": "Укол вилкой",
         "cost": 1, "type": "attack", "power": 9,
-        "damage_type": "piercing", "tags": "SOUR",
+        "damage_type": "none", "tags": "SOUR",
         "is_exhaust": False, "rarity": "common",
         "is_starting": False,
     },
     {
         "name": "Удар скалкой",
         "cost": 2, "type": "attack", "power": 14,
-        "damage_type": "blunt", "tags": "BITTER",
+        "damage_type": "none", "tags": "BITTER",
         "is_exhaust": False, "rarity": "common",
         "is_starting": False,
     },
     {
         "name": "Блок крышкой",
         "cost": 1, "type": "skill", "power": 6,
-        "damage_type": "blunt", "tags": "",
-        "is_exhaust": False, "rarity": "common",
-        "is_starting": False,
-    },
-    {
-        "name": "Парирование тесаком",
-        "cost": 1, "type": "skill", "power": 3,
-        "damage_type": "slashing", "tags": "",
+        "damage_type": "none", "tags": "SALTY",
         "is_exhaust": False, "rarity": "common",
         "is_starting": False,
     },
@@ -81,14 +74,14 @@ CARDS: list[dict] = [
     {
         "name": "Быстрая шинковка",
         "cost": 1, "type": "attack", "power": 5,
-        "damage_type": "slashing", "tags": "HOT,DRAW_1",
+        "damage_type": "none", "tags": "HOT,DRAW_1",
         "is_exhaust": False, "rarity": "rare",
         "is_starting": False,
     },
     {
         "name": "Ревизия запасов",
         "cost": 1, "type": "skill", "power": 4,
-        "damage_type": "none", "tags": "DRAW_2",
+        "damage_type": "none", "tags": "SWEET",
         "is_exhaust": True, "rarity": "rare",
         "is_starting": False,
     },
@@ -109,7 +102,7 @@ CARDS: list[dict] = [
     {
         "name": "Кислотный бросок",
         "cost": 1, "type": "attack", "power": 5,
-        "damage_type": "piercing", "tags": "SOUR",
+        "damage_type": "none", "tags": "SOUR",
         "is_exhaust": False, "rarity": "rare",
         "is_starting": False,
     },
@@ -131,7 +124,7 @@ CARDS: list[dict] = [
     {
         "name": "Секретный ингредиент",
         "cost": 0, "type": "attack", "power": 15,
-        "damage_type": "piercing", "tags": "SWEET,DRAW_1",
+        "damage_type": "none", "tags": "SWEET,DRAW_1",
         "is_exhaust": True, "rarity": "epic",
         "is_starting": False,
     },
@@ -146,7 +139,7 @@ CARDS: list[dict] = [
     {
         "name": "Техника тысячи порезов",
         "cost": 3, "type": "attack", "power": 25,
-        "damage_type": "slashing", "tags": "HOT,DRAW_1",
+        "damage_type": "none", "tags": "HOT,DRAW_1",
         "is_exhaust": True, "rarity": "legendary",
         "is_starting": False,
     },
@@ -161,7 +154,7 @@ CARDS: list[dict] = [
     {
         "name": "Бросок вока",
         "cost": 2, "type": "attack", "power": 8,
-        "damage_type": "blunt", "tags": "AOE",
+        "damage_type": "none", "tags": "AOE,HOT",
         "is_exhaust": False, "rarity": "rare",
         "is_starting": False,
     },
@@ -187,6 +180,77 @@ CARDS: list[dict] = [
         "is_exhaust": False, "rarity": "epic",
         "is_starting": False,
     },
+    # === NEW CARDS (Step 38) ===
+    {
+        "name": "Фламбирование",
+        "cost": 1, "type": "attack", "power": 9,
+        "damage_type": "none", "tags": "HOT",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Раскаленный вок",
+        "cost": 2, "type": "attack", "power": 16,
+        "damage_type": "none", "tags": "HOT",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Едкий маринад",
+        "cost": 1, "type": "skill", "power": 0,
+        "damage_type": "none", "tags": "SOUR",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Ферментация",
+        "cost": 0, "type": "skill", "power": 0,
+        "damage_type": "none", "tags": "SOUR",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Карамелизация",
+        "cost": 1, "type": "skill", "power": 5,
+        "damage_type": "none", "tags": "SWEET",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Синтетический сироп",
+        "cost": 1, "type": "skill", "power": 0,
+        "damage_type": "none", "tags": "SWEET",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Грязный эспрессо",
+        "cost": 0, "type": "skill", "power": 0,
+        "damage_type": "none", "tags": "BITTER",
+        "is_exhaust": False, "rarity": "rare",
+        "is_starting": False,
+    },
+    {
+        "name": "Пережженная корка",
+        "cost": 1, "type": "attack", "power": 5,
+        "damage_type": "none", "tags": "BITTER",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Глубокая засолка",
+        "cost": 1, "type": "skill", "power": 10,
+        "damage_type": "none", "tags": "SALTY",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Чугунная стойка",
+        "cost": 2, "type": "skill", "power": 16,
+        "damage_type": "none", "tags": "SALTY",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
     # === CURSE ===
     {
         "name": "Мертвый груз",
@@ -199,86 +263,29 @@ CARDS: list[dict] = [
 
 
 ENEMIES: list[dict] = [
-    # === YOKAI COMMON ===
+    # === YOKAI (только по GDD) ===
     {
         "name": "Голодный Гаки",
         "hp": 25,
-        "base_damage": 2,
-        "damage_type": "slashing",
+        "base_damage": 5,
+        "damage_type": "none",
         "ai_pattern": json.dumps([
-            {"action": "attack", "damage": 2, "damage_type": "slashing", "steal": 3},
-            {"action": "attack", "damage": 2, "damage_type": "slashing", "steal": 3},
+            {"action": "attack", "damage": 5, "damage_type": "none", "steal": 3},
+            {"action": "attack", "damage": 5, "damage_type": "none", "steal": 3},
             {"action": "flee", "condition": "stolen_gte_9"},
         ]),
     },
-    {
-        "name": "Рокурокуби",
-        "hp": 40,
-        "base_damage": 5,
-        "damage_type": "piercing",
-        "ai_pattern": json.dumps([
-            {
-                "action": "conditional",
-                "condition": "player_no_block",
-                "if_true": {"action": "debuff", "debuff_tag": "VULNERABLE", "duration": 2, "flat_damage": 3},
-                "if_false": {"action": "attack", "damage": 5, "damage_type": "piercing"},
-            },
-            {"action": "attack", "damage": 5, "damage_type": "piercing"},
-        ]),
-    },
-    {
-        "name": "Неоновый Каппа",
-        "hp": 50,
-        "base_damage": 7,
-        "damage_type": "blunt",
-        "start_block": 25,
-        "ai_pattern": json.dumps([
-            {
-                "action": "conditional",
-                "condition": "self_has_block",
-                "if_true": {"action": "buff", "buff_tag": "RAGE", "duration": 1, "multiplier": 1.3},
-                "if_false": {"action": "debuff_self", "debuff_tag": "FEAR", "duration": 1, "flat_damage": 0},
-            },
-            {"action": "attack", "damage": 7, "damage_type": "blunt"},
-        ]),
-    },
-    # === YOKAI ELITE ===
-    {
-        "name": "Они-Обжора",
-        "hp": 130,
-        "base_damage": 12,
-        "damage_type": "blunt",
-        "ai_pattern": json.dumps([
-            {"action": "block", "block": 15},
-            {"action": "buff", "buff_tag": "RAGE", "duration": 1, "multiplier": 1.5},
-            {"action": "attack", "damage": 30, "damage_type": "blunt"},
-        ]),
-    },
-    {
-        "name": "Тэнгу-Курьер",
-        "hp": 90,
-        "base_damage": 6,
-        "damage_type": "slashing",
-        "ai_pattern": json.dumps([
-            {"action": "attack", "damage": 6, "damage_type": "slashing"},
-            {"action": "attack", "damage": 6, "damage_type": "slashing"},
-            {"action": "attack", "damage": 6, "damage_type": "slashing"},
-            {"action": "block", "block": 8},
-            {"action": "attack", "damage": 10, "damage_type": "slashing"},
-        ]),
-    },
-    # === YOKAI BOSS ===
+    # === BOSS ===
     {
         "name": "Нурарихён",
-        "hp": 250,
+        "hp": 150,
         "base_damage": 15,
-        "damage_type": "slashing",
-        "is_boss": True,
+        "damage_type": "none",
         "ai_pattern": json.dumps([
             {"action": "summon_gaki", "condition": "gaki_count_lt_2"},
-            {"action": "buff_all_gaki", "buff_tag": "RAGE", "duration": 1, "multiplier": 1.5, "self_block": 15},
-            {"action": "attack", "damage": 15, "damage_type": "slashing", "apply_debuff": "VULNERABLE", "debuff_duration": 2},
-            {"action": "attack", "damage": 20, "damage_type": "slashing"},
+            {"action": "buff_all_gaki", "buff_tag": "RAGE", "duration": 1, "multiplier": 1.25, "self_block": 15},
+            {"action": "attack", "damage": 15, "damage_type": "none", "apply_debuff": "VULNERABLE", "debuff_duration": 2},
+            {"action": "attack", "damage": 20, "damage_type": "none"},
         ]),
     },
 ]
@@ -318,7 +325,7 @@ SHOP_ITEMS: list[dict] = [
         "description": "Добавляет карту Двойной удар (ATK 12, slashing, exhaust) в колоду",
         "price": 60,
         "category": "card",
-        "payload": '{"card_name": "Двойной удар", "type": "attack", "power": 12, "damage_type": "slashing", "cost": 2, "is_exhaust": true}',
+        "payload": '{"card_name": "Двойной удар", "type": "attack", "power": 12, "damage_type": "none", "cost": 2, "is_exhaust": true}',
     },
 ]
 
