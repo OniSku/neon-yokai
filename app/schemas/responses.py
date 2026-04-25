@@ -76,6 +76,7 @@ class RunActionResponse(BaseModel):
     loot: list[LootItem] = Field(default_factory=list)
     credits_earned: int = 0
     is_dead: bool = False
+    combo_messages: list[str] = Field(default_factory=list)  # Сообщения о взрыве комбо
     run: RunState
 
 

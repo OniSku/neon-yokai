@@ -111,29 +111,14 @@
         .token-circle.player {
             border: 2px solid var(--neon-red);
             box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
-            background-image: url('assets/chef_token.png');
+            background-image: url('/static/img/chef_token.png');
         }
         .token-circle.enemy {
             border: 2px solid var(--neon-green);
             box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
         }
         .token-circle.enemy.gaki {
-            background-image: url('assets/gaki_token.png');
-        }
-        .token-circle.enemy.kappa {
-            background-image: url('assets/kappa_token.png');
-        }
-        .token-circle.enemy.oni {
-            background-image: url('assets/oni_token.png');
-        }
-        .token-circle.enemy.tengu {
-            background-image: url('assets/tengu_token.png');
-        }
-        .token-circle.enemy.roku {
-            background-image: url('assets/roku_token.png');
-        }
-        .token-circle.enemy.nura {
-            background-image: url('assets/nura_token.png');
+            background-image: url('/static/img/gaki_token.png');
         }
         .token-circle.enemy.unknown {
             background-image: none;
@@ -634,6 +619,15 @@
                 pBlock.style.display = "none";
             }
 
+            // Update combo stacks (5 flavors)
+            if (state.combo_stacks) {
+                document.getElementById("hot-stacks").textContent = state.combo_stacks.HOT || 0;
+                document.getElementById("sour-stacks").textContent = state.combo_stacks.SOUR || 0;
+                document.getElementById("sweet-stacks").textContent = state.combo_stacks.SWEET || 0;
+                document.getElementById("bitter-stacks").textContent = state.combo_stacks.BITTER || 0;
+                document.getElementById("salty-stacks").textContent = state.combo_stacks.SALTY || 0;
+            }
+
             // Update enemy
             const enemyToken = document.getElementById("enemy-token");
             const e = state.enemy || (state.enemies && state.enemies[0] && state.enemies[0].fighter);
@@ -646,16 +640,6 @@
                 enemyToken.className = "token-circle enemy";
                 if (e.name && e.name.includes("Гаки")) {
                     enemyToken.classList.add("gaki");
-                } else if (e.name && e.name.includes("Каппа")) {
-                    enemyToken.classList.add("kappa");
-                } else if (e.name && e.name.includes("Они")) {
-                    enemyToken.classList.add("oni");
-                } else if (e.name && e.name.includes("Тэнгу")) {
-                    enemyToken.classList.add("tengu");
-                } else if (e.name && e.name.includes("Рокурокуби")) {
-                    enemyToken.classList.add("roku");
-                } else if (e.name && e.name.includes("Нурарихён")) {
-                    enemyToken.classList.add("nura");
                 } else {
                     enemyToken.classList.add("unknown");
                 }
@@ -740,10 +724,26 @@
             const container = document.getElementById("card-hand");
             container.innerHTML = "";
 
+            const FLAVOR_CLASSES = ["hot", "sour", "sweet", "bitter", "salty"];
+
             hand.forEach((card, index) => {
                 const div = document.createElement("div");
                 const canPlay = card.cost <= energy;
-                div.className = "battle-card" + (canPlay ? "" : " disabled");
+
+                // Добавляем класс вкуса если есть
+                let flavorClass = "";
+                if (card.tags) {
+                    const tags = Array.isArray(card.tags) ? card.tags : card.tags.split(",");
+                    for (const tag of tags) {
+                        const cleanTag = tag.trim().toLowerCase();
+                        if (FLAVOR_CLASSES.includes(cleanTag)) {
+                            flavorClass = " " + cleanTag;
+                            break;  // Берем первый найденный вкус
+                        }
+                    }
+                }
+
+                div.className = "battle-card" + flavorClass + (canPlay ? "" : " disabled");
 
                 div.innerHTML = `
                     <div class="card-cost">${card.cost}</div>
@@ -832,6 +832,11 @@
                 // Проверяем смерть или завершение забега
                 if (checkRunFinished(data)) {
                     return;
+                }
+
+                // Отображаем сообщения о комбо
+                if (data.combo_messages && data.combo_messages.length > 0) {
+                    alert(data.combo_messages.join("\n"));
                 }
 
                 if (data.run && data.run.battle) {

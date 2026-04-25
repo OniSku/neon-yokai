@@ -15,6 +15,70 @@ TAG_BUFF_MAP: dict[str, str] = {
     "SALTY": "SALTY_BUFF",
 }
 
+# 5 Вкусов для системы Комбо
+FLAVOR_TAGS: set[str] = {"HOT", "SOUR", "SWEET", "BITTER", "SALTY"}
+COMBO_THRESHOLD: int = 4
+COMBO_THRESHOLD_WITH_CHARGE: int = 3
+
+
+async def _add_combo_stack(state: BattleState, tags: list[str]) -> str | None:
+    """Добавить стак комбо для каждого тега вкуса. Возвращает тег если комбо взорвалось."""
+    exploded: str | None = None
+    for tag in tags:
+        if tag in FLAVOR_TAGS:
+            state.combo_stacks[tag] += 1
+            # Проверяем порог
+            threshold = COMBO_THRESHOLD_WITH_CHARGE if state.combo_charges > 0 else COMBO_THRESHOLD
+            if state.combo_stacks[tag] >= threshold:
+                exploded = tag
+    return exploded
+
+
+async def _explode_combo(state: BattleState, flavor: str) -> str:
+    """Активировать эффект комбо. Возвращает сообщение о эффекте."""
+    # Сбрасываем стаки этого вкуса
+    state.combo_stacks[flavor] = 0
+
+    # Тратим заряд если был
+    if state.combo_charges > 0:
+        state.combo_charges -= 1
+
+    # Применяем эффект
+    if flavor == "HOT":
+        # 15 чистого урона текущей цели
+        target = _get_target(state)
+        await apply_damage(target, 15)
+        return "COMBO HOT: 15 урона!"
+
+    elif flavor == "SOUR":
+        # 2 Weak + 2 Vulnerable на всех врагов
+        if state.enemies:
+            for es in state.enemies:
+                if es.alive:
+                    es.fighter.buffs.append(Buff(tag="WEAK", duration=2))
+                    es.fighter.buffs.append(Buff(tag="VULNERABLE", duration=2))
+        return "COMBO SOUR: Weak + Vulnerable на всех!"
+
+    elif flavor == "SWEET":
+        # Лечение 4 HP + взять 2 карты
+        state.player.hp = min(state.player.hp + 4, state.player.max_hp)
+        await draw_cards(state, 2)
+        return "COMBO SWEET: +4 HP, +2 карты!"
+
+    elif flavor == "BITTER":
+        # +2 Энергии + взять 1 карту
+        state.player.energy += 2
+        await draw_cards(state, 1)
+        return "COMBO BITTER: +2 энергии, +1 карта!"
+
+    elif flavor == "SALTY":
+        # +12 Блока + Удержание текущего блока
+        state.player.block += 12
+        state.player.buffs.append(Buff(tag="RETAIN_BLOCK", duration=1))
+        return "COMBO SALTY: +12 блока, удержание!"
+
+    return ""
+
 
 def _get_target(state: BattleState) -> Fighter:
     if state.enemies:
@@ -271,8 +335,29 @@ async def execute_card(
             if state.hand:
                 state.discard_pile.append(state.hand.pop(0))
 
+    # Система Комбо Вкусов - добавляем стаки и проверяем взрыв
+    combo_messages: list[str] = []
+    exploded = await _add_combo_stack(state, card.tags)
+    if exploded:
+        msg = await _explode_combo(state, exploded)
+        if msg:
+            combo_messages.append(msg)
+            # Если один вкус взорвался, другие тоже могли достичь порога
+            # Проверяем все вкусы еще раз
+            for flavor in FLAVOR_TAGS:
+                threshold = COMBO_THRESHOLD_WITH_CHARGE if state.combo_charges > 0 else COMBO_THRESHOLD
+                if state.combo_stacks[flavor] >= threshold:
+                    msg = await _explode_combo(state, flavor)
+                    if msg:
+                        combo_messages.append(msg)
+
     _sync_primary_enemy(state)
     await check_battle_end(state)
+
+    # Сохраняем сообщения комбо в карте для передачи на фронт
+    if combo_messages:
+        card.combo_messages = combo_messages  # type: ignore[attr-defined]
+
     return card
 
 

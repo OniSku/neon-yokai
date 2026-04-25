@@ -90,6 +90,12 @@ class BattleState(BaseModel):
     finished: bool = False
     winner: str | None = None
 
+    # Система Комбо Вкусов (5 flavors)
+    combo_stacks: dict[str, int] = Field(default_factory=lambda: {
+        "HOT": 0, "SOUR": 0, "SWEET": 0, "BITTER": 0, "SALTY": 0
+    })
+    combo_charges: int = 0  # Заряды от готовки (снижают порог с 4 до 3)
+
 
 class EnemySlot(BaseModel):
     enemy_id: int | None = None
