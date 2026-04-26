@@ -113,6 +113,7 @@ async def calculate_damage(
     attacker: Fighter,
     base_power: int,
     tags: list[str],
+    target: Fighter | None = None,
 ) -> int:
     damage = base_power
 
@@ -121,6 +122,16 @@ async def calculate_damage(
             damage = int(damage * buff.multiplier) + buff.flat_bonus
         elif buff.tag == "COMBO_BURN":
             damage += buff.flat_bonus
+        elif buff.tag == "WEAK":
+            # - Слабость: атаки на 25% слабее
+            damage = int(damage * 0.75)
+
+    # - Уязвимость цели: получает на 50% больше урона
+    if target:
+        for buff in target.buffs:
+            if buff.tag == "VULNERABLE":
+                damage = int(damage * 1.5)
+                break
 
     return max(damage, 0)
 
@@ -284,21 +295,24 @@ async def execute_card(
 
     if card.type == "attack":
         power_with_upgrade = math.ceil(card.power * 1.5) if card.is_upgraded else card.power
-        damage = await calculate_damage(state.player, power_with_upgrade, card.tags)
         is_vyparivanie = card.name == "Выпаривание" or "UNIQUE" in card.tags
         if _is_aoe(card) and state.enemies:
             for es in state.enemies:
                 if es.alive:
+                    # - AOE: считаем урон отдельно для каждого врага с учётом его VULNERABLE
+                    dmg = await calculate_damage(state.player, power_with_upgrade, card.tags, target=es.fighter)
                     if is_vyparivanie:
                         strip_amount = min(es.fighter.block, 10)
                         es.fighter.block -= strip_amount
-                    await apply_damage(es.fighter, damage)
+                    await apply_damage(es.fighter, dmg)
                     if "BURN" in card.tags or "IGNITE" in card.tags:
                         es.fighter.buffs.append(
                             Buff(tag="BURN", duration=2, multiplier=1.0, flat_bonus=3)
                         )
         else:
             target = _get_target(state)
+            # - Одиночная атака: урон с учётом VULNERABLE цели
+            damage = await calculate_damage(state.player, power_with_upgrade, card.tags, target=target)
             if is_vyparivanie:
                 strip_amount = min(target.block, 10)
                 target.block -= strip_amount
@@ -348,7 +362,7 @@ async def execute_card(
         bitter_stacks = state.combo_stacks.get("BITTER", 0)
         bonus_dmg = bitter_stacks * 3
         if bonus_dmg > 0:
-            await apply_damage(state.enemy.fighter, bonus_dmg)
+            await apply_damage(state.enemy, bonus_dmg)
 
     # - \u041f\u0435\u0440\u0435\u0441\u043e\u043b\u0435\u043d\u043d\u044b\u0439 \u0431\u0443\u043b\u044c\u043e\u043d: Exhaust \u0441\u043b\u0443\u0447\u0430\u0439\u043d\u0443\u044e \u043a\u0430\u0440\u0442\u0443 \u0438\u0437 \u0440\u0443\u043a\u0438
     if "EXHAUST_RANDOM" in card.tags and state.hand:
@@ -566,10 +580,18 @@ async def _do_enemy_action(
         damage = max(action.damage, 0)
         dtype = action.damage_type
 
+        # - WEAK на враге: его атаки на 25% слабее
+        if any(b.tag == "WEAK" for b in enemy_fighter.buffs):
+            damage = int(damage * 0.75)
+
         parry = await resolve_parry(state, damage, dtype)
         if parry.triggered:
             damage -= parry.blocked
             await apply_damage(enemy_fighter, parry.reflected)
+
+        # - VULNERABLE на игроке: получает на 50% больше урона
+        if any(b.tag == "VULNERABLE" for b in state.player.buffs):
+            damage = int(damage * 1.5)
 
         if artifacts:
             dealt = await apply_damage_with_artifacts(state, damage, artifacts)
