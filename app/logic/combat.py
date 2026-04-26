@@ -618,10 +618,19 @@ async def _do_enemy_action(
         if any(b.tag == "VULNERABLE" for b in state.player.buffs):
             damage = int(damage * 1.5)
 
+        # - BITTER_BUFF на игроке: снижает входящий урон на 25%
+        if any(b.tag == "BITTER_BUFF" for b in state.player.buffs):
+            damage = int(damage * 0.75)
+
         if artifacts:
             dealt = await apply_damage_with_artifacts(state, damage, artifacts)
         else:
             dealt = await apply_damage(state.player, damage)
+
+        # - THORNS на игроке: отражает flat_bonus урона атакующему врагу
+        thorns_buff = next((b for b in state.player.buffs if b.tag == "THORNS"), None)
+        if thorns_buff and thorns_buff.flat_bonus > 0 and dealt > 0:
+            enemy_fighter.hp = max(0, enemy_fighter.hp - thorns_buff.flat_bonus)
 
         if getattr(action, "steal", 0) > 0 and es:
             es.stolen_credits = getattr(es, "stolen_credits", 0) + action.steal
@@ -742,6 +751,16 @@ async def start_turn(state: BattleState) -> None:
             state.player.hp = min(state.player.hp + buff.flat_bonus, state.player.max_hp)
         elif buff.tag == "COMBO_THORNS":
             state.player.block += buff.flat_bonus
+        elif buff.tag == "SWEET_BUFF":
+            # - Сладость: +2 HP в начале каждого хода
+            state.player.hp = min(state.player.hp + 2, state.player.max_hp)
+
+    # - SOUR_BUFF на игроке: -1 блок целевому врагу в начале хода
+    if any(b.tag == "SOUR_BUFF" for b in state.player.buffs) and state.enemies:
+        alive = [es for es in state.enemies if es.alive]
+        if alive:
+            idx = state.target_index % len(alive)
+            alive[idx].fighter.block = max(0, alive[idx].fighter.block - 1)
 
     # - BURN/POISON на врагах тикают в начале хода игрока
     for es in state.enemies:
