@@ -653,9 +653,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 16px;
-            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            padding: 8px 12px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, transparent 100%);
+            gap: 6px;
         }
+        .arena-topbar-left { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+        .arena-topbar-right { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
         /* Enemy zone */
         .arena-enemy-zone {
             padding: 6px 12px 0;
@@ -671,21 +674,27 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
-            min-width: 80px;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid rgba(233,69,96,0.35);
-            border-radius: 8px;
-            padding: 5px 10px;
+            gap: 3px;
+            min-width: 90px;
+            max-width: 140px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(233,69,96,0.4);
+            border-radius: 10px;
+            padding: 7px 12px;
             cursor: pointer;
         }
-        .arena-enemy-card.targeted { border-color: var(--neon); box-shadow: 0 0 8px rgba(0,255,245,0.4); }
+        .arena-enemy-card.targeted { border-color: var(--neon); box-shadow: 0 0 10px rgba(0,255,245,0.5); }
         .arena-enemy-card.dead { opacity: 0.3; filter: grayscale(1); cursor: default; }
-        .aec-name { font-size: 0.65rem; font-weight: 700; color: var(--accent); text-transform: uppercase; }
-        .aec-hp { font-size: 0.7rem; color: var(--text); }
-        .aec-bar { width: 64px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; }
-        .aec-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
-        .aec-intent { font-size: 0.6rem; color: var(--energy); margin-top: 2px; }
+        .aec-name { font-size: 0.7rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
+        .aec-hp { font-size: 0.75rem; color: var(--text); font-weight: 600; }
+        .aec-bar { width: 80px; height: 6px; background: #333; border-radius: 3px; overflow: hidden; }
+        .aec-bar-fill { height: 100%; background: linear-gradient(90deg, #e94560, #ff6b6b); border-radius: 3px; transition: width 0.3s; }
+        .aec-intent { font-size: 0.7rem; font-weight: 700; color: var(--energy); margin-top: 3px; padding: 2px 6px; background: rgba(0,255,245,0.1); border-radius: 4px; }
+        .aec-intent.intent-attack { color: #ff6b6b; background: rgba(233,69,96,0.15); }
+        .aec-intent.intent-defend { color: #4488ff; background: rgba(68,136,255,0.15); }
+        .aec-intent.intent-buff { color: #ffdd57; background: rgba(255,221,87,0.15); }
+        .aec-intent.intent-debuff { color: #9944ff; background: rgba(153,68,255,0.15); }
+        .aec-intent.intent-steal { color: var(--gold); background: rgba(255,193,7,0.15); }
         /* Enemy tokens row */
         .arena-tokens-row {
             display: flex;
@@ -738,45 +747,58 @@
         /* Player info block */
         .arena-player-info {
             display: flex;
-            gap: 14px;
+            flex-direction: column;
+            gap: 5px;
             align-items: center;
-            background: rgba(0,0,0,0.6);
-            border: 1px solid rgba(0,255,245,0.2);
+            background: rgba(0,0,0,0.65);
+            border: 1px solid rgba(0,255,245,0.25);
             border-radius: 12px;
-            padding: 8px 18px;
+            padding: 8px 16px;
+            width: 100%;
+            max-width: 320px;
         }
+        .arena-player-stats-row { display: flex; gap: 20px; align-items: center; }
         .ap-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; }
-        .ap-stat .ap-val { font-size: 0.95rem; font-weight: 700; }
-        .ap-stat .ap-lbl { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; }
+        .ap-stat .ap-val { font-size: 1rem; font-weight: 700; }
+        .ap-stat .ap-lbl { font-size: 0.52rem; color: var(--muted); text-transform: uppercase; }
         .ap-stat.hp .ap-val { color: var(--neon); }
         .ap-stat.block .ap-val { color: var(--block); }
         .ap-stat.energy .ap-val { color: var(--energy); }
+        /* HP-бар игрока */
+        .arena-player-hp-bar { width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+        .arena-player-hp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--neon), #00bfae); border-radius: 3px; transition: width 0.35s; }
         /* Combo row */
         .arena-combo-row {
             display: flex;
-            gap: 6px;
+            gap: 5px;
             justify-content: center;
         }
         .arena-combo-slot {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 48px;
             border-radius: 8px;
             border: 2px solid;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: rgba(0,0,0,0.65);
+            background: rgba(0,0,0,0.7);
             font-weight: 700;
+            cursor: pointer;
+            gap: 1px;
+            transition: transform 0.1s, box-shadow 0.15s;
         }
+        .arena-combo-slot:active { transform: scale(0.93); }
         .arena-combo-slot.hot { border-color: #ff4444; color: #ff4444; }
         .arena-combo-slot.sour { border-color: #44ff44; color: #44ff44; }
         .arena-combo-slot.sweet { border-color: #ff69b4; color: #ff69b4; }
         .arena-combo-slot.bitter { border-color: #9944ff; color: #9944ff; }
         .arena-combo-slot.salty { border-color: #4488ff; color: #4488ff; }
-        .arena-combo-slot .acs-num { font-size: 0.85rem; line-height: 1; }
-        .arena-combo-slot .acs-icon { font-size: 0.55rem; }
-        .arena-combo-slot { cursor: pointer; }
+        .arena-combo-slot .acs-num { font-size: 1rem; line-height: 1; }
+        .arena-combo-slot .acs-icon { font-size: 0.6rem; }
+        .arena-combo-slot .acs-lbl { font-size: 0.42rem; text-transform: uppercase; letter-spacing: 0.3px; opacity: 0.8; }
+        /* Подсветка при накопленных стаках */
+        .arena-combo-slot.active-combo { box-shadow: 0 0 8px currentColor; }
         /* Hand zone */
         .arena-hand-zone {
             background: linear-gradient(0deg, rgba(0,0,0,0.92) 60%, transparent 100%);
@@ -1148,13 +1170,13 @@
 
         <!-- TOP BAR -->
         <div class="arena-topbar">
-            <div style="display:flex;flex-direction:column;gap:2px">
-                <span style="font-size:0.85rem;color:var(--neon);font-weight:700;text-transform:uppercase;letter-spacing:2px">ХОД <span id="turn">0</span></span>
-                <span style="font-size:0.7rem;color:var(--muted)">ФАЗА: <span id="phase" style="color:var(--neon)">-</span></span>
+            <div class="arena-topbar-left">
+                <span style="font-size:0.8rem;color:var(--neon);font-weight:700;text-transform:uppercase;letter-spacing:1px">ХОД <span id="turn">0</span></span>
+                <span style="font-size:0.62rem;color:var(--muted)">ФАЗА: <span id="phase" style="color:var(--text)">-</span></span>
             </div>
-            <div style="display:flex;gap:8px">
+            <div class="arena-topbar-right">
                 <div class="artifacts-row" id="artifacts-row" style="margin:0"></div>
-                <button class="btn btn-muted" style="padding:6px 12px;font-size:0.75rem" onclick="abandonRun()">Сдаться</button>
+                <button class="btn btn-muted" style="padding:5px 10px;font-size:0.7rem;white-space:nowrap" onclick="abandonRun()">Сдаться</button>
             </div>
         </div>
 
@@ -1169,16 +1191,19 @@
             <div class="arena-token player-token" id="arena-player-token"></div>
             <div class="buffs" id="player-buffs" style="justify-content:center"></div>
             <div class="arena-player-info">
-                <div class="ap-stat hp"><span class="ap-val" id="player-hp-text">80/80</span><span class="ap-lbl">HP</span></div>
-                <div class="ap-stat block"><span class="ap-val" id="player-block-text">0</span><span class="ap-lbl">Блок</span></div>
-                <div class="ap-stat energy"><span class="ap-val" id="player-energy-text">3/3</span><span class="ap-lbl">Энергия</span></div>
+                <div class="arena-player-stats-row">
+                    <div class="ap-stat hp"><span class="ap-val" id="player-hp-text">80/80</span><span class="ap-lbl">HP</span></div>
+                    <div class="ap-stat block"><span class="ap-val" id="player-block-text">0</span><span class="ap-lbl">Блок</span></div>
+                    <div class="ap-stat energy"><span class="ap-val" id="player-energy-text">3/3</span><span class="ap-lbl">Энергия</span></div>
+                </div>
+                <div class="arena-player-hp-bar"><div class="arena-player-hp-bar-fill" id="player-hp-bar" style="width:100%"></div></div>
             </div>
             <div class="arena-combo-row">
-                <div class="arena-combo-slot hot" onclick="showFlavorPopup('HOT')"><span class="acs-num" id="cs-hot">0</span><span class="acs-icon">🌶</span></div>
-                <div class="arena-combo-slot sour" onclick="showFlavorPopup('SOUR')"><span class="acs-num" id="cs-sour">0</span><span class="acs-icon">🍋</span></div>
-                <div class="arena-combo-slot sweet" onclick="showFlavorPopup('SWEET')"><span class="acs-num" id="cs-sweet">0</span><span class="acs-icon">🍯</span></div>
-                <div class="arena-combo-slot bitter" onclick="showFlavorPopup('BITTER')"><span class="acs-num" id="cs-bitter">0</span><span class="acs-icon">☕</span></div>
-                <div class="arena-combo-slot salty" onclick="showFlavorPopup('SALTY')"><span class="acs-num" id="cs-salty">0</span><span class="acs-icon">🧂</span></div>
+                <div class="arena-combo-slot hot" id="cs-slot-hot" onclick="showFlavorPopup('HOT')"><span class="acs-num" id="cs-hot">0</span><span class="acs-icon">🌶</span><span class="acs-lbl">Острота</span></div>
+                <div class="arena-combo-slot sour" id="cs-slot-sour" onclick="showFlavorPopup('SOUR')"><span class="acs-num" id="cs-sour">0</span><span class="acs-icon">🍋</span><span class="acs-lbl">Кислота</span></div>
+                <div class="arena-combo-slot sweet" id="cs-slot-sweet" onclick="showFlavorPopup('SWEET')"><span class="acs-num" id="cs-sweet">0</span><span class="acs-icon">🍯</span><span class="acs-lbl">Сладость</span></div>
+                <div class="arena-combo-slot bitter" id="cs-slot-bitter" onclick="showFlavorPopup('BITTER')"><span class="acs-num" id="cs-bitter">0</span><span class="acs-icon">☕</span><span class="acs-lbl">Горечь</span></div>
+                <div class="arena-combo-slot salty" id="cs-slot-salty" onclick="showFlavorPopup('SALTY')"><span class="acs-num" id="cs-salty">0</span><span class="acs-icon">🧂</span><span class="acs-lbl">Соль</span></div>
             </div>
         </div>
 
@@ -2346,16 +2371,21 @@ function updateBattleUI(state) {
         if (es.alive) {
             card.onclick = () => { selectedTarget = aliveEnemies.indexOf(es); updateBattleUI(state); };
         }
-        const intentClick = intentFull ? ' onclick="event.stopPropagation();showComboPopup(\'' + intentStr.replace(/'/g,'') + '\',\'\',\'' + intentFull + '\')" style="cursor:pointer"' : '';
+        const intentClass = es.intent ? " intent-" + (es.intent.type || "attack") : "";
+        const blockStr = f.block > 0 ? ' <span style="color:#4488ff">🛡' + f.block + '</span>' : "";
         card.innerHTML =
-            '<div class="aec-name">' + f.name + (isTargeted ? " [ЦЕЛЬ]" : "") + '</div>' +
-            '<div class="aec-hp">' + f.hp + "/" + f.max_hp + (f.block ? " 🛡" + f.block : "") + '</div>' +
+            '<div class="aec-name">' + f.name + (isTargeted ? " ►" : "") + '</div>' +
+            '<div class="aec-hp">' + f.hp + "/" + f.max_hp + blockStr + '</div>' +
             '<div class="aec-bar"><div class="aec-bar-fill" style="width:' + hpPct + '%"></div></div>' +
-            (intentStr ? '<div class="aec-intent"' + intentClick + '>' + intentStr + '</div>' : '') +
+            (intentStr ? '<div class="aec-intent' + intentClass + '">' + intentStr + '</div>' : '') +
             _buildEnemyBuffsHtml(f.buffs);
+        if (intentFull) {
+            const intentEl = card.querySelector(".aec-intent");
+            if (intentEl) intentEl.onclick = (ev) => { ev.stopPropagation(); showComboPopup(intentStr, "", intentFull); };
+        }
         infoRow.appendChild(card);
 
-        // Жетон
+        // - Жетон
         const tok = document.createElement("div");
         tok.className = "arena-token enemy-token" + (isDead ? " dead" : "");
         tok.id = "arena-enemy-token-" + idx;
@@ -2390,15 +2420,21 @@ function updateBattleUI(state) {
     document.getElementById("player-hp-text").textContent = p.hp + "/" + p.max_hp;
     document.getElementById("player-block-text").textContent = p.block || 0;
     document.getElementById("player-energy-text").textContent = (p.energy || 0) + "/" + (p.max_energy || 3);
+    // - HP-бар игрока
+    const hpBar = document.getElementById("player-hp-bar");
+    if (hpBar && p.max_hp > 0) hpBar.style.width = Math.max(0, p.hp / p.max_hp * 100) + "%";
     renderBuffs("player-buffs", p.buffs || []);
 
     // --- Комбо счётчики ---
     const cs = state.combo_stacks || {};
-    document.getElementById("cs-hot").textContent = cs.HOT || 0;
-    document.getElementById("cs-sour").textContent = cs.SOUR || 0;
-    document.getElementById("cs-sweet").textContent = cs.SWEET || 0;
-    document.getElementById("cs-bitter").textContent = cs.BITTER || 0;
-    document.getElementById("cs-salty").textContent = cs.SALTY || 0;
+    const COMBO_THRESHOLD = 4;
+    const comboSlots = {HOT: "hot", SOUR: "sour", SWEET: "sweet", BITTER: "bitter", SALTY: "salty"};
+    for (const [tag, cls] of Object.entries(comboSlots)) {
+        const val = cs[tag] || 0;
+        document.getElementById("cs-" + cls).textContent = val;
+        const slot = document.getElementById("cs-slot-" + cls);
+        if (slot) slot.classList.toggle("active-combo", val >= 2);
+    }
 
     // --- Рука: arena-card ---
     const handEl = document.getElementById("hand");
