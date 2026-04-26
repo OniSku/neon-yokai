@@ -248,7 +248,153 @@
         .upgrade-pip.filled { background: var(--neon); box-shadow: 0 0 6px rgba(0,255,245,0.4); }
         .upgrade-cost { font-size: 0.7rem; color: var(--muted); }
 
-        /* Animations */
+        /* ===== Shape Language ===== */
+        /* Треугольник - кнопка Назад/Выход */
+        .btn-triangle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #1a1a2e;
+            border: 1px solid #444;
+            color: var(--muted);
+            padding: 10px 18px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            clip-path: polygon(12px 0%, 100% 0%, 100% 100%, 12px 100%, 0% 50%);
+            transition: all 0.2s;
+            min-height: 44px;
+        }
+        .btn-triangle:hover { background: #252545; color: var(--text); }
+        .btn-triangle::before { content: "\25C4"; font-size: 0.9rem; }
+
+        /* Квадрат - слот выбора (карта, ингредиент, артефакт) */
+        .btn-square {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: var(--surface);
+            border: 2px solid var(--accent2);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+            padding: 6px;
+            touch-action: manipulation;
+        }
+        .btn-square:hover, .btn-square.selected {
+            border-color: var(--neon);
+            box-shadow: 0 0 10px rgba(0,255,245,0.3);
+            color: var(--neon);
+        }
+        .btn-square.empty { opacity: 0.35; cursor: default; border-style: dashed; }
+
+        /* Ромб - кнопка подтверждения (Купить, Сварить) */
+        .btn-diamond-wrap {
+            display: flex;
+            justify-content: center;
+            margin-top: 16px;
+        }
+        .btn-diamond {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: none;
+            border: none;
+            flex-direction: column;
+        }
+        .btn-diamond::before {
+            content: "";
+            position: absolute;
+            width: 64px;
+            height: 64px;
+            background: var(--neon);
+            transform: rotate(45deg);
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .btn-diamond:hover::before { background: #00ccd0; box-shadow: 0 0 18px rgba(0,255,245,0.6); }
+        .btn-diamond:disabled::before { background: #333; box-shadow: none; }
+        .btn-diamond:disabled { cursor: not-allowed; }
+        .btn-diamond .diamond-label {
+            position: relative;
+            z-index: 1;
+            font-weight: 800;
+            font-size: 0.72rem;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+            pointer-events: none;
+        }
+        .btn-diamond:disabled .diamond-label { color: #666; }
+
+        /* Круг - глобальное действие (Ночная смена) */
+        .btn-circle {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #e94560 0%, #8b0000 100%);
+            border: 3px solid var(--accent);
+            box-shadow: 0 0 20px rgba(233,69,96,0.5);
+            color: #fff;
+            font-weight: 900;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            line-height: 1.3;
+            touch-action: manipulation;
+        }
+        .btn-circle:hover { box-shadow: 0 0 32px rgba(233,69,96,0.8); transform: scale(1.05); }
+
+        /* Жар плиты по краям экрана */
+        .cooking-heat {
+            box-shadow: inset 0 0 30px #ff4500, inset 0 0 60px rgba(255,69,0,0.15);
+        }
+
+        /* Товар в магазине (run-shop) */
+        .run-shop-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .run-shop-item .item-info-panel {
+            background: var(--surface2);
+            border: 1px solid var(--accent2);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            min-height: 56px;
+        }
+        .run-shop-item .item-info-panel.has-item { color: var(--text); border-color: var(--neon); }
+        .run-shop-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        /* ===== Animations ===== */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             10% { transform: translateX(-6px) rotate(-0.5deg); }
@@ -312,6 +458,33 @@
         .buff-ARMOR_BREAK, .buff-SLOW { background: rgba(255,255,255,0.06); color: #aaa; border: 1px solid rgba(255,255,255,0.15); }
         .buff-SHARPEN { background: rgba(255,215,0,0.12); color: var(--energy); border: 1px solid rgba(255,215,0,0.25); }
 
+        /* Combo toast */
+        .combo-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            border: 2px solid var(--neon);
+            color: var(--neon);
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 16px rgba(0,255,245,0.4);
+            z-index: 300;
+            pointer-events: none;
+            animation: toast-in-out 2.5s ease-out forwards;
+            text-align: center;
+            max-width: 280px;
+        }
+        @keyframes toast-in-out {
+            0%   { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+            75%  { opacity: 1; }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        }
+
         /* Result overlay */
         .result-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; }
         .result-overlay.active { display: flex; }
@@ -337,8 +510,11 @@
         </div>
         <button class="btn btn-primary btn-block" onclick="goTo('shop')">Склад Поставщика</button>
         <button class="btn btn-secondary btn-block" onclick="goTo('cart')">Тележка (крафт)</button>
-        <button class="btn btn-secondary btn-block" style="background:var(--neon);color:#000" onclick="goTo('upgrades')">Прокачка Тележки</button>
-        <button class="btn btn-danger btn-block" onclick="startRun()">В ночную смену</button>
+        <button class="btn btn-secondary btn-block" onclick="goTo('upgrades')">Прокачка Тележки</button>
+        <button class="btn btn-secondary btn-block" onclick="goTo('suture')">Шов (мета)</button>
+        <div style="display:flex;justify-content:center;margin-top:20px">
+            <button class="btn-circle" onclick="startRun()">В ночную<br>смену</button>
+        </div>
     </div>
 </div>
 
@@ -350,25 +526,31 @@
             <div class="row"><span class="label">XP</span><span class="val val-neon" id="upgrades-xp">0</span></div>
         </div>
         <div id="upgrade-branches"></div>
-        <button class="btn btn-muted btn-block mt14" onclick="goTo('menu')">Назад</button>
+        <button class="btn-triangle btn-block mt14" onclick="goTo('menu')">Назад</button>
     </div>
 </div>
 
-<!-- ========== SCREEN: SHOP (Supplier's Warehouse) ========== -->
+<!-- ========== SCREEN: SHOP (Хаб - Склад Поставщика) ========== -->
 <div id="screen-shop" class="screen">
     <div class="wrap">
-        <h2>Склад Поставщика</h2>
-        <div class="card-surface">
-            <div class="row mb8"><span class="label">Баланс</span><span class="val val-gold" id="shop-credits">0</span></div>
-            <div class="row"><span class="label">Долг</span><span class="val val-red" id="shop-debt">0</span></div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <button class="btn-triangle" onclick="goTo('menu')">Назад</button>
+            <h2 style="margin:0">Склад Поставщика</h2>
+        </div>
+        <div class="card-surface" style="text-align:center">
+            <div style="font-size:1.4rem;margin-bottom:6px">&#128092;</div>
+            <div class="row">
+                <span class="label">Кредиты</span><span class="val val-green" id="shop-credits">0</span>
+            </div>
+            <div class="row mt8">
+                <span class="label">Долг</span><span class="val val-red" id="shop-debt">0</span>
+            </div>
         </div>
         <div id="shop-items"></div>
         <div class="mt14">
-            <button class="btn btn-secondary btn-block" onclick="takeKit()">Взять набор продуктов под реализацию</button>
+            <button class="btn btn-secondary btn-block" onclick="takeKit()">Взять набор под реализацию</button>
             <button class="btn btn-muted btn-block" onclick="promptPay()">Погасить долг</button>
-            <button class="btn btn-warning btn-block" onclick="showRemoveCardUI()">Удалить карту <span id="remove-card-price">(50 кр)</span></button>
-            <button class="btn btn-primary btn-block" onclick="goTo('cart')">К Тележке</button>
-            <button class="btn btn-muted btn-block" onclick="goTo('menu')">Назад</button>
+            <button class="btn btn-muted btn-block" onclick="showRemoveCardUI()">Удалить карту <span id="remove-card-price">(50 кр)</span></button>
         </div>
         <div id="shop-remove-card-ui" style="display:none" class="mt8">
             <p class="label mb8">Выберите карту для удаления:</p>
@@ -380,19 +562,25 @@
 
 <!-- ========== SCREEN: CART / CRAFT ========== -->
 <div id="screen-cart" class="screen">
-    <div class="wrap">
-        <h2>Тележка</h2>
-        <div class="card-surface">
-            <div class="label mb8">Инвентарь (выберите до 3 предметов) <span id="inv-limit-text" style="color:var(--muted);font-size:0.7rem"></span></div>
-            <div id="cart-inventory"></div>
+    <div class="wrap cooking-heat">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <button class="btn-triangle" onclick="goTo('menu')">Назад</button>
+            <h2 style="margin:0">Тележка - Готовка</h2>
         </div>
-        <button class="btn btn-primary btn-block" id="btn-craft" onclick="doCraft()" disabled>Приготовить блюдо (0/3)</button>
+        <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px">Выбери до 3 ингредиентов - получи комбо-бафф на следующий забег.</p>
+        <div class="card-surface">
+            <div class="label mb8">Ингредиенты <span id="inv-limit-text" style="color:var(--muted);font-size:0.7rem"></span></div>
+            <div id="cart-inventory" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        </div>
         <div id="craft-result" class="card-surface mt8" style="display:none">
             <div class="label">Результат крафта</div>
             <div id="craft-result-text"></div>
         </div>
-        <button class="btn btn-danger btn-block mt14" onclick="startRun()">В ночную смену</button>
-        <button class="btn btn-muted btn-block" onclick="goTo('menu')">Назад</button>
+        <div class="btn-diamond-wrap">
+            <button class="btn-diamond" id="btn-craft" onclick="doCraft()" disabled>
+                <span class="diamond-label">Сварить<br><span id="craft-count">0/3</span></span>
+            </button>
+        </div>
     </div>
 </div>
 
@@ -426,6 +614,50 @@
     </div>
 </div>
 
+<!-- ========== SCREEN: SUTURE (Шов - мета-магазин) ========== -->
+<div id="screen-suture" class="screen">
+    <div class="wrap">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <button class="btn-triangle" onclick="goTo('menu')">Назад</button>
+            <h2 style="margin:0">Шов</h2>
+        </div>
+        <div class="card-surface" style="text-align:center">
+            <div style="font-size:1.3rem;margin-bottom:6px">&#129529;</div>
+            <div class="row">
+                <span class="label">Слизь</span><span class="val" style="color:#9b59b6" id="suture-slime">0</span>
+            </div>
+            <div class="row mt8">
+                <span class="label">Ядра</span><span class="val" style="color:#e67e22" id="suture-cores">0</span>
+            </div>
+        </div>
+        <div class="card-surface mt8" style="color:var(--muted);font-size:0.82rem;text-align:center">
+            В разработке - здесь будут товары за Слизь и Ядра.
+        </div>
+    </div>
+</div>
+
+<!-- ========== SCREEN: RUN-SHOP (Магазин на Карте - внутри забега) ========== -->
+<div id="screen-run-shop" class="screen">
+    <div class="wrap">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <button class="btn-triangle" onclick="leaveRunShop()">Выйти</button>
+            <h2 style="margin:0">Поставщик</h2>
+        </div>
+        <div class="card-surface">
+            <div class="row"><span class="label">Кредиты</span><span class="val val-gold" id="run-shop-credits">0</span></div>
+        </div>
+        <div class="run-shop-grid" id="run-shop-grid"></div>
+        <div class="run-shop-item">
+            <div class="item-info-panel" id="run-shop-info">Выберите товар для просмотра</div>
+        </div>
+        <div class="btn-diamond-wrap">
+            <button class="btn-diamond" id="btn-run-shop-buy" onclick="doRunShopBuy()" disabled>
+                <span class="diamond-label">Купить</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- ========== SCREEN: REST ========== -->
 <div id="screen-rest" class="screen">
     <div class="wrap">
@@ -434,8 +666,8 @@
             <p style="font-size:0.85rem;color:var(--muted);line-height:1.6">Выберите действие:</p>
         </div>
         <div id="rest-choices">
-            <button class="btn btn-success btn-block mb8" onclick="restSleep()">Сон (восстановить 30% HP)</button>
-            <button class="btn btn-primary btn-block mb8" onclick="restUpgrade()">Заточка ножей (улучшить карту)</button>
+            <button class="btn btn-primary btn-block mb8" onclick="restSleep()">Сон - восстановить 30% HP</button>
+            <button class="btn btn-secondary btn-block mb8" onclick="restUpgrade()">Заточка ножей - улучшить карту</button>
         </div>
         <div id="rest-upgrade-ui" style="display:none">
             <p class="label mb8">Выберите карту для улучшения (+3 урона/блока):</p>
@@ -579,12 +811,24 @@ function hideCardTooltip() {
 
 function goTo(screenId) {
     document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-    document.getElementById("screen-" + screenId).classList.add("active");
+    const el = document.getElementById("screen-" + screenId);
+    if (!el) return;
+    el.classList.add("active");
     if (screenId === "menu") loadProfile();
     if (screenId === "shop") loadShop();
     if (screenId === "cart") loadInventory();
     if (screenId === "upgrades") loadUpgrades();
     if (screenId === "map") renderMap();
+    if (screenId === "suture") loadSuture();
+    if (screenId === "run-shop") loadRunShop();
+}
+
+function showComboToast(msg) {
+    const toast = document.createElement("div");
+    toast.className = "combo-toast";
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2600);
 }
 
 function log(msg, cls = "log-system") {
@@ -800,36 +1044,34 @@ async function loadInventory() {
         el.innerHTML = "";
         if (!items.length) { el.innerHTML = '<div style="color:var(--muted);font-size:0.8rem">Инвентарь пуст. Победите врагов для получения ингредиентов.</div>'; return; }
         for (const item of items) {
-            const row = document.createElement("div");
-            row.className = "inv-item";
-            row.dataset.id = item.ingredient_id;
-            row.innerHTML =
-                '<div><div class="inv-item-name">' + item.ingredient_name + '</div><div class="inv-item-qty">x' + item.quantity + '</div></div>' +
-                '<div class="inv-item-check"></div>';
-            row.onclick = () => toggleIngredient(item.ingredient_id, row);
-            el.appendChild(row);
+            const btn = document.createElement("button");
+            btn.className = "btn-square";
+            btn.dataset.id = item.ingredient_id;
+            btn.innerHTML = '<div style="font-size:0.7rem;font-weight:700">' + item.ingredient_name + '</div>' +
+                '<div style="font-size:0.65rem;color:var(--muted)">x' + item.quantity + '</div>';
+            btn.onclick = () => toggleIngredient(item.ingredient_id, btn);
+            el.appendChild(btn);
         }
     } catch (e) { console.error(e); }
 }
 
-function toggleIngredient(id, row) {
+function toggleIngredient(id, btn) {
     const idx = selectedIngredients.indexOf(id);
     if (idx >= 0) {
         selectedIngredients.splice(idx, 1);
-        row.classList.remove("selected");
-        row.querySelector(".inv-item-check").textContent = "";
+        btn.classList.remove("selected");
     } else {
         if (selectedIngredients.length >= 3) return;
         selectedIngredients.push(id);
-        row.classList.add("selected");
-        row.querySelector(".inv-item-check").textContent = "\u2713";
+        btn.classList.add("selected");
     }
     updateCraftBtn();
 }
 
 function updateCraftBtn() {
     const btn = document.getElementById("btn-craft");
-    btn.textContent = "Приготовить блюдо (" + selectedIngredients.length + "/3)";
+    const count = document.getElementById("craft-count");
+    if (count) count.textContent = selectedIngredients.length + "/3";
     btn.disabled = selectedIngredients.length === 0;
 }
 
@@ -932,9 +1174,8 @@ async function goToNode(nodeIndex) {
             goTo("rest");
             initRestUI();
         } else if (data.node.node_type === "shop") {
-            log("Магазин Поставщика", "log-system");
-            goTo("shop");
-            loadShop();
+            log("Склад Поставщика (в забеге)", "log-system");
+            goTo("run-shop");
         } else if (data.node.node_type === "treasure" && currentRun.reward_phase) {
             renderMap();
         } else if (currentRun.battle && !currentRun.battle.finished) {
@@ -954,6 +1195,88 @@ async function abandonRun() {
         currentRun = null;
         goTo("menu");
     } catch (e) { alert("Ошибка сети"); }
+}
+
+/* ===== SUTURE ===== */
+async function loadSuture() {
+    // Заглушка - в разработке
+    // Здесь будет загрузка мета-валюты (Слизь, Ядра)
+}
+
+/* ===== RUN-SHOP (Магазин на Карте) ===== */
+let runShopItems = [];
+let runShopSelected = null;
+
+async function loadRunShop() {
+    runShopSelected = null;
+    const buyBtn = document.getElementById("btn-run-shop-buy");
+    if (buyBtn) buyBtn.disabled = true;
+    const infoEl = document.getElementById("run-shop-info");
+    if (infoEl) { infoEl.textContent = "Выберите товар для просмотра"; infoEl.classList.remove("has-item"); }
+
+    try {
+        const [itemsRes, profileRes] = await Promise.all([
+            fetch(API + "/shop/items", { headers: headers() }),
+            fetch(API + "/user/profile", { headers: headers() })
+        ]);
+        runShopItems = await itemsRes.json();
+        const profile = profileRes.ok ? await profileRes.json() : null;
+        if (profile) document.getElementById("run-shop-credits").textContent = profile.credits;
+
+        const grid = document.getElementById("run-shop-grid");
+        grid.innerHTML = "";
+        for (const item of runShopItems) {
+            const btn = document.createElement("button");
+            btn.className = "btn-square";
+            btn.dataset.itemId = item.id;
+            btn.innerHTML =
+                '<div style="font-size:0.7rem;font-weight:700;text-align:center">' + item.name + '</div>' +
+                '<div style="font-size:0.65rem;color:var(--energy);margin-top:4px">' + item.price + ' кр</div>';
+            btn.onclick = () => selectRunShopItem(item, btn);
+            grid.appendChild(btn);
+        }
+    } catch (e) { console.error(e); }
+}
+
+function selectRunShopItem(item, btnEl) {
+    // Снимаем выделение со всех
+    document.querySelectorAll("#run-shop-grid .btn-square").forEach(b => b.classList.remove("selected"));
+    btnEl.classList.add("selected");
+    runShopSelected = item;
+
+    const infoEl = document.getElementById("run-shop-info");
+    infoEl.classList.add("has-item");
+    infoEl.innerHTML =
+        '<b>' + item.name + '</b>' +
+        '<div style="margin-top:4px;color:var(--muted)">' + (item.description || "") + '</div>' +
+        '<div style="margin-top:4px;color:var(--energy);font-weight:700">' + item.price + ' кредитов</div>';
+
+    const buyBtn = document.getElementById("btn-run-shop-buy");
+    if (buyBtn) buyBtn.disabled = false;
+}
+
+async function doRunShopBuy() {
+    if (!runShopSelected) return;
+    try {
+        const res = await fetch(API + "/shop/buy", {
+            method: "POST", headers: headers(),
+            body: JSON.stringify({ item_id: runShopSelected.id })
+        });
+        const data = await res.json();
+        if (!res.ok) { alert(data.detail || "Ошибка"); return; }
+        document.getElementById("run-shop-credits").textContent = data.credits;
+        showComboToast("Куплено: " + runShopSelected.name);
+        runShopSelected = null;
+        document.getElementById("btn-run-shop-buy").disabled = true;
+        document.getElementById("run-shop-info").textContent = "Выберите товар для просмотра";
+        document.getElementById("run-shop-info").classList.remove("has-item");
+        document.querySelectorAll("#run-shop-grid .btn-square").forEach(b => b.classList.remove("selected"));
+    } catch (e) { alert("Ошибка сети"); }
+}
+
+async function leaveRunShop() {
+    goTo("map");
+    renderMap();
 }
 
 /* ===== EVENT ===== */
@@ -1350,6 +1673,10 @@ async function playCard(handIndex) {
         }
 
         log(data.message, "log-player");
+        // Показываем toast при взрыве комбо вкусов
+        if (data.combo_messages && data.combo_messages.length > 0) {
+            data.combo_messages.forEach((m, i) => setTimeout(() => showComboToast(m), i * 500));
+        }
         handleBattleResult(data);
     } catch (e) { log("Ошибка сети: " + e.message, "log-enemy"); }
 }
@@ -1458,6 +1785,6 @@ if (window.Telegram && window.Telegram.WebApp) {
 }
 loadProfile();
 </script>
-<script src="map.js"></script>
+<script src="map.js?v=39"></script>
 </body>
 </html>

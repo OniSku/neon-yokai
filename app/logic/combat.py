@@ -336,28 +336,23 @@ async def execute_card(
                 state.discard_pile.append(state.hand.pop(0))
 
     # Система Комбо Вкусов - добавляем стаки и проверяем взрыв
-    combo_messages: list[str] = []
+    state.last_combo_messages = []
     exploded = await _add_combo_stack(state, card.tags)
     if exploded:
         msg = await _explode_combo(state, exploded)
         if msg:
-            combo_messages.append(msg)
+            state.last_combo_messages.append(msg)
             # Если один вкус взорвался, другие тоже могли достичь порога
             # Проверяем все вкусы еще раз
             for flavor in FLAVOR_TAGS:
                 threshold = COMBO_THRESHOLD_WITH_CHARGE if state.combo_charges > 0 else COMBO_THRESHOLD
                 if state.combo_stacks[flavor] >= threshold:
-                    msg = await _explode_combo(state, flavor)
-                    if msg:
-                        combo_messages.append(msg)
+                    msg2 = await _explode_combo(state, flavor)
+                    if msg2:
+                        state.last_combo_messages.append(msg2)
 
     _sync_primary_enemy(state)
     await check_battle_end(state)
-
-    # Сохраняем сообщения комбо в карте для передачи на фронт
-    if combo_messages:
-        card.combo_messages = combo_messages  # type: ignore[attr-defined]
-
     return card
 
 

@@ -95,6 +95,7 @@ class BattleState(BaseModel):
         "HOT": 0, "SOUR": 0, "SWEET": 0, "BITTER": 0, "SALTY": 0
     })
     combo_charges: int = 0  # Заряды от готовки (снижают порог с 4 до 3)
+    last_combo_messages: list[str] = Field(default_factory=list)  # Сообщения последнего хода
 
 
 class EnemySlot(BaseModel):

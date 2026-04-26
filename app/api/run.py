@@ -327,8 +327,9 @@ async def run_action(
                 await apply_interest(session, user)
         await save_run_state(session, run)
 
-        # Получаем сообщения о комбо из карты
-        combo_msgs = getattr(card, "combo_messages", []) or []
+        # Получаем сообщения о комбо из стейта боя
+        combo_msgs = state.last_combo_messages[:]
+        state.last_combo_messages = []
 
         return RunActionResponse(
             message=f"Сыграна: {card.name}",
