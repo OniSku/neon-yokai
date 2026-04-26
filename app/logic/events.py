@@ -32,7 +32,7 @@ SCENARIOS: list[dict] = [
             {
                 "choice_id": "pry",
                 "label": "Вскрыть",
-                "description": "Нужна атакующая карта с cost 0; +30 кредитов",
+                "description": "Нужна карта с cost 0 в колоде - +30 кредитов",
                 "cost_type": "none",
                 "cost_value": 0,
             },
@@ -289,8 +289,24 @@ async def resolve_event_choice(
             else:
                 msg = "Автомат загудел, но ничего не выпало. -5 HP"
         elif choice_id == "pry":
-            credits_delta = 30
-            msg = "Вы вскрыли автомат! +30 кредитов"
+            # Проверяем наличие карты с cost=0 в колоде забега
+            from app.models.user_deck_card import UserDeckCard
+            udc_res = await session.execute(
+                select(UserDeckCard).where(UserDeckCard.user_id == run.user_id)
+            )
+            all_udc = list(udc_res.scalars().all())
+            has_zero_cost = False
+            for udc in all_udc:
+                card_res = await session.execute(select(Card).where(Card.id == udc.card_id))
+                c = card_res.scalar_one_or_none()
+                if c and c.cost == 0:
+                    has_zero_cost = True
+                    break
+            if has_zero_cost:
+                credits_delta = 30
+                msg = "Быстрый удар изолентой картой! Автомат сломался. +30 кредитов"
+            else:
+                msg = "Нет нужной карты. Автомат не поддался."
         elif choice_id == "ignore":
             msg = "Вы прошли мимо."
 

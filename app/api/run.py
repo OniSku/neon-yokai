@@ -764,11 +764,16 @@ async def event_choice_endpoint(
 
     # Handle special event signals
     if msg == "FIGHT_ELITE":
+        # Ищем паттерн Гаки как основу для Коллектора-Элиты
+        elite_enemy_res = await session.execute(select(Enemy).where(Enemy.name == "Голодный Гаки"))
+        elite_enemy = elite_enemy_res.scalar_one_or_none()
+        elite_id = elite_enemy.id if elite_enemy else None
         node = _find_node(run)
         node.node_type = "elite"
+        node.enemy_id = elite_id
         node.enemy_name = "Коллектор-Элита"
-        node.enemy_hp = 100
-        node.enemies = [EnemySlot(enemy_id=None, name="Коллектор-Элита", hp=100, max_hp=100)]
+        node.enemy_hp = 80
+        node.enemies = [EnemySlot(enemy_id=elite_id, name="Коллектор-Элита", hp=80, max_hp=80)]
         run.active_event = None
         await _start_node_battle(session, run, user.debt_level, max_hp=max_hp, suture_relics=user.suture_relics or [])
         await save_run_state(session, run)
@@ -780,11 +785,15 @@ async def event_choice_endpoint(
 
     if msg == "FIGHT_BOSS_LEGENDARY":
         from app.logic.events import _random_artifact
+        boss_res = await session.execute(select(Enemy).where(Enemy.name == "Нурарихён"))
+        boss_enemy = boss_res.scalar_one_or_none()
+        boss_id = boss_enemy.id if boss_enemy else None
         node = _find_node(run)
         node.node_type = "boss"
+        node.enemy_id = boss_id
         node.enemy_name = "Нурарихён"
         node.enemy_hp = 250
-        node.enemies = [EnemySlot(enemy_id=None, name="Нурарихён", hp=250, max_hp=250)]
+        node.enemies = [EnemySlot(enemy_id=boss_id, name="Нурарихён", hp=250, max_hp=250)]
         run.active_event = None
         await _start_node_battle(session, run, user.debt_level, max_hp=max_hp, suture_relics=user.suture_relics or [])
         leg_art = await _random_artifact(session, rarity="legendary")
