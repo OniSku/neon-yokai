@@ -1025,16 +1025,14 @@ function headers() {
     };
 }
 
-const DTYPE_RU = { slashing: "Режущий", piercing: "Колющий", blunt: "Дробящий", none: "" };
 const RARITY_RU = { common: "Обычная", rare: "Редкая", epic: "Эпическая", legendary: "Легендарная" };
 const CTYPE_RU = { attack: "Атака", skill: "Навык", curse: "Проклятие" };
 
 function buildCardDesc(card) {
     const t = CTYPE_RU[card.type] || card.type;
-    const dt = DTYPE_RU[card.damage_type] || card.damage_type;
     let desc = t;
-    if (card.type === "attack") desc += ": наносит " + card.power + " урона" + (dt ? " (" + dt + ")" : "");
-    else if (card.type === "skill") desc += ": +" + card.power + " блок" + (dt && dt !== "" ? " (" + dt + " парирование)" : "");
+    if (card.type === "attack") desc += ": наносит " + card.power + " урона";
+    else if (card.type === "skill") desc += ": +" + card.power + " блок";
     else if (card.type === "curse") desc = "Проклятие: нельзя разыграть, засоряет руку";
     if (card.tags && card.tags.length) {
         const vis = card.tags.filter(t => !t.startsWith("DRAW_") && !t.startsWith("DISCARD_") && t !== "AOE");
@@ -1666,7 +1664,7 @@ async function _applyArenaMedia() {
 function initBattleUI() {
     document.getElementById("log").innerHTML = "";
     if (!currentRun || !currentRun.battle) return;
-    selectedTarget = currentRun.battle.target_index || 0;
+    selectedTarget = 0;
     const comboEl = document.getElementById("combo-effects");
     comboEl.innerHTML = "";
     if (currentRun.combo_effects && currentRun.combo_effects.length) {
@@ -1681,7 +1679,6 @@ function initBattleUI() {
     }
     renderArtifacts();
     prevPlayerHp = currentRun.battle.player.hp;
-    prevEnemyHp = currentRun.battle.enemy ? currentRun.battle.enemy.hp : 0;
     log("Бой начался", "log-system");
     _applyArenaMedia();
     updateBattleUI(currentRun.battle);
@@ -1770,7 +1767,6 @@ function triggerShake() {
 }
 
 let prevPlayerHp = null;
-let prevEnemyHp = null;
 
 const FLAVOR_TAGS_LIST = ["HOT", "SOUR", "SWEET", "BITTER", "SALTY"];
 const INTENT_ICONS = {attack: "⚔", defend: "🛡", buff: "✨", debuff: "✨", steal: "💰"};
@@ -1851,17 +1847,16 @@ function updateBattleUI(state) {
 
     document.getElementById("player-hp-text").textContent = p.hp + "/" + p.max_hp;
     document.getElementById("player-block-text").textContent = p.block || 0;
-    document.getElementById("player-energy-text").textContent = p.energy + "/" + p.max_energy;
+    document.getElementById("player-energy-text").textContent = (p.energy || 0) + "/" + (p.max_energy || 3);
     renderBuffs("player-buffs", p.buffs || []);
 
     // --- Комбо счётчики ---
-    if (state.combo_stacks) {
-        document.getElementById("cs-hot").textContent = state.combo_stacks.HOT || 0;
-        document.getElementById("cs-sour").textContent = state.combo_stacks.SOUR || 0;
-        document.getElementById("cs-sweet").textContent = state.combo_stacks.SWEET || 0;
-        document.getElementById("cs-bitter").textContent = state.combo_stacks.BITTER || 0;
-        document.getElementById("cs-salty").textContent = state.combo_stacks.SALTY || 0;
-    }
+    const cs = state.combo_stacks || {};
+    document.getElementById("cs-hot").textContent = cs.HOT || 0;
+    document.getElementById("cs-sour").textContent = cs.SOUR || 0;
+    document.getElementById("cs-sweet").textContent = cs.SWEET || 0;
+    document.getElementById("cs-bitter").textContent = cs.BITTER || 0;
+    document.getElementById("cs-salty").textContent = cs.SALTY || 0;
 
     // --- Рука: arena-card ---
     const handEl = document.getElementById("hand");
@@ -1955,7 +1950,8 @@ function handleBattleResult(data) {
         } else {
             text.textContent = "ПОРАЖЕНИЕ";
             text.style.color = "var(--accent)";
-            lootEl.textContent = "50% кредитов сожжено";
+            const rem = currentRun && currentRun.user_credits !== undefined ? currentRun.user_credits : "?";
+            lootEl.textContent = "50% кредитов сожжено. Остаток: " + rem + " кр";
         }
         overlay.classList.add("active");
     }
@@ -1985,7 +1981,8 @@ async function loadRewards() {
             btn.className = "card-btn rarity-" + rarity;
             btn.onclick = () => claimReward(card.card_id);
             const typeLabel = card.type === "attack" ? "АТК " + card.power : "ЗАЩ " + card.power;
-            const tags = card.tags && card.tags.length ? card.tags.filter(t => !t.startsWith("DRAW_") && !t.startsWith("DISCARD_")).join(", ") : "";
+            const rawTags = Array.isArray(card.tags) ? card.tags : (card.tags ? String(card.tags).split(",") : []);
+            const tags = rawTags.filter(t => !t.startsWith("DRAW_") && !t.startsWith("DISCARD_")).join(", ");
             const rarityRu = RARITY_RU[rarity] || rarity;
             btn.innerHTML =
                 '<div class="card-cost">' + card.cost + '</div>' +
@@ -2143,6 +2140,6 @@ if (window.Telegram && window.Telegram.WebApp) {
 }
 loadProfile();
 </script>
-<script src="map.js?v=40.7_final"></script>
+<script src="map.js?v=40.9"></script>
 </body>
 </html>

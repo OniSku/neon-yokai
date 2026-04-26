@@ -336,6 +336,7 @@ async def run_action(
                 # Игрок умер - сжигаем 50% кредитов, долг и мета-валюта не трогаются
                 run.run_finished = True
                 user.credits = user.credits // 2
+                run.user_credits = user.credits
                 await apply_interest(session, user)
         await save_run_state(session, run)
 
@@ -373,6 +374,7 @@ async def run_action(
                 run.run_finished = True
                 is_dead = True
                 user.credits = user.credits // 2
+                run.user_credits = user.credits
                 await apply_interest(session, user)
         await save_run_state(session, run)
         return RunActionResponse(
