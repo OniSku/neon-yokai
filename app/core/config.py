@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "NeonYokai"
     DEBUG: bool = False
+    DEV_MODE: bool = True  # Разрешить токен "dev_mode" для тестов вне Telegram
 
     BOT_TOKEN: str = ""
 

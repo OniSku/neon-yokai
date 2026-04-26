@@ -10,10 +10,27 @@ from app.core.security import validate_init_data
 from app.models.user import User
 
 
+DEV_TELEGRAM_ID: int = 123456789
+DEV_USERNAME: str = "dev_tester"
+
+
 async def get_current_user(
     x_init_data: str = Header(..., alias="X-Init-Data"),
     session: AsyncSession = Depends(get_session),
 ) -> User:
+    # Режим разработчика - обход валидации Telegram
+    if settings.DEV_MODE and x_init_data == "dev_mode":
+        result = await session.execute(
+            select(User).where(User.telegram_id == DEV_TELEGRAM_ID)
+        )
+        user = result.scalar_one_or_none()
+        if user is None:
+            user = User(telegram_id=DEV_TELEGRAM_ID, username=DEV_USERNAME)
+            session.add(user)
+            await session.commit()
+            await session.refresh(user)
+        return user
+
     validated = validate_init_data(x_init_data, settings.BOT_TOKEN)
 
     user_data_raw = validated.get("user")

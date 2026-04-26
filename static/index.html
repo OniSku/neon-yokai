@@ -672,7 +672,7 @@
             <button class="btn btn-secondary btn-block mb8" onclick="restUpgrade()">Заточка ножей - улучшить карту</button>
         </div>
         <div id="rest-upgrade-ui" style="display:none">
-            <p class="label mb8">Выберите карту для улучшения (+3 урона/блока):</p>
+            <p class="label mb8">Выберите карту для улучшения (x1.5 урона/блока):</p>
             <div id="rest-upgrade-cards" class="card-list"></div>
             <button class="btn btn-muted btn-block mt8" onclick="restCancelUpgrade()">Отмена</button>
         </div>
@@ -762,7 +762,8 @@ function getInitData() {
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
         return window.Telegram.WebApp.initData;
     }
-    return "";
+    // Режим разработчика - обход авторизации вне Telegram
+    return "dev_mode";
 }
 
 function headers() {
@@ -895,14 +896,14 @@ async function loadUpgrades() {
                 '<div class="upgrade-pips">' + pips + '</div>' +
                 '<div class="upgrade-cost">Цена: ' + costText + '</div>' +
                 (maxed ? '' : '<button class="btn btn-block mt8 ' + (canAfford ? 'btn-primary' : 'btn-muted') + '" ' +
-                    (canAfford ? 'onclick="doUpgrade(\'' + key + '\')"' : 'disabled') +
+                    (canAfford ? 'onclick="doCartUpgrade(\'' + key + '\')"' : 'disabled') +
                     '>Улучшить</button>');
             el.appendChild(div);
         }
     } catch (e) { console.error(e); }
 }
 
-async function doUpgrade(branch) {
+async function doCartUpgrade(branch) {
     try {
         const res = await fetch(API + "/hub/cart/upgrade", {
             method: "POST",
@@ -1794,6 +1795,6 @@ if (window.Telegram && window.Telegram.WebApp) {
 }
 loadProfile();
 </script>
-<script src="map.js?v=40"></script>
+<script src="map.js?v=40.5"></script>
 </body>
 </html>
