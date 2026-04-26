@@ -79,16 +79,29 @@ async def buy_item(
     user.credits -= final_price
 
     if item.category == "ingredient" and item.payload:
-        # - Ищем ингредиент по имени из payload
+        import random as _rnd
         payload = json.loads(item.payload)
         ing_name = payload.get("ingredient_name")
+        ing_random = payload.get("ingredient_random")
         inv_limit = get_inventory_limit(user)
         current_count = await get_total_ingredient_count(session, user.id)
-        if current_count < inv_limit and ing_name:
-            ing_result = await session.execute(
-                select(Ingredient).where(Ingredient.name == ing_name)
-            )
-            ingredient = ing_result.scalar_one_or_none()
+
+        if current_count < inv_limit:
+            ingredient = None
+            if ing_name:
+                # - Конкретный ингредиент по имени
+                ing_result = await session.execute(
+                    select(Ingredient).where(Ingredient.name == ing_name)
+                )
+                ingredient = ing_result.scalar_one_or_none()
+            elif ing_random == "natural":
+                # - Рандомный натуральный ингредиент (is_synthetic=False)
+                ing_result = await session.execute(
+                    select(Ingredient).where(Ingredient.is_synthetic == False)
+                )
+                pool = list(ing_result.scalars().all())
+                ingredient = _rnd.choice(pool) if pool else None
+
             if ingredient:
                 inv_result = await session.execute(
                     select(InventoryItem).where(

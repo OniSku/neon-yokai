@@ -1629,22 +1629,23 @@ async function loadInventory() {
                 '<div class="ir-name">' + item.ingredient_name + '</div>' +
                 pipsHtml +
                 '<div class="ir-qty">x' + item.quantity + '</div>';
-            row.onclick = () => toggleIngredient(item.ingredient_id, row);
+            row.onclick = () => toggleIngredient(item, row);
             el.appendChild(row);
         }
     } catch (e) { console.error(e); }
 }
 
-function toggleIngredient(id, row) {
-    const idx = selectedIngredients.indexOf(id);
-    if (idx >= 0) {
-        selectedIngredients.splice(idx, 1);
-        row.classList.remove("selected");
-    } else {
-        if (selectedIngredients.length >= 3) return;
-        selectedIngredients.push(id);
-        row.classList.add("selected");
-    }
+function toggleIngredient(item, row) {
+    const id = typeof item === "object" ? item.ingredient_id : item;
+    const available = typeof item === "object" ? (item.quantity || 1) : 1;
+    if (selectedIngredients.length >= 3) return;
+    // - Считаем сколько раз уже добавлен этот ингредиент
+    const alreadyUsed = selectedIngredients.filter(x => x === id).length;
+    if (alreadyUsed >= available) return;
+    selectedIngredients.push(id);
+    // - Подсвечиваем когда всё количество использовано
+    const nowUsed = selectedIngredients.filter(x => x === id).length;
+    if (nowUsed >= available) row.classList.add("selected");
     updateCraftBtn();
     updateCraftSlots();
     updateCraftPreview();
@@ -2893,20 +2894,21 @@ function restRenderCookList() {
 }
 
 function restToggleIngredient(item, row) {
-    const key = item.source + "_" + item.ingredient_id;
-    const idx = restCookSelected.findIndex(s => s.key === key);
-    if (idx >= 0) {
-        restCookSelected.splice(idx, 1);
-        row.classList.remove("selected");
-    } else {
-        if (restCookSelected.length >= 3) return;
-        // - нельзя добавить один и тот же ингредиент из того же источника дважды
-        const alreadyUsed = restCookSelected.filter(s => s.source === item.source && s.ingredient_id === item.ingredient_id).length;
-        const available = item.quantity || 1;
-        if (alreadyUsed >= available) return;
-        restCookSelected.push({ key: item.source + "_" + item.ingredient_id + "_" + alreadyUsed, ingredient_id: item.ingredient_id, source: item.source, name: item.ingredient_name, flavor_profile: item.flavor_profile });
-        row.classList.add("selected");
-    }
+    if (restCookSelected.length >= 3) return;
+    // - Считаем сколько раз этот ингредиент уже добавлен
+    const alreadyUsed = restCookSelected.filter(
+        s => s.source === item.source && s.ingredient_id === item.ingredient_id
+    ).length;
+    const available = item.quantity || 1;
+    if (alreadyUsed >= available) return;  // - нельзя добавить больше чем есть в запасе
+    // - Уникальный ключ с порядковым номером копии
+    const key = item.source + "_" + item.ingredient_id + "_" + alreadyUsed;
+    restCookSelected.push({ key, ingredient_id: item.ingredient_id, source: item.source, name: item.ingredient_name, flavor_profile: item.flavor_profile });
+    // - Подсвечиваем строку если всё количество использовано
+    const nowUsed = restCookSelected.filter(
+        s => s.source === item.source && s.ingredient_id === item.ingredient_id
+    ).length;
+    if (nowUsed >= available) row.classList.add("selected");
     restUpdateCookSlots();
     restUpdateCookBtn();
     restUpdateCookPreview();

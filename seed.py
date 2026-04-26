@@ -534,28 +534,13 @@ SHOP_ITEMS: list[dict] = [
         "category": "ingredient",
         "payload": '{"ingredient_name": "Глитч-корень"}',
     },
-    # === Расходники ===
+    # === Специальные наборы ===
     {
-        "name": "Паёк коллектора",
-        "description": "Аптечка. Восстанавливает 20 HP немедленно.",
+        "name": "Набор острых специй",
+        "description": "Случайный натуральный ингредиент HOT или SOUR профиля. Рандом из запасов.",
         "price": 30,
-        "category": "consumable",
-        "payload": '{"heal": 20}',
-    },
-    {
-        "name": "Прошивка чипа v.2",
-        "description": "+1 энергии на первый бой следующего забега.",
-        "price": 40,
-        "category": "consumable",
-        "payload": '{"bonus_energy_first_fight": 1}',
-    },
-    # === Услуги ===
-    {
-        "name": "Забыть лишнее",
-        "description": "Сжечь карту из колоды. Цена растёт за забег: 50, 75, 100...",
-        "price": 50,
-        "category": "remove_card",
-        "payload": '{"base_price": 50, "price_step": 25}',
+        "category": "ingredient",
+        "payload": '{"ingredient_random": "natural"}',
     },
     # === Инструмент (артефакт) ===
     {
