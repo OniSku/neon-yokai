@@ -188,3 +188,4 @@ class RunState(BaseModel):
     rest_choice_pending: bool = False
     user_credits: int = 0
     seen_event_ids: list[str] = Field(default_factory=list)
+    run_ingredients: list[dict] = Field(default_factory=list)

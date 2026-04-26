@@ -1075,18 +1075,62 @@
 <!-- ========== SCREEN: REST ========== -->
 <div id="screen-rest" class="screen">
     <div class="wrap">
-        <h2 style="color:var(--neon3)">Тележка повара</h2>
+        <h2 style="color:var(--neon3)">\ud83d\uded6 Тележка повара</h2>
         <div class="card-surface mb8">
-            <p style="font-size:0.85rem;color:var(--muted);line-height:1.6">Выберите действие:</p>
+            <p style="font-size:0.85rem;color:var(--muted);line-height:1.6">Привал. Выберите одно действие:</p>
         </div>
-        <div id="rest-choices">
-            <button class="btn btn-primary btn-block mb8" onclick="restSleep()">Сон - восстановить 30% HP</button>
-            <button class="btn btn-secondary btn-block mb8" onclick="restUpgrade()">Заточка ножей - улучшить карту</button>
+
+        <!-- Основные кнопки выбора -->
+        <div id="rest-choices" style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-primary btn-block" onclick="restSleep()" style="height:56px">
+                \ud83d\udca4 <b>Сон</b> - восстановить 30% HP
+            </button>
+            <button class="btn btn-secondary btn-block" onclick="restUpgrade()" style="height:56px">
+                \u2694\ufe0f <b>Заточка ножей</b> - улучшить карту колоды
+            </button>
+            <button class="btn btn-block" onclick="restCook()" style="height:56px;background:rgba(255,150,0,0.15);border:1px solid rgba(255,150,0,0.4);color:#ffaa44">
+                \ud83c\udf73 <b>Готовка</b> - сварить блюдо для следующего боя
+            </button>
         </div>
+
+        <!-- Улучшение карты -->
         <div id="rest-upgrade-ui" style="display:none">
-            <p class="label mb8">Выберите карту для улучшения (x1.5 урона/блока):</p>
+            <p class="label mb8">Выберите карту для улучшения:</p>
             <div id="rest-upgrade-cards" class="card-list"></div>
             <button class="btn btn-muted btn-block mt8" onclick="restCancelUpgrade()">Отмена</button>
+        </div>
+
+        <!-- Готовка на привале -->
+        <div id="rest-cook-ui" style="display:none">
+            <div class="card-surface" style="margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <span class="label">\ud83e\uddc0 Ингредиенты</span>
+                    <span style="font-size:0.7rem;color:var(--muted)">Выбрано: <span id="rest-cook-count" style="color:var(--neon)">0</span>/3</span>
+                </div>
+                <div id="rest-cook-slots" style="display:flex;gap:6px;margin-bottom:10px">
+                    <div class="craft-slot" id="rest-slot-0"></div>
+                    <div class="craft-slot" id="rest-slot-1"></div>
+                    <div class="craft-slot" id="rest-slot-2"></div>
+                </div>
+                <div id="rest-cook-preview" style="display:none;margin-bottom:8px">
+                    <div id="rest-cook-preview-bars"></div>
+                    <div id="rest-cook-preview-hint" style="font-size:0.75rem;color:var(--energy);margin-top:4px"></div>
+                </div>
+                <div id="rest-cook-list" style="display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto"></div>
+            </div>
+            <div id="rest-cook-active-buff" style="display:none;margin-bottom:8px" class="card-surface">
+                <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px">\u26a1 Текущий бафф (будет заменён):</div>
+                <div id="rest-cook-active-buff-text" style="font-size:0.8rem;color:var(--accent)"></div>
+            </div>
+            <button class="btn btn-block mt8" id="btn-rest-cook" onclick="doRestCook()" disabled
+                style="height:52px;font-size:1rem;font-weight:700;background:rgba(255,150,0,0.2);border:1px solid rgba(255,150,0,0.5);color:#ffaa44">
+                \ud83c\udf73 Приготовить блюдо
+            </button>
+            <button class="btn btn-muted btn-block mt8" onclick="restCancelCook()">Отмена</button>
+        </div>
+
+        <div id="rest-result" class="card-surface mt8" style="display:none;border-color:var(--neon)">
+            <div id="rest-result-text" style="font-size:0.85rem;color:var(--neon)"></div>
         </div>
         <button class="btn btn-muted btn-block mt14" id="btn-rest-continue" style="display:none" onclick="restContinue()">Продолжить</button>
     </div>
@@ -2715,8 +2759,10 @@ function closeResult() {
 
 /* ===== REST ===== */
 function initRestUI() {
-    document.getElementById("rest-choices").style.display = "block";
+    document.getElementById("rest-choices").style.display = "flex";
     document.getElementById("rest-upgrade-ui").style.display = "none";
+    document.getElementById("rest-cook-ui").style.display = "none";
+    const rr = document.getElementById("rest-result"); if (rr) rr.style.display = "none";
     document.getElementById("btn-rest-continue").style.display = "none";
 }
 
@@ -2775,7 +2821,179 @@ async function doCardUpgrade(cardId) {
 
 function restCancelUpgrade() {
     document.getElementById("rest-upgrade-ui").style.display = "none";
-    document.getElementById("rest-choices").style.display = "block";
+    document.getElementById("rest-choices").style.display = "flex";
+}
+
+/* --- Готовка на привале --- */
+let restCookSelected = [];  // {ingredient_id, source, name}
+let restCookInventory = []; // загруженные данные
+
+async function restCook() {
+    document.getElementById("rest-choices").style.display = "none";
+    document.getElementById("rest-cook-ui").style.display = "block";
+    restCookSelected = [];
+    restCookInventory = [];
+    restUpdateCookSlots();
+    restUpdateCookBtn();
+    // Показываем текущий бафф если есть
+    const activeBuff = document.getElementById("rest-cook-active-buff");
+    const activeBuffText = document.getElementById("rest-cook-active-buff-text");
+    if (currentRun && currentRun.combo_effects && currentRun.combo_effects.length) {
+        activeBuff.style.display = "block";
+        activeBuffText.textContent = currentRun.combo_effects.map(c => c.name || c).join(", ");
+    } else {
+        activeBuff.style.display = "none";
+    }
+    // Загружаем ингредиенты
+    try {
+        const res = await fetch(API + "/run/ingredients", { headers: headers() });
+        if (!res.ok) { alert("Ошибка загрузки ингредиентов"); return; }
+        const data = await res.json();
+        restCookInventory = data.all || [];
+        restRenderCookList();
+    } catch (e) { alert("Ошибка сети: " + e.message); }
+}
+
+function restRenderCookList() {
+    const el = document.getElementById("rest-cook-list");
+    el.innerHTML = "";
+    if (!restCookInventory.length) {
+        el.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:8px">Нет ингредиентов - победите врагов или возьмите из хаба.</div>';
+        return;
+    }
+    const FLAVOR_COLORS = {spicy: "#ff4444", sour: "#44ff44", sweet: "#ff69b4", bitter: "#9944ff", salty: "#4488ff"};
+    const FLAVOR_EMOJI = {spicy: "🌶 Острота", sour: "🍋 Кислота", sweet: "🍯 Сладость", bitter: "☕ Горечь", salty: "🧂 Соль"};
+    for (const item of restCookInventory) {
+        const row = document.createElement("div");
+        row.className = "ingredient-row";
+        row.dataset.id = item.ingredient_id;
+        row.dataset.source = item.source;
+        const profile = item.flavor_profile || {};
+        let pipsHtml = '<div class="ir-flavors">';
+        for (const [fl, val] of Object.entries(profile)) {
+            if (val > 0 && FLAVOR_COLORS[fl]) {
+                const size = Math.min(4 + val * 2, 14);
+                pipsHtml += '<span title="' + (FLAVOR_EMOJI[fl] || fl) + ': ' + val + '" style="display:inline-block;width:' + size + 'px;height:' + size + 'px;border-radius:3px;background:' + FLAVOR_COLORS[fl] + ';opacity:0.85"></span>';
+            }
+        }
+        pipsHtml += '</div>';
+        const srcBadge = item.source === "run" ? '<span style="font-size:0.6rem;color:var(--energy);margin-left:4px">★ забег</span>' : '';
+        row.innerHTML =
+            '<div class="ir-name">' + item.ingredient_name + srcBadge + '</div>' +
+            pipsHtml +
+            '<div class="ir-qty">x' + item.quantity + '</div>';
+        row.onclick = () => restToggleIngredient(item, row);
+        el.appendChild(row);
+    }
+}
+
+function restToggleIngredient(item, row) {
+    const key = item.source + "_" + item.ingredient_id;
+    const idx = restCookSelected.findIndex(s => s.key === key);
+    if (idx >= 0) {
+        restCookSelected.splice(idx, 1);
+        row.classList.remove("selected");
+    } else {
+        if (restCookSelected.length >= 3) return;
+        restCookSelected.push({ key, ingredient_id: item.ingredient_id, source: item.source, name: item.ingredient_name, flavor_profile: item.flavor_profile });
+        row.classList.add("selected");
+    }
+    restUpdateCookSlots();
+    restUpdateCookBtn();
+    restUpdateCookPreview();
+}
+
+function restUpdateCookSlots() {
+    for (let i = 0; i < 3; i++) {
+        const slot = document.getElementById("rest-slot-" + i);
+        if (!slot) continue;
+        const sel = restCookSelected[i];
+        if (sel) {
+            slot.className = "craft-slot filled";
+            slot.innerHTML = '<span class="cs-name">' + sel.name + '</span><span class="cs-remove" onclick="restRemoveSlot(' + i + ')">✕</span>';
+        } else {
+            slot.className = "craft-slot";
+            slot.textContent = (i + 1) + ". Пусто";
+        }
+    }
+    document.getElementById("rest-cook-count").textContent = restCookSelected.length;
+}
+
+function restRemoveSlot(idx) {
+    const sel = restCookSelected[idx];
+    if (!sel) return;
+    restCookSelected.splice(idx, 1);
+    const row = document.querySelector('.ingredient-row[data-id="' + sel.ingredient_id + '"][data-source="' + sel.source + '"]');
+    if (row) row.classList.remove("selected");
+    restUpdateCookSlots();
+    restUpdateCookBtn();
+    restUpdateCookPreview();
+}
+
+function restUpdateCookBtn() {
+    document.getElementById("btn-rest-cook").disabled = restCookSelected.length === 0;
+}
+
+function restUpdateCookPreview() {
+    const preview = document.getElementById("rest-cook-preview");
+    const barsEl = document.getElementById("rest-cook-preview-bars");
+    const hintEl = document.getElementById("rest-cook-preview-hint");
+    if (!restCookSelected.length) { preview.style.display = "none"; return; }
+    preview.style.display = "block";
+    const totals = {spicy: 0, sour: 0, sweet: 0, bitter: 0, salty: 0};
+    for (const sel of restCookSelected) {
+        const fp = sel.flavor_profile || {};
+        for (const [fl, val] of Object.entries(fp)) { if (fl in totals) totals[fl] += val; }
+    }
+    const FLAVOR_META = [
+        {key: "spicy",  label: "🌶 Острота",  color: "#ff4444", combo: "Ожог всех (8 урона/ход)"},
+        {key: "sour",   label: "🍋 Кислота",  color: "#44ff44", combo: "Уязвимость всем (2 хода)"},
+        {key: "sweet",  label: "🍯 Сладость", color: "#ff69b4", combo: "+6 HP за ход"},
+        {key: "bitter", label: "☕ Горечь",   color: "#9944ff", combo: "+2 энергии за ход"},
+        {key: "salty",  label: "🧂 Соль",     color: "#4488ff", combo: "+8 блока мгновенно"},
+    ];
+    const maxVal = Math.max(...Object.values(totals), 1);
+    let barsHtml = ""; let dominant = null; let domVal = 0;
+    for (const fm of FLAVOR_META) {
+        const v = totals[fm.key];
+        if (!v) continue;
+        const pct = Math.min(Math.round(v / maxVal * 100), 100);
+        barsHtml += '<div class="flavor-bar-row"><span class="flavor-bar-label">' + fm.label + '</span><div class="flavor-bar-track"><div class="flavor-bar-fill" style="width:' + pct + '%;background:' + fm.color + '"></div></div><span style="font-size:0.65rem;color:var(--muted);min-width:16px;text-align:right">' + v + '</span></div>';
+        if (v > domVal) { domVal = v; dominant = fm; }
+    }
+    barsEl.innerHTML = barsHtml;
+    hintEl.textContent = dominant ? "Доминанта: " + dominant.label + " - " + dominant.combo : "";
+}
+
+async function doRestCook() {
+    if (!restCookSelected.length) return;
+    const hubIds = restCookSelected.filter(s => s.source === "hub").map(s => s.ingredient_id);
+    const runIds = restCookSelected.filter(s => s.source === "run").map(s => s.ingredient_id);
+    try {
+        const res = await fetch(API + "/run/rest/cook", {
+            method: "POST", headers: headers(),
+            body: JSON.stringify({ hub_ids: hubIds, run_ids: runIds })
+        });
+        if (!res.ok) { const err = await res.json(); alert(err.detail || "Ошибка"); return; }
+        const data = await res.json();
+        currentRun = data.run;
+        document.getElementById("rest-cook-ui").style.display = "none";
+        const rr = document.getElementById("rest-result");
+        rr.style.display = "block";
+        const FLAVOR_RU = {spicy: "🌶 Острота", sour: "🍋 Кислота", sweet: "🍯 Сладость", bitter: "☕ Горечь", salty: "🧂 Соль"};
+        const r = data.result;
+        const domFl = r ? r.dominant_flavor : null;
+        let html = "✅ Блюдо приготовлено!<br>";
+        if (domFl) html += 'Доминанта: <b>' + (FLAVOR_RU[domFl] || domFl) + '</b><br>';
+        if (data.combo_effects && data.combo_effects.length) html += '⚡ Комбо: <b>' + data.combo_effects.join(", ") + '</b>';
+        document.getElementById("rest-result-text").innerHTML = html;
+        document.getElementById("btn-rest-continue").style.display = "block";
+    } catch (e) { alert("Ошибка сети: " + e.message); }
+}
+
+function restCancelCook() {
+    document.getElementById("rest-cook-ui").style.display = "none";
+    document.getElementById("rest-choices").style.display = "flex";
 }
 
 function restContinue() {

@@ -28,6 +28,9 @@ from app.models.card import Card
 from app.models.enemy import Enemy
 from app.models.user import User
 from app.models.user_deck_card import UserDeckCard
+from app.models.ingredient import Ingredient
+from app.models.inventory_item import InventoryItem
+from app.logic.craft import craft_dish, resolve_combo_effects, sum_ingredient_weights
 from app.schemas.battle import ArtifactInstance, BattleState, Buff, CardInstance, EnemyAction, EnemyState, EnemySlot, Fighter, MapNode, PendingRewards, RunState
 from app.schemas.requests import (
     ActionType,
@@ -1030,5 +1033,136 @@ async def rest_upgrade(
     return {
         "message": "Карта улучшена! +3 к урону или блоку",
         "upgraded_card_id": card_id,
+        "run": run,
+    }
+
+
+@router.get("/ingredients")
+async def get_run_ingredients(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Возвращает ингредиенты доступные в забеге: из хаба (инвентарь) + выбитые в забеге."""
+    run = await load_run_state(session, user.id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="No active run")
+
+    # - Ингредиенты из хаба (постоянный инвентарь)
+    inv_result = await session.execute(
+        select(InventoryItem).where(InventoryItem.user_id == user.id, InventoryItem.quantity > 0)
+    )
+    hub_items = list(inv_result.scalars().all())
+
+    hub_ids = [i.ingredient_id for i in hub_items]
+    ing_result = await session.execute(select(Ingredient).where(Ingredient.id.in_(hub_ids)))
+    ing_map = {i.id: i for i in ing_result.scalars().all()}
+
+    hub_list = []
+    for item in hub_items:
+        ing = ing_map.get(item.ingredient_id)
+        if ing:
+            hub_list.append({
+                "ingredient_id": ing.id,
+                "ingredient_name": ing.name,
+                "quantity": item.quantity,
+                "flavor_profile": ing.flavor_profile,
+                "source": "hub",
+            })
+
+    # - Ингредиенты выбитые в забеге (run_ingredients)
+    run_list = []
+    for ri in (run.run_ingredients or []):
+        if ri.get("quantity", 0) > 0:
+            run_list.append({**ri, "source": "run"})
+
+    return {"hub": hub_list, "run": run_list, "all": hub_list + run_list}
+
+
+@router.post("/rest/cook")
+async def rest_cook(
+    body: dict,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Готовка на отдыхе. Принимает списки hub_ids и run_ids.
+    Заменяет текущие combo_effects новыми. Сбрасывает если бафф уже активен."""
+    run = await load_run_state(session, user.id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="No active run")
+    if not run.rest_choice_pending:
+        raise HTTPException(status_code=400, detail="No rest choice pending")
+
+    hub_ids: list[int] = body.get("hub_ids", [])
+    run_ids: list[int] = body.get("run_ids", [])
+
+    if not hub_ids and not run_ids:
+        raise HTTPException(status_code=400, detail="Выберите хотя бы один ингредиент")
+
+    from collections import Counter
+
+    # - Списываем ингредиенты из хаба
+    hub_counter = Counter(hub_ids)
+    for ing_id, qty in hub_counter.items():
+        inv_res = await session.execute(
+            select(InventoryItem).where(
+                InventoryItem.user_id == user.id,
+                InventoryItem.ingredient_id == ing_id,
+            )
+        )
+        inv_item = inv_res.scalar_one_or_none()
+        if inv_item is None or inv_item.quantity < qty:
+            raise HTTPException(status_code=400, detail=f"Недостаточно ингредиента id={ing_id}")
+        inv_item.quantity -= qty
+
+    # - Списываем ингредиенты из забега
+    run_counter = Counter(run_ids)
+    new_run_ingredients: list[dict] = []
+    for ri in (run.run_ingredients or []):
+        rid = ri.get("ingredient_id")
+        if rid in run_counter:
+            used = min(run_counter[rid], ri.get("quantity", 0))
+            run_counter[rid] -= used
+            remaining = ri.get("quantity", 0) - used
+            if remaining > 0:
+                new_run_ingredients.append({**ri, "quantity": remaining})
+        else:
+            new_run_ingredients.append(ri)
+    for rid, rem in run_counter.items():
+        if rem > 0:
+            raise HTTPException(status_code=400, detail=f"Ингредиент run_id={rid} не найден")
+    run.run_ingredients = new_run_ingredients
+
+    # - Загружаем объекты Ingredient
+    all_ids = hub_ids + run_ids
+    ing_result = await session.execute(
+        select(Ingredient).where(Ingredient.id.in_(set(all_ids)))
+    )
+    ing_map = {i.id: i for i in ing_result.scalars().all()}
+    ingredients = []
+    for iid in all_ids:
+        ing = ing_map.get(iid)
+        if ing:
+            ingredients.append(ing)
+
+    if not ingredients:
+        raise HTTPException(status_code=400, detail="Ингредиенты не найдены в БД")
+
+    # - Варим блюдо и заменяем combo_effects (сбрасываем старый бафф)
+    craft_result = await craft_dish(ingredients, debt_level=user.debt_level)
+    profile = await sum_ingredient_weights(ingredients)
+    combos = await resolve_combo_effects(profile)
+    run.combo_effects = combos  # - замена, а не добавление
+
+    node = _find_node(run)
+    node.completed = True
+    run.rest_choice_pending = False
+
+    await session.commit()
+    await save_run_state(session, run)
+
+    return {
+        "message": f"Блюдо приготовлено! Доминанта: {craft_result.dominant_flavor or 'нет'}",
+        "result": craft_result,
+        "combo_effects": [c.name for c in combos],
         "run": run,
     }
