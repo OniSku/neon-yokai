@@ -1675,9 +1675,9 @@ function selectRunShopItem(item, btnEl) {
 async function doRunShopBuy() {
     if (!runShopSelected) return;
     try {
-        const res = await fetch(API + "/shop/buy", {
+        const res = await fetch(API + "/run/shop/buy", {
             method: "POST", headers: headers(),
-            body: JSON.stringify({ item_id: runShopSelected.id })
+            body: JSON.stringify({ item_id: runShopSelected.id, category: runShopSelected.category })
         });
         const data = await res.json();
         if (!res.ok) { alert(data.detail || "Ошибка"); return; }

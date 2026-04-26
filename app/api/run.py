@@ -495,6 +495,97 @@ async def run_shop_items(
     return items
 
 
+@router.post("/shop/buy")
+async def run_shop_buy(
+    body: dict,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Купить предмет из магазина в забеге: карту, ингредиент или артефакт."""
+    import json as _json
+    from app.models.shop_item import ShopItem
+    from app.models.artifact import Artifact
+    from app.models.user_deck_card import UserDeckCard
+    from app.models.inventory_item import InventoryItem
+    from app.logic.meta import get_shop_discount_async, get_inventory_limit
+    from app.logic.loot import get_total_ingredient_count
+
+    item_id = body.get("item_id")
+    category = body.get("category")
+
+    if not item_id or not category:
+        raise HTTPException(status_code=400, detail="item_id и category обязательны")
+
+    discount = await get_shop_discount_async(session, user)
+
+    if category == "card":
+        card = await session.get(Card, item_id)
+        if card is None:
+            raise HTTPException(status_code=404, detail="Карта не найдена")
+        price = max(1, int(card.power * 5 * (1.0 - discount)))
+        if user.credits < price:
+            raise HTTPException(status_code=402, detail=f"Недостаточно кредитов ({price} нужно, {user.credits} есть)")
+        user.credits -= price
+        deck_result = await session.execute(
+            select(UserDeckCard).where(UserDeckCard.user_id == user.id, UserDeckCard.card_id == card.id)
+        )
+        existing = deck_result.scalar_one_or_none()
+        if existing is None:
+            session.add(UserDeckCard(user_id=user.id, card_id=card.id, quantity=1))
+        else:
+            existing.quantity += 1
+        await session.commit()
+        return {"message": f"Куплено: {card.name}", "credits": user.credits}
+
+    elif category == "ingredient":
+        item = await session.get(ShopItem, item_id)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Ингредиент не найден")
+        price = max(1, int(item.price * (1.0 - discount)))
+        if user.credits < price:
+            raise HTTPException(status_code=402, detail=f"Недостаточно кредитов ({price} нужно, {user.credits} есть)")
+        user.credits -= price
+        if item.payload:
+            payload = _json.loads(item.payload)
+            inv_limit = get_inventory_limit(user)
+            current_count = await get_total_ingredient_count(session, user.id)
+            for ing_id in payload.get("ingredient_ids", []):
+                if current_count >= inv_limit:
+                    break
+                inv_res = await session.execute(
+                    select(InventoryItem).where(InventoryItem.user_id == user.id, InventoryItem.ingredient_id == ing_id)
+                )
+                inv = inv_res.scalar_one_or_none()
+                if inv is None:
+                    session.add(InventoryItem(user_id=user.id, ingredient_id=ing_id, quantity=1))
+                else:
+                    inv.quantity += 1
+                current_count += 1
+        await session.commit()
+        return {"message": f"Куплено: {item.name}", "credits": user.credits}
+
+    elif category == "artifact":
+        art = await session.get(Artifact, item_id)
+        if art is None:
+            raise HTTPException(status_code=404, detail="Артефакт не найден")
+        price = max(1, int(60 * (1.0 - discount)))
+        if user.credits < price:
+            raise HTTPException(status_code=402, detail=f"Недостаточно кредитов ({price} нужно, {user.credits} есть)")
+        # Добавляем артефакт в активный забег
+        run = await load_run_state(session, user.id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="Нет активного забега")
+        art_inst = ArtifactInstance(artifact_id=art.id, name=art.name, description=art.description, rarity=art.rarity, effect_tag=art.effect_tag or "")
+        run.artifacts.append(art_inst)
+        user.credits -= price
+        await save_run_state(session, run)
+        await session.commit()
+        return {"message": f"Куплено: {art.name}", "credits": user.credits}
+
+    else:
+        raise HTTPException(status_code=400, detail=f"Неизвестная категория: {category}")
+
+
 @router.post("/next_node", response_model=NextNodeResponse)
 async def next_node(
     body: NextNodeRequest,
