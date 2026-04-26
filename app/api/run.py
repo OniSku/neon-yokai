@@ -718,7 +718,7 @@ async def claim_reward_endpoint(
         run.artifacts.append(run.pending_rewards.artifact_reward)
 
     inv_limit = get_inventory_limit(user)
-    await claim_rewards(session, user, run.pending_rewards, body.chosen_card_id, inventory_limit=inv_limit)
+    await claim_rewards(session, user, run.pending_rewards, body.chosen_card_id, inventory_limit=inv_limit, run=run)
 
     run.reward_phase = False
     run.pending_rewards = None

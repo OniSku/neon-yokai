@@ -2616,17 +2616,19 @@ async function loadRewards() {
                 const row = document.createElement("div");
                 row.className = "reward-row";
                 row.innerHTML =
-                    '<div class="reward-icon">&#127858;</div>' +
-                    '<div class="reward-label">' + l.name + '</div>' +
+                    '<div class="reward-icon">\ud83e\uddc0</div>' +
+                    '<div class="reward-label">' + (l.ingredient_name || l.name) + '<div style="font-size:0.65rem;color:var(--energy)">\u2605 \u0432 \u0440\u044e\u043a\u0437\u0430\u043a \u0437\u0430\u0431\u0435\u0433\u0430</div></div>' +
                     '<div class="reward-value">x' + l.quantity + '</div>';
                 row.onclick = function() {
                     if (row.classList.contains("claimed")) return;
                     row.classList.add("claimed");
-                    row.querySelector(".reward-value").textContent = "Взято";
+                    row.querySelector(".reward-value").textContent = "\u0412\u0437\u044f\u0442\u043e";
                     _checkAllRewardsClaimed();
                 };
                 list.appendChild(row);
             }
+        } else {
+            // - \u041d\u0435\u0442 \u043b\u0443\u0442\u0430 - \u0432\u0440\u0430\u0433 \u043d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u0443\u0440\u043e\u043d\u0438\u043b
         }
 
         // --- Ряд: выбор карты ---

@@ -13,6 +13,7 @@ from app.schemas.battle import ArtifactInstance, PendingRewards, RewardCard
 
 LOOT_MIN: int = 1
 LOOT_MAX: int = 2
+INGREDIENT_DROP_CHANCE: float = 0.22  # - 22% шанс дропа ингредиента с врага
 
 
 async def get_total_ingredient_count(
@@ -55,14 +56,34 @@ def _card_to_reward(c: Card) -> RewardCard:
 async def _roll_ingredient_loot(
     session: AsyncSession,
     enemy_count: int = 1,
+    force: bool = False,
 ) -> list[dict]:
+    # - Шанс дропа: 22% за врага. Элита/босс - всегда дропают.
+    drop_count = 0
+    for _ in range(enemy_count):
+        if force or random.random() < INGREDIENT_DROP_CHANCE:
+            drop_count += 1
+    if drop_count == 0:
+        return []
     result = await session.execute(select(Ingredient))
     all_ingredients = list(result.scalars().all())
     if not all_ingredients:
         return []
-    count = max(enemy_count, random.randint(LOOT_MIN, LOOT_MAX))
-    chosen = random.choices(all_ingredients, k=count)
-    return [{"ingredient_id": ing.id, "name": ing.name, "quantity": 1} for ing in chosen]
+    qty = random.randint(LOOT_MIN, LOOT_MAX) if drop_count == 1 else random.randint(LOOT_MIN, LOOT_MAX + 1)
+    chosen = random.choices(all_ingredients, k=qty)
+    return [
+        {
+            "ingredient_id": ing.id,
+            "ingredient_name": ing.name,
+            "name": ing.name,
+            "quantity": 1,
+            "flavor_profile": {
+                "spicy": ing.spicy, "sour": ing.sour,
+                "sweet": ing.sweet, "bitter": ing.bitter, "salty": ing.salty,
+            },
+        }
+        for ing in chosen
+    ]
 
 
 async def _roll_reward_cards(
@@ -176,7 +197,9 @@ async def generate_pending_rewards(
     node_type: str = "combat",
     enemy_count: int = 1,
 ) -> PendingRewards:
-    loot = await _roll_ingredient_loot(session, enemy_count=enemy_count)
+    # - Элита и босс гарантированно дропают ингредиенты
+    force_drop = node_type in ("elite", "boss")
+    loot = await _roll_ingredient_loot(session, enemy_count=enemy_count, force=force_drop)
     card_choices = await _roll_reward_cards(session, node_type=node_type)
     if node_type in ("elite", "boss"):
         artifact = await _roll_artifact_reward(session, node_type=node_type)
@@ -199,28 +222,47 @@ async def claim_rewards(
     rewards: PendingRewards,
     chosen_card_id: int | None = None,
     inventory_limit: int = 5,
+    run: "any | None" = None,  # - если передан - лут идёт в run_ingredients, а не в хаб-инвентарь
 ) -> None:
     user.credits += rewards.credits
     user.experience += rewards.experience
 
-    current_count = await get_total_ingredient_count(session, user.id)
-    for item in rewards.loot:
-        if current_count >= inventory_limit:
-            break
-        ing_id = item["ingredient_id"]
-        inv_result = await session.execute(
-            select(InventoryItem).where(
-                InventoryItem.user_id == user.id,
-                InventoryItem.ingredient_id == ing_id,
+    if run is not None:
+        # - Лут идёт в run_ingredients (доступен для готовки на привале)
+        if not hasattr(run, "run_ingredients") or run.run_ingredients is None:
+            run.run_ingredients = []
+        for item in rewards.loot:
+            ing_id = item["ingredient_id"]
+            existing = next((r for r in run.run_ingredients if r.get("ingredient_id") == ing_id), None)
+            if existing:
+                existing["quantity"] = existing.get("quantity", 0) + 1
+            else:
+                run.run_ingredients.append({
+                    "ingredient_id": ing_id,
+                    "ingredient_name": item.get("ingredient_name") or item.get("name", str(ing_id)),
+                    "quantity": 1,
+                    "flavor_profile": item.get("flavor_profile"),
+                })
+    else:
+        # - Лут идёт в хаб-инвентарь (старое поведение)
+        current_count = await get_total_ingredient_count(session, user.id)
+        for item in rewards.loot:
+            if current_count >= inventory_limit:
+                break
+            ing_id = item["ingredient_id"]
+            inv_result = await session.execute(
+                select(InventoryItem).where(
+                    InventoryItem.user_id == user.id,
+                    InventoryItem.ingredient_id == ing_id,
+                )
             )
-        )
-        inv_item = inv_result.scalar_one_or_none()
-        if inv_item is None:
-            inv_item = InventoryItem(user_id=user.id, ingredient_id=ing_id, quantity=1)
-            session.add(inv_item)
-        else:
-            inv_item.quantity += 1
-        current_count += 1
+            inv_item = inv_result.scalar_one_or_none()
+            if inv_item is None:
+                inv_item = InventoryItem(user_id=user.id, ingredient_id=ing_id, quantity=1)
+                session.add(inv_item)
+            else:
+                inv_item.quantity += 1
+            current_count += 1
 
     if chosen_card_id is not None:
         valid = any(c.card_id == chosen_card_id for c in rewards.card_choices)
