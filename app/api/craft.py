@@ -23,18 +23,23 @@ async def cook(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> CookResponse:
+    needed: dict[int, int] = Counter(body.ingredient_ids)
     result = await session.execute(
-        select(Ingredient).where(Ingredient.id.in_(body.ingredient_ids))
+        select(Ingredient).where(Ingredient.id.in_(needed.keys()))
     )
-    ingredients = list(result.scalars().all())
+    ing_map = {i.id: i for i in result.scalars().all()}
 
-    if len(ingredients) != len(body.ingredient_ids):
+    if len(ing_map) != len(needed):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="One or more ingredients not found",
         )
 
-    needed: dict[int, int] = Counter(body.ingredient_ids)
+    # - Строим список с повторами (2x перец чили = [перец, перец])
+    ingredients = []
+    for ing_id, qty in needed.items():
+        ingredients.extend([ing_map[ing_id]] * qty)
+
     for ing_id, qty in needed.items():
         inv_result = await session.execute(
             select(InventoryItem).where(
