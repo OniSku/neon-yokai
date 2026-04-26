@@ -220,7 +220,9 @@ async def apply_damage_with_artifacts(
 
 async def tick_buffs(fighter: Fighter) -> None:
     for buff in fighter.buffs:
-        buff.duration -= 1
+        # - Постоянные баффы (duration >= 99) не тикают
+        if buff.duration < 99:
+            buff.duration -= 1
     fighter.buffs = [b for b in fighter.buffs if b.duration > 0]
 
 
@@ -500,7 +502,8 @@ def _build_intent(action: EnemyAction, turn: int) -> EnemyIntent:
             desc += f" (крадет {action.steal} кредитов)"
         return EnemyIntent(type="attack", value=dmg, description=desc)
     if action.action == "block":
-        return EnemyIntent(type="defend", value=action.block, description=f"Собирается защититься (+{action.block} блок)")
+        block_val = action.block if action.block > 0 else action.amount
+        return EnemyIntent(type="defend", value=block_val, description=f"Собирается защититься (+{block_val} блок)")
     if action.action == "buff":
         return EnemyIntent(type="buff", value=0, description="Собирается усилиться")
     if action.action == "debuff":
@@ -513,6 +516,11 @@ def _build_intent(action: EnemyAction, turn: int) -> EnemyIntent:
         return EnemyIntent(type="buff", value=0, description="Призывает Гаки!")
     if action.action == "buff_all_gaki":
         return EnemyIntent(type="buff", value=0, description="Усиливает Гаки!")
+    if action.action == "apply_debuff":
+        tag = action.apply_debuff or action.debuff_tag or "?"
+        return EnemyIntent(type="debuff", value=0, description=f"Накладывает {tag} на игрока")
+    if action.action == "flee":
+        return EnemyIntent(type="buff", value=0, description="Собирается сбежать!")
     return EnemyIntent(type="attack", value=0, description="Неизвестное намерение")
 
 
@@ -645,7 +653,9 @@ async def _do_enemy_action(
                 )
 
     elif action.action == "block":
-        enemy_fighter.block += action.block
+        # - amount - старое поле в сиде seed, используем block или amount
+        block_val = action.block if action.block > 0 else action.amount
+        enemy_fighter.block += block_val
 
     elif action.action == "buff":
         if action.buff_tag:
@@ -662,6 +672,21 @@ async def _do_enemy_action(
             state.player.buffs.append(
                 Buff(tag=action.debuff_tag, duration=action.duration, flat_bonus=action.flat_damage)
             )
+
+    elif action.action == "apply_debuff":
+        # - Rokurokubi и др.: накладывают дебафф через apply_debuff/debuff_tag
+        tag = action.apply_debuff or action.debuff_tag
+        if tag:
+            if getattr(state, "debuff_shield_active", False):
+                state.debuff_shield_active = False
+            else:
+                existing = next((b for b in state.player.buffs if b.tag == tag), None)
+                if existing:
+                    existing.duration += action.debuff_duration
+                else:
+                    state.player.buffs.append(
+                        Buff(tag=tag, duration=action.debuff_duration, flat_bonus=0)
+                    )
 
     elif action.action == "flee":
         es.alive = False

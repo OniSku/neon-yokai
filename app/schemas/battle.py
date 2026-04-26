@@ -51,6 +51,11 @@ class EnemyAction(BaseModel):
     condition: str | None = None
     if_true: dict | None = None
     if_false: dict | None = None
+    steal: int = 0
+    apply_debuff: str | None = None
+    debuff_duration: int = 2
+    self_block: int = 0
+    amount: int = 0
 
 
 class EnemyIntent(BaseModel):
