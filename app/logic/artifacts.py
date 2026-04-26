@@ -42,6 +42,18 @@ async def on_combat_start(
         elif art.name == "Свинья-копилка":
             log.append(f"[{art.name}] active (breaks on rest for +50 cr)")
 
+        elif art.name == "Банка старого маринада":
+            # - Все враги получают 1 стак SOUR игрока (стаки накапливаются на BattleState)
+            state.combo_stacks["SOUR"] = state.combo_stacks.get("SOUR", 0) + 1
+            _use_charge(art)
+            log.append(f"[{art.name}] +1 SOUR stack at combat start")
+
+        elif art.name == "Утяжеленный вок":
+            # - Игроку +2 стака SALTY
+            state.combo_stacks["SALTY"] = state.combo_stacks.get("SALTY", 0) + 2
+            _use_charge(art)
+            log.append(f"[{art.name}] player +2 SALTY stacks")
+
     _cleanup(artifacts)
     return log
 
@@ -116,6 +128,12 @@ async def on_rest(
             art.name = "Разбитая копилка"
             art.description = "Пусто. Была свиньей-копилкой."
             log.append("[Свинья-копилка] broken! +50 credits")
+
+        elif art.name == "Заначка шефа":
+            # - Дополнительные 10% HP отдаётся как +bonus_credits=0 + через heal_bonus
+            bonus_credits += 0  # - заглушка: логика допхила в run.py по тегу "Заначка шефа"
+            _use_charge(art)
+            log.append("[Заначка шефа] rest heal +10%")
 
     _cleanup(artifacts)
     return bonus_credits, log

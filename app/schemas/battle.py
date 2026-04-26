@@ -187,3 +187,4 @@ class RunState(BaseModel):
     card_removals_this_run: int = 0
     rest_choice_pending: bool = False
     user_credits: int = 0
+    seen_event_ids: list[str] = Field(default_factory=list)

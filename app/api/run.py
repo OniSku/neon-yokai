@@ -648,7 +648,10 @@ async def next_node(
         msg = f"Бой: {tag}{node.enemy_name}" + (f" (+{enemy_count - 1} ещё)" if enemy_count > 1 else "")
     elif node.node_type == "event":
         run.battle = None
-        event = pick_random_event(floor=node.floor)
+        event = pick_random_event(floor=node.floor, seen_event_ids=run.seen_event_ids)
+        # - Запоминаем встреченный ивент в список
+        if event.event_id not in run.seen_event_ids:
+            run.seen_event_ids.append(event.event_id)
         node.event_id = event.event_id
         run.active_event = event
         msg = f"Событие: {event.title}"
@@ -862,6 +865,55 @@ async def event_choice_endpoint(
             card_reward=None, artifact_reward=None, run=run,
         )
 
+    if msg == "REMOVE_RANDOM_CARD":
+        # - Удаляем случайную non-curse карту из колоды
+        udc_res = await session.execute(
+            select(UserDeckCard).where(UserDeckCard.user_id == user.id)
+        )
+        all_udc = list(udc_res.scalars().all())
+        removable = []
+        for udc in all_udc:
+            cr = await session.execute(select(Card).where(Card.id == udc.card_id))
+            c = cr.scalar_one_or_none()
+            if c and c.type != "curse" and not c.is_starting:
+                removable.append(udc)
+        removed_name = "карта"
+        if removable:
+            target = random.choice(removable)
+            cr2 = await session.execute(select(Card).where(Card.id == target.card_id))
+            rc = cr2.scalar_one_or_none()
+            removed_name = rc.name if rc else "карта"
+            if target.quantity > 1:
+                target.quantity -= 1
+            else:
+                await session.delete(target)
+        node = _find_node(run)
+        node.completed = True
+        run.active_event = None
+        await session.commit()
+        await save_run_state(session, run)
+        return EventChoiceResponse(
+            message=f"'«{removed_name}»' удалена из колоды.",
+            hp_delta=0, credits_delta=0,
+            card_reward=None, artifact_reward=None, run=run,
+        )
+
+    if msg == "STREET_ALTAR_HEAL":
+        # - Полное лечение, списываем 30% кредитов
+        tribute = int(user.credits * 0.3)
+        user.credits = max(0, user.credits - tribute)
+        run.current_hp = max_hp
+        node = _find_node(run)
+        node.completed = True
+        run.active_event = None
+        await session.commit()
+        await save_run_state(session, run)
+        return EventChoiceResponse(
+            message=f"Алтарь принял жертву. -{tribute} кр., HP полностью восстановлен.",
+            hp_delta=0, credits_delta=-tribute,
+            card_reward=None, artifact_reward=None, run=run,
+        )
+
     if msg == "IMPLANT_MAX_HP_10":
         meta = parse_meta(user)
         meta["implant_hp"] = meta.get("implant_hp", 0) + 10
@@ -917,7 +969,11 @@ async def rest_sleep(
         raise HTTPException(status_code=400, detail="No rest choice pending")
 
     max_hp = 80 + await get_max_hp_bonus_async(session, user)
-    heal_amount = int(max_hp * 0.3)
+    heal_pct = 0.3
+    # - Заначка шефа даёт +10% к лечению на отдыхе
+    if any(a.name == "Заначка шефа" and a.is_active for a in run.artifacts):
+        heal_pct += 0.1
+    heal_amount = int(max_hp * heal_pct)
     run.current_hp = min(run.current_hp + heal_amount, max_hp)
 
     bonus_cr, rest_log = await on_rest(run.artifacts)

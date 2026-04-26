@@ -192,11 +192,83 @@ ULTRA_RARE_CHANCE: float = 0.05
 ULTRA_RARE_FLOORS: set[int] = {6, 7}
 
 
-def pick_random_event(floor: int = 0) -> EventScenario:
+SCENARIOS.extend([
+    {
+        "event_id": "supply_cache",
+        "title": "Склад концентратов",
+        "description": "За раздвижной плитой - запасный склад. Химикаты в ряд. Но нести много.",
+        "choices": [
+            {
+                "choice_id": "take_credits",
+                "label": "Взять кредиты",
+                "description": "+30 кредитов",
+                "cost_type": "none",
+                "cost_value": 0,
+            },
+            {
+                "choice_id": "remove_card",
+                "label": "Удалить слабую карту",
+                "description": "Удалить случайную карту из колоды (бесплатно)",
+                "cost_type": "none",
+                "cost_value": 0,
+            },
+        ],
+    },
+    {
+        "event_id": "forgotten_recipe",
+        "title": "Забытый рецепт",
+        "description": "Старый чип в стене мерцает. На нем - техника которую вы забыли. Флэшбэк болезнен.",
+        "choices": [
+            {
+                "choice_id": "download",
+                "label": "Скачать рецепт",
+                "description": "-10 HP, получить случайную Rare карту",
+                "cost_type": "hp",
+                "cost_value": 10,
+            },
+            {
+                "choice_id": "ignore",
+                "label": "Пройти мимо",
+                "description": "Уйти без последствий",
+                "cost_type": "none",
+                "cost_value": 0,
+            },
+        ],
+    },
+    {
+        "event_id": "street_altar",
+        "title": "Уличный алтарь",
+        "description": "В нише - алтарь из обломков и неоновых лент Екайа. Он призывает. Повар чувствует узнаваемое.",
+        "choices": [
+            {
+                "choice_id": "pray",
+                "label": "Помолиться",
+                "description": "-30% текущих кредитов, полное восстановление HP",
+                "cost_type": "none",
+                "cost_value": 0,
+            },
+            {
+                "choice_id": "ignore",
+                "label": "Пройти мимо",
+                "description": "Уйти без последствий",
+                "cost_type": "none",
+                "cost_value": 0,
+            },
+        ],
+    },
+])
+
+
+def pick_random_event(floor: int = 0, seen_event_ids: list[str] | None = None) -> EventScenario:
     if floor in ULTRA_RARE_FLOORS and random.random() < ULTRA_RARE_CHANCE:
         data = ULTRA_RARE_SCENARIO
     else:
-        data = random.choice(SCENARIOS)
+        seen = seen_event_ids or []
+        available = [s for s in SCENARIOS if s["event_id"] not in seen]
+        # - Если все ивенты уже просмотрены, сбрасываем список
+        if not available:
+            available = SCENARIOS
+        data = random.choice(available)
     choices = [EventChoice(**c) for c in data["choices"]]
     return EventScenario(
         event_id=data["event_id"],
@@ -393,6 +465,32 @@ async def resolve_event_choice(
             credits_delta = -10
             artifact_reward = await _random_artifact(session)
             msg = "Заплатили 10 кр. Кот доволен и оставил подарок."
+
+    # ---- Склад концентратов ----
+    elif eid == "supply_cache":
+        if choice_id == "take_credits":
+            credits_delta = 30
+            msg = "Набрали химикатов на обмен. +30 кредитов."
+        elif choice_id == "remove_card":
+            # - Сигнал для run.py - удалить случайную non-curse карту из колоды
+            msg = "REMOVE_RANDOM_CARD"
+
+    # ---- Забытый рецепт ----
+    elif eid == "forgotten_recipe":
+        if choice_id == "download":
+            hp_delta = -10
+            card_reward = await _random_rare_card(session)
+            msg = "Флэшбэк жжет, но техника ваша. -10 HP, получена Rare карта."
+        elif choice_id == "ignore":
+            msg = "Вы прошли мимо чипа."
+
+    # ---- Уличный алтарь ----
+    elif eid == "street_altar":
+        if choice_id == "pray":
+            # - run.py применит полное лечение и спишет 30% кредитов
+            msg = "STREET_ALTAR_HEAL"
+        elif choice_id == "ignore":
+            msg = "Вы не задержались у алтаря."
 
     else:
         msg = "Вы ушли без последствий."

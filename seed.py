@@ -252,6 +252,94 @@ CARDS: list[dict] = [
         "is_exhaust": False, "rarity": "common",
         "is_starting": False,
     },
+    # === ШАГ 44: Common SOUR/BITTER ===
+    {
+        "name": "Уксусный выпад",
+        "cost": 1, "type": "attack", "power": 7,
+        "damage_type": "none", "tags": "SOUR",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Пролитая эссенция",
+        "cost": 1, "type": "skill", "power": 0,
+        "damage_type": "none", "tags": "SOUR,AOE_WEAK",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Горчичный газ",
+        "cost": 1, "type": "skill", "power": 0,
+        "damage_type": "none", "tags": "SOUR,AOE_VULNERABLE",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Холодный остаток",
+        "cost": 1, "type": "skill", "power": 0,
+        "damage_type": "none", "tags": "BITTER,DRAW_1",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Обугленная щепа",
+        "cost": 1, "type": "attack", "power": 8,
+        "damage_type": "none", "tags": "BITTER",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Жженый сахар",
+        "cost": 0, "type": "skill", "power": 0,
+        "damage_type": "none", "tags": "BITTER,ENERGY_1",
+        "is_exhaust": True, "rarity": "common",
+        "is_starting": False,
+    },
+    # === ШАГ 44: Rare (двойные теги) ===
+    {
+        "name": "Морская карамель",
+        "cost": 2, "type": "skill", "power": 8,
+        "damage_type": "none", "tags": "SALTY,SWEET,DRAW_1",
+        "is_exhaust": False, "rarity": "rare",
+        "is_starting": False,
+    },
+    {
+        "name": "Кисло-сладкий соус",
+        "cost": 1, "type": "skill", "power": 4,
+        "damage_type": "none", "tags": "SWEET,SOUR",
+        "is_exhaust": False, "rarity": "rare",
+        "is_starting": False,
+    },
+    {
+        "name": "Жгучая горечь",
+        "cost": 2, "type": "attack", "power": 12,
+        "damage_type": "none", "tags": "HOT,BITTER",
+        "is_exhaust": False, "rarity": "rare",
+        "is_starting": False,
+    },
+    # === ШАГ 44: Epic (shop-only) ===
+    {
+        "name": "Нейро-уксус",
+        "cost": 2, "type": "skill", "power": 0,
+        "damage_type": "none", "tags": "SOUR,BITTER,DRAW_2",
+        "is_exhaust": True, "rarity": "epic",
+        "is_starting": False,
+    },
+    {
+        "name": "Соль и перец",
+        "cost": 1, "type": "skill", "power": 10,
+        "damage_type": "none", "tags": "SALTY,HOT",
+        "is_exhaust": True, "rarity": "epic",
+        "is_starting": False,
+    },
+    # === ШАГ 44: Legendary ===
+    {
+        "name": "Пять вкусов изнанки",
+        "cost": 3, "type": "skill", "power": 0,
+        "damage_type": "none", "tags": "HOT,SOUR,SWEET,BITTER,SALTY,DRAW_1",
+        "is_exhaust": True, "rarity": "legendary",
+        "is_starting": False,
+    },
     # === CURSE ===
     {
         "name": "Мертвый груз",
@@ -274,6 +362,35 @@ ENEMIES: list[dict] = [
             {"action": "attack", "damage": 5, "damage_type": "none", "steal": 3},
             {"action": "attack", "damage": 5, "damage_type": "none", "steal": 3},
             {"action": "flee", "condition": "stolen_gte_9"},
+        ]),
+    },
+    # === СТАДИЯ 2 ===
+    {
+        "name": "Каппа",
+        "hp": 40,
+        "base_damage": 8,
+        "damage_type": "none",
+        "ai_pattern": json.dumps([
+            {"action": "block", "amount": 15},
+            {"action": "attack", "damage": 6},
+            {"action": "block", "amount": 10},
+            {"action": "attack", "damage": 12},
+            {"action": "attack", "damage": 8, "apply_debuff": "VULNERABLE", "debuff_duration": 1},
+        ]),
+    },
+    {
+        "name": "Рокурокуби",
+        "hp": 30,
+        "base_damage": 5,
+        "damage_type": "none",
+        "ai_pattern": json.dumps([
+            {"action": "apply_debuff", "debuff": "VULNERABLE", "debuff_duration": 2},
+            {"action": "attack", "damage": 4},
+            {"action": "attack", "damage": 4},
+            {"action": "apply_debuff", "debuff": "WEAK", "debuff_duration": 2},
+            {"action": "attack", "damage": 6},
+            {"action": "apply_debuff", "debuff": "VULNERABLE", "debuff_duration": 1},
+            {"action": "apply_debuff", "debuff": "WEAK", "debuff_duration": 1},
         ]),
     },
     # === BOSS ===
@@ -396,6 +513,31 @@ ARTIFACTS: list[dict] = [
         "charges": 1,
         "is_active": True,
         "broken_into": "Разбитая копилка",
+    },
+    # === ШАГ 44: Новые артефакты ===
+    {
+        "name": "Банка старого маринада",
+        "rarity": "rare",
+        "description": "В начале боя все враги получают 1 стак кислоты (SOUR)",
+        "trigger": "on_combat_start",
+        "charges": -1,
+        "is_active": True,
+    },
+    {
+        "name": "Утяжеленный вок",
+        "rarity": "common",
+        "description": "+2 стака SALTY в начале каждого боя",
+        "trigger": "on_combat_start",
+        "charges": -1,
+        "is_active": True,
+    },
+    {
+        "name": "Заначка шефа",
+        "rarity": "rare",
+        "description": "Отдых восстанавливает на 10% HP больше обычного",
+        "trigger": "on_rest",
+        "charges": -1,
+        "is_active": True,
     },
 ]
 
