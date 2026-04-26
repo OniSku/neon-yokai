@@ -322,10 +322,16 @@ async def run_action(
             run.combo_effects = []
             if state.winner == "player":
                 current_node.completed = True
-                ec = max(len(current_node.enemies), 1)
-                rewards = await generate_pending_rewards(session, node_type=current_node.node_type, enemy_count=ec)
-                run.reward_phase = True
-                run.pending_rewards = rewards
+                # Победа над боссом завершает забег
+                if current_node.node_type == "boss":
+                    run.run_finished = True
+                    user.experience += 100
+                    await session.commit()
+                else:
+                    ec = max(len(current_node.enemies), 1)
+                    rewards = await generate_pending_rewards(session, node_type=current_node.node_type, enemy_count=ec)
+                    run.reward_phase = True
+                    run.pending_rewards = rewards
             else:
                 # Игрок умер - сжигаем 50% кредитов, долг и мета-валюта не трогаются
                 run.run_finished = True
@@ -352,10 +358,16 @@ async def run_action(
             run.combo_effects = []
             if state.winner == "player":
                 current_node.completed = True
-                ec = max(len(current_node.enemies), 1)
-                rewards = await generate_pending_rewards(session, node_type=current_node.node_type, enemy_count=ec)
-                run.reward_phase = True
-                run.pending_rewards = rewards
+                # Победа над боссом завершает забег
+                if current_node.node_type == "boss":
+                    run.run_finished = True
+                    user.experience += 100
+                    await session.commit()
+                else:
+                    ec = max(len(current_node.enemies), 1)
+                    rewards = await generate_pending_rewards(session, node_type=current_node.node_type, enemy_count=ec)
+                    run.reward_phase = True
+                    run.pending_rewards = rewards
             else:
                 # Игрок умер - сжигаем 50% кредитов, долг и мета-валюта не трогаются
                 run.run_finished = True

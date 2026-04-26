@@ -69,26 +69,140 @@
             font-size: 0.75rem;
         }
 
-        /* Main Battle Area */
+        /* Main Battle Area - 3 layers */
         .battle-container {
             display: flex;
             flex-direction: column;
             height: 100vh;
-            padding: 70px 20px 20px;
-            background-image: url('assets/market_bg.png');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            padding: 56px 0 0;
+            position: relative;
         }
 
-        /* Token Area - Middle */
-        .token-area {
+        /* Background */
+        .battle-bg {
+            position: fixed;
+            inset: 0;
+            background: url('/static/img/market_bg.jpg') center/cover no-repeat;
+            z-index: -2;
+        }
+        .battle-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.62);
+        }
+
+        /* Layer 1 - Enemy zone (top) */
+        .enemy-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 16px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.75) 0%, transparent 100%);
+            gap: 8px;
+            min-height: 160px;
+        }
+        .enemy-info-row {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .enemy-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-width: 90px;
+        }
+        .enemy-name-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .enemy-hp-label {
+            font-size: 0.75rem;
+            color: var(--text);
+        }
+        .enemy-hp-mini {
+            width: 72px;
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .enemy-hp-mini-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        .enemy-tokens-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* Layer 2 - Player zone (center) */
+        .player-zone {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .player-info-block {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            background: rgba(0,0,0,0.55);
+            border: 1px solid rgba(0,255,245,0.2);
+            border-radius: 12px;
+            padding: 8px 20px;
+        }
+        .p-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        .p-stat .val { font-size: 1rem; font-weight: 700; }
+        .p-stat .lbl { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; }
+        .p-stat.hp .val { color: var(--neon); }
+        .p-stat.block .val { color: var(--block); }
+        .p-stat.energy .val { color: var(--energy); }
+
+        /* Combo counter - inside player zone */
+        .combo-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Layer 3 - Hand zone (bottom) */
+        .hand-zone {
+            background: linear-gradient(0deg, rgba(0,0,0,0.92) 60%, transparent 100%);
+            padding: 8px 12px 16px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            min-height: 140px;
+            overflow-x: auto;
+        }
+        .hand-cards {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+            justify-content: center;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+        }
+
+        /* Token Area - kept for compat */
+        .token-area {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 80px;
-            position: relative;
+            gap: 20px;
+            flex-wrap: wrap;
         }
 
         /* Token Circle */
@@ -467,55 +581,113 @@
         .battle-card.bitter { border-color: #9944ff; box-shadow: 0 0 15px rgba(153,68,255,0.2); }
         .battle-card.salty { border-color: #4444ff; box-shadow: 0 0 15px rgba(68,68,255,0.2); }
 
-        /* Battle Arena Background */
-        .battle-arena {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #0d0d0d 0%, #1a1a2e 50%, #16213e 100%);
-            z-index: -1;
+        /* Attack jump animation */
+        .attack-jump-down {
+            animation: jump-down 0.35s ease-out;
         }
-        .battle-arena::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('/static/img/market_bg.png') center/cover;
-            opacity: 0.15;
+        .attack-jump-up {
+            animation: jump-up 0.35s ease-out;
+        }
+        @keyframes jump-down {
+            0%   { transform: translateY(0); }
+            40%  { transform: translateY(28px); }
+            100% { transform: translateY(0); }
+        }
+        @keyframes jump-up {
+            0%   { transform: translateY(0); }
+            40%  { transform: translateY(-28px); }
+            100% { transform: translateY(0); }
+        }
+
+        /* Buff icons on token */
+        .token-buffs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            justify-content: center;
+            max-width: 130px;
+            margin-top: 4px;
+        }
+        .token-buff-icon {
+            font-size: 0.6rem;
+            background: rgba(0,0,0,0.7);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 4px;
+            padding: 1px 4px;
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .token-buff-icon.positive { border-color: var(--neon); color: var(--neon); }
+        .token-buff-icon.negative { border-color: var(--accent); color: var(--accent); }
+
+        /* Combo toast */
+        .combo-toast {
+            position: fixed;
+            top: 64px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            border: 2px solid var(--neon);
+            color: var(--neon);
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 16px rgba(0,255,245,0.4);
+            z-index: 300;
+            pointer-events: none;
+            animation: toast-in-out 2.5s ease-out forwards;
+            text-align: center;
+            max-width: 280px;
+        }
+        @keyframes toast-in-out {
+            0%   { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+            75%  { opacity: 1; }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        }
+
+        /* Victory/Defeat overlay */
+        .result-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.88);
+            z-index: 200;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        .result-screen.active { display: flex; }
+        .result-title { font-size: 2rem; font-weight: 700; text-shadow: 0 0 30px currentColor; }
+        .result-title.win { color: var(--neon); }
+        .result-title.lose { color: var(--accent); }
+        .result-btn {
+            padding: 14px 40px;
+            background: var(--surface);
+            border: 2px solid var(--neon);
+            color: var(--neon);
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
     </style>
 </head>
 <body>
-    <!-- Battle Arena Background -->
-    <div class="battle-arena"></div>
+    <!-- Background -->
+    <div class="battle-bg"></div>
 
-    <!-- Combo Counter -->
-    <div class="combo-counter" id="combo-counter">
-        <div class="combo-slot hot" data-flavor="hot">
-            <span class="stack-count" id="hot-stacks">0</span>
-            <span class="flavor-icon">🌶️</span>
-        </div>
-        <div class="combo-slot sour" data-flavor="sour">
-            <span class="stack-count" id="sour-stacks">0</span>
-            <span class="flavor-icon">🍋</span>
-        </div>
-        <div class="combo-slot sweet" data-flavor="sweet">
-            <span class="stack-count" id="sweet-stacks">0</span>
-            <span class="flavor-icon">🍯</span>
-        </div>
-        <div class="combo-slot bitter" data-flavor="bitter">
-            <span class="stack-count" id="bitter-stacks">0</span>
-            <span class="flavor-icon">☕</span>
-        </div>
-        <div class="combo-slot salty" data-flavor="salty">
-            <span class="stack-count" id="salty-stacks">0</span>
-            <span class="flavor-icon">🧂</span>
-        </div>
+    <!-- Result Screen -->
+    <div class="result-screen" id="result-screen">
+        <div class="result-title" id="result-title">ПОБЕДА</div>
+        <div id="result-desc" style="color:var(--muted);font-size:0.9rem;text-align:center"></div>
+        <button class="result-btn" onclick="returnToHub()">Вернуться в Хаб</button>
     </div>
+
     <!-- Top Info Bar -->
     <div class="top-info">
         <div>
@@ -527,99 +699,248 @@
 
     <!-- Main Battle Container -->
     <div class="battle-container">
-        <!-- Token Area (Middle) -->
-        <div class="token-area">
-            <!-- Player Token -->
-            <div class="token-circle player" id="player-token">
-                <div class="token-hp-text player" id="player-hp-text">80/80</div>
-                <div class="token-placeholder" id="player-avatar">&#128104;</div>
-                <div class="token-hp-bar">
-                    <div class="token-hp-fill player" id="player-hp-bar" style="width: 100%"></div>
-                </div>
-                <div class="token-block" id="player-block" style="display: none;">0</div>
-                <div class="token-name player">ПОВАР</div>
-                <div class="artifacts-row" id="player-artifacts"></div>
-            </div>
 
-            <!-- Enemy Token -->
-            <div class="token-circle enemy" id="enemy-token">
-                <div class="intent-bubble attack" id="intent-bubble">
-                    <span class="intent-icon">&#9876;</span>
-                    <span id="intent-text">Атака 7</span>
+        <!-- LAYER 1: Enemy Zone (top) -->
+        <div class="enemy-zone" id="enemy-zone">
+            <!-- Инфо-панель врагов -->
+            <div class="enemy-info-row" id="enemy-info-row"></div>
+            <!-- Жетоны врагов -->
+            <div class="enemy-tokens-row" id="enemy-tokens-row"></div>
+        </div>
+
+        <!-- LAYER 2: Player Zone (center) -->
+        <div class="player-zone">
+            <!-- Жетон повара -->
+            <div class="token-circle player" id="player-token">
+                <div class="token-block" id="player-block" style="display:none">0</div>
+            </div>
+            <!-- Иконки артефактов под жетоном -->
+            <div class="artifacts-row" id="player-artifacts" style="position:static;transform:none;max-width:160px"></div>
+            <!-- Баффы игрока -->
+            <div class="token-buffs" id="player-buffs"></div>
+            <!-- Инфо-блок: HP, Блок, Энергия -->
+            <div class="player-info-block">
+                <div class="p-stat hp">
+                    <span class="val" id="player-hp-text">80/80</span>
+                    <span class="lbl">HP</span>
                 </div>
-                <div class="token-hp-text enemy" id="enemy-hp-text">50/50</div>
-                <div class="token-placeholder" id="enemy-avatar">&#128121;</div>
-                <div class="token-hp-bar">
-                    <div class="token-hp-fill enemy" id="enemy-hp-bar" style="width: 100%"></div>
+                <div class="p-stat block">
+                    <span class="val" id="player-block-val">0</span>
+                    <span class="lbl">Блок</span>
                 </div>
-                <div class="token-block" id="enemy-block" style="display: none;">0</div>
-                <div class="token-name enemy" id="enemy-name">ГАКИ</div>
+                <div class="p-stat energy">
+                    <span class="val" id="energy-text">3/3</span>
+                    <span class="lbl">Энергия</span>
+                </div>
+            </div>
+            <!-- Комбо-счётчики -->
+            <div class="combo-row">
+                <div class="combo-slot hot"><span class="stack-count" id="hot-stacks">0</span><span class="flavor-icon">🌶</span></div>
+                <div class="combo-slot sour"><span class="stack-count" id="sour-stacks">0</span><span class="flavor-icon">🍋</span></div>
+                <div class="combo-slot sweet"><span class="stack-count" id="sweet-stacks">0</span><span class="flavor-icon">🍯</span></div>
+                <div class="combo-slot bitter"><span class="stack-count" id="bitter-stacks">0</span><span class="flavor-icon">☕</span></div>
+                <div class="combo-slot salty"><span class="stack-count" id="salty-stacks">0</span><span class="flavor-icon">🧂</span></div>
             </div>
         </div>
 
-        <!-- Bottom Area (Cards & Controls) -->
-        <div class="bottom-area">
-            <!-- Energy Bar -->
-            <div class="energy-bar">
-                <div class="energy-icon">&#9889;</div>
-                <div class="energy-text" id="energy-text">3 / 3</div>
-            </div>
-
-            <!-- Card Hand -->
-            <div class="card-hand" id="card-hand">
-                <!-- Cards will be rendered here -->
-            </div>
-
-            <!-- End Turn Button -->
-            <button class="end-turn-btn" id="end-turn-btn" onclick="endTurn()">ЗАВЕРШИТЬ ХОД</button>
+        <!-- LAYER 3: Hand Zone (bottom) -->
+        <div class="hand-zone">
+            <div class="hand-cards" id="card-hand"></div>
+            <button class="end-turn-btn" id="end-turn-btn" onclick="endTurn()" style="flex-shrink:0;align-self:center">КОНЕЦ<br>ХОДА</button>
         </div>
     </div>
 
     <script>
-        // Battle state
         let battleState = null;
 
-        // Initialize battle UI
-        function initBattleUI() {
-            // Will be populated from API
+        const ARTIFACT_EMOJI = {
+            "Энергетик": "⚡", "Острый соус": "🌶", "Бронежилет шефа": "🦺",
+            "Магнитная доска": "🧲", "Точильный камень": "🗡", "Дефибриллятор": "💓",
+            "Шипованный фартук": "🦔", "Свинья-копилка": "🐷", "Разбитая копилка": "🐽"
+        };
+        const POSITIVE_BUFFS = new Set(["RETAIN_BLOCK", "THORNS", "SHARPEN", "SWEET_BUFF", "SPICY_BUFF", "SOUR_BUFF", "BITTER_BUFF", "SALTY_BUFF", "COMBO_BURN", "COMBO_REGEN", "COMBO_THORNS"]);
+        const FLAVOR_CLASSES = ["hot", "sour", "sweet", "bitter", "salty"];
+
+        function showComboToast(msg) {
+            const t = document.createElement("div");
+            t.className = "combo-toast";
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 2600);
         }
 
-        // Check if run is finished (player died)
+        function showResultScreen(win, desc) {
+            const scr = document.getElementById("result-screen");
+            const title = document.getElementById("result-title");
+            const d = document.getElementById("result-desc");
+            title.className = "result-title " + (win ? "win" : "lose");
+            title.textContent = win ? "ПОБЕДА" : "ПОРАЖЕНИЕ";
+            d.textContent = desc || "";
+            scr.classList.add("active");
+        }
+
+        function returnToHub() {
+            window.location.href = "/";
+        }
+
         function checkRunFinished(data) {
             if (!data.run) return false;
-
-            // Если забег завершен или игрок побежден
-            if (data.run.run_finished || data.run.battle?.winner === "enemy") {
-                alert("Вы погибли! Возврат в меню...");
-                window.location.href = "/";
+            if (data.run.run_finished) {
+                const won = data.run.battle && data.run.battle.winner === "player";
+                showResultScreen(won, won ? "Забег завершен! +100 XP" : "Вы погибли. 50% кредитов сожжено.");
+                return true;
+            }
+            if (data.run.battle && data.run.battle.winner === "enemy") {
+                showResultScreen(false, "Вы погибли. 50% кредитов сожжено.");
                 return true;
             }
             return false;
         }
 
-        // Render battle state
+        function triggerShake(el) {
+            if (!el) return;
+            el.classList.add("shake");
+            setTimeout(() => el.classList.remove("shake"), 220);
+        }
+
+        function triggerAttackJump(el, direction) {
+            if (!el) return;
+            const cls = direction === "down" ? "attack-jump-down" : "attack-jump-up";
+            el.classList.add(cls);
+            setTimeout(() => el.classList.remove(cls), 380);
+        }
+
+        function renderBuffIcons(buffs, containerId) {
+            const el = document.getElementById(containerId);
+            if (!el) return;
+            el.innerHTML = "";
+            if (!buffs || !buffs.length) return;
+            for (const b of buffs) {
+                const span = document.createElement("span");
+                span.className = "token-buff-icon " + (POSITIVE_BUFFS.has(b.tag) ? "positive" : "negative");
+                span.textContent = b.tag.replace("_BUFF", "").replace("COMBO_", "") + (b.duration < 99 ? " " + b.duration : "");
+                el.appendChild(span);
+            }
+        }
+
+        function renderEnemies(state) {
+            const infoRow = document.getElementById("enemy-info-row");
+            const tokensRow = document.getElementById("enemy-tokens-row");
+            infoRow.innerHTML = "";
+            tokensRow.innerHTML = "";
+
+            const enemies = state.enemies && state.enemies.length ? state.enemies : [];
+            if (!enemies.length) return;
+
+            enemies.forEach((es, idx) => {
+                const f = es.fighter;
+                const alive = es.alive && f.hp > 0;
+
+                // Инфо-карточка
+                const card = document.createElement("div");
+                card.className = "enemy-card";
+                const hpPct = Math.max(0, (f.hp / f.max_hp) * 100);
+                let intentStr = "";
+                if (es.intent) {
+                    if (es.intent.type === "attack") intentStr = "⚔ " + es.intent.value;
+                    else if (es.intent.type === "defend") intentStr = "🛡 " + es.intent.value;
+                    else intentStr = es.intent.description || "?";
+                }
+                card.innerHTML =
+                    '<div class="enemy-name-label">' + f.name + (alive ? "" : " [МЕРТВ]") + '</div>' +
+                    '<div class="enemy-hp-label">' + f.hp + "/" + f.max_hp + (f.block ? " 🛡" + f.block : "") + '</div>' +
+                    '<div class="enemy-hp-mini"><div class="enemy-hp-mini-fill" style="width:' + hpPct + '%"></div></div>' +
+                    (intentStr ? '<div style="font-size:0.65rem;color:var(--accent);margin-top:2px">' + intentStr + '</div>' : '');
+                infoRow.appendChild(card);
+
+                // Жетон
+                const tok = document.createElement("div");
+                tok.className = "token-circle enemy" + (f.name.includes("Гаки") ? " gaki" : (f.name.includes("Нурарихён") ? "" : " unknown"));
+                tok.id = "enemy-token-" + idx;
+                tok.style.opacity = alive ? "1" : "0.3";
+                tok.style.filter = alive ? "" : "grayscale(1)";
+                // Баффы под жетоном
+                const buffsDiv = document.createElement("div");
+                buffsDiv.className = "token-buffs";
+                if (f.buffs && f.buffs.length) {
+                    for (const b of f.buffs) {
+                        const s = document.createElement("span");
+                        s.className = "token-buff-icon " + (POSITIVE_BUFFS.has(b.tag) ? "positive" : "negative");
+                        s.textContent = b.tag.replace("_BUFF", "") + (b.duration < 99 ? " " + b.duration : "");
+                        buffsDiv.appendChild(s);
+                    }
+                }
+                const wrapper = document.createElement("div");
+                wrapper.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:4px";
+                wrapper.appendChild(tok);
+                wrapper.appendChild(buffsDiv);
+                tokensRow.appendChild(wrapper);
+            });
+        }
+
+        function renderArtifacts(artifacts) {
+            const container = document.getElementById("player-artifacts");
+            container.innerHTML = "";
+            artifacts.forEach(art => {
+                const div = document.createElement("div");
+                div.className = "artifact-icon " + (art.is_active ? "active" : "inactive");
+                div.textContent = ARTIFACT_EMOJI[art.name] || "🔹";
+                div.title = art.name + ": " + art.description;
+                container.appendChild(div);
+            });
+        }
+
+        function renderHand(hand, energy) {
+            const container = document.getElementById("card-hand");
+            container.innerHTML = "";
+            hand.forEach((card, index) => {
+                const canPlay = card.cost <= energy && card.type !== "curse";
+                let flavorClass = "";
+                if (card.tags) {
+                    const tags = Array.isArray(card.tags) ? card.tags : card.tags.split(",");
+                    for (const tag of tags) {
+                        const t = tag.trim().toLowerCase();
+                        if (FLAVOR_CLASSES.includes(t)) { flavorClass = " " + t; break; }
+                    }
+                }
+                const displayPower = card.is_upgraded ? Math.ceil(card.power * 1.5) : card.power;
+                const upgMark = card.is_upgraded ? "+" : "";
+                const div = document.createElement("div");
+                div.className = "battle-card" + flavorClass + (canPlay ? "" : " disabled");
+                div.innerHTML =
+                    '<div class="card-cost">' + card.cost + '</div>' +
+                    '<div class="card-name">' + card.name + upgMark + '</div>' +
+                    '<div class="card-type">' + (card.type === "attack" ? "АТК" : card.type === "skill" ? "НАВ" : "ПРОКЛЯТИЕ") + '</div>' +
+                    '<div class="card-power">' + displayPower + '</div>';
+                if (canPlay) {
+                    div.onclick = () => {
+                        triggerAttackJump(document.getElementById("player-token"), "down");
+                        playCard(index);
+                    };
+                }
+                container.appendChild(div);
+            });
+        }
+
         function renderBattle(state) {
             battleState = state;
-
-            // Update turn info
-            document.getElementById("turn-number").textContent = state.turn;
-            document.getElementById("phase-text").textContent =
-                state.phase === "player_turn" ? "Ваша фаза" : "Фаза врага";
-
-            // Update player
             const p = state.player;
-            document.getElementById("player-hp-text").textContent = `${p.hp}/${p.max_hp}`;
-            document.getElementById("player-hp-bar").style.width = `${(p.hp / p.max_hp * 100)}%`;
 
-            const pBlock = document.getElementById("player-block");
-            if (p.block > 0) {
-                pBlock.textContent = p.block;
-                pBlock.style.display = "flex";
-            } else {
-                pBlock.style.display = "none";
-            }
+            document.getElementById("turn-number").textContent = state.turn;
+            document.getElementById("phase-text").textContent = state.phase === "player_turn" ? "Ваша фаза" : "Фаза врага";
 
-            // Update combo stacks (5 flavors)
+            // Игрок
+            document.getElementById("player-hp-text").textContent = p.hp + "/" + p.max_hp;
+            document.getElementById("player-block-val").textContent = p.block || 0;
+            document.getElementById("energy-text").textContent = p.energy + "/" + p.max_energy;
+            const pBlockBadge = document.getElementById("player-block");
+            if (p.block > 0) { pBlockBadge.textContent = p.block; pBlockBadge.style.display = "flex"; }
+            else { pBlockBadge.style.display = "none"; }
+
+            // Баффы игрока
+            renderBuffIcons(p.buffs, "player-buffs");
+
+            // Комбо
             if (state.combo_stacks) {
                 document.getElementById("hot-stacks").textContent = state.combo_stacks.HOT || 0;
                 document.getElementById("sour-stacks").textContent = state.combo_stacks.SOUR || 0;
@@ -628,142 +949,16 @@
                 document.getElementById("salty-stacks").textContent = state.combo_stacks.SALTY || 0;
             }
 
-            // Update enemy
-            const enemyToken = document.getElementById("enemy-token");
-            const e = state.enemy || (state.enemies && state.enemies[0] && state.enemies[0].fighter);
-            if (e) {
-                document.getElementById("enemy-hp-text").textContent = `${e.hp}/${e.max_hp}`;
-                document.getElementById("enemy-hp-bar").style.width = `${(e.hp / e.max_hp * 100)}%`;
-                document.getElementById("enemy-name").textContent = e.name.toUpperCase();
+            // Враги
+            renderEnemies(state);
 
-                // Set enemy token background based on name
-                enemyToken.className = "token-circle enemy";
-                if (e.name && e.name.includes("Гаки")) {
-                    enemyToken.classList.add("gaki");
-                } else {
-                    enemyToken.classList.add("unknown");
-                }
-
-                const eBlock = document.getElementById("enemy-block");
-                if (e.block > 0) {
-                    eBlock.textContent = e.block;
-                    eBlock.style.display = "flex";
-                } else {
-                    eBlock.style.display = "none";
-                }
-            }
-
-            // Update energy
-            document.getElementById("energy-text").textContent = `${p.energy} / ${p.max_energy}`;
-
-            // Update enemy intent from enemy state
-            const es = state.enemies && state.enemies[0];
-            const intentBubble = document.getElementById("intent-bubble");
-            const intentText = document.getElementById("intent-text");
-            if (es && es.intent) {
-                const intent = es.intent;
-                intentBubble.className = "intent-bubble " + (intent.type || "attack");
-                if (intent.type === "attack") {
-                    intentText.textContent = `Атака ${intent.value}`;
-                } else if (intent.type === "defend") {
-                    intentText.textContent = `Блок ${intent.value}`;
-                } else if (intent.type === "steal") {
-                    intentText.textContent = `Кража ${intent.value}`;
-                } else {
-                    intentText.textContent = intent.description || "???";
-                }
-                intentBubble.style.display = "flex";
-            } else {
-                intentBubble.style.display = "none";
-            }
-
-            // Render artifacts
+            // Артефакты и рука
             renderArtifacts(state.artifacts || []);
-
-            // Render hand
             renderHand(state.hand || [], p.energy);
         }
 
-        // Trigger shake animation on element
-        function triggerShake(elementId) {
-            const el = document.getElementById(elementId);
-            if (el) {
-                el.classList.add("shake");
-                setTimeout(() => el.classList.remove("shake"), 200);
-            }
-        }
-
-        // Render player artifacts
-        function renderArtifacts(artifacts) {
-            const container = document.getElementById("player-artifacts");
-            container.innerHTML = "";
-
-            const emojiMap = {
-                "Энергетик": "⚡",
-                "Острый соус": "🌶️",
-                "Бронежилет шефа": "🦺",
-                "Магнитная доска": "🧲",
-                "Точильный камень": "🗡️",
-                "Дефибриллятор": "💓",
-                "Шипованный фартук": "🦔",
-                "Свинья-копилка": "🐷",
-                "Разбитая копилка": "🐽"
-            };
-
-            artifacts.forEach(art => {
-                const div = document.createElement("div");
-                div.className = "artifact-icon " + (art.is_active ? "active" : "inactive");
-                div.textContent = emojiMap[art.name] || "🔹";
-                div.title = `${art.name}: ${art.description}`;
-                container.appendChild(div);
-            });
-        }
-
-        // Render card hand
-        function renderHand(hand, energy) {
-            const container = document.getElementById("card-hand");
-            container.innerHTML = "";
-
-            const FLAVOR_CLASSES = ["hot", "sour", "sweet", "bitter", "salty"];
-
-            hand.forEach((card, index) => {
-                const div = document.createElement("div");
-                const canPlay = card.cost <= energy;
-
-                // Добавляем класс вкуса если есть
-                let flavorClass = "";
-                if (card.tags) {
-                    const tags = Array.isArray(card.tags) ? card.tags : card.tags.split(",");
-                    for (const tag of tags) {
-                        const cleanTag = tag.trim().toLowerCase();
-                        if (FLAVOR_CLASSES.includes(cleanTag)) {
-                            flavorClass = " " + cleanTag;
-                            break;  // Берем первый найденный вкус
-                        }
-                    }
-                }
-
-                div.className = "battle-card" + flavorClass + (canPlay ? "" : " disabled");
-
-                div.innerHTML = `
-                    <div class="card-cost">${card.cost}</div>
-                    <div class="card-name">${card.name}</div>
-                    <div class="card-type">${card.type}</div>
-                    <div class="card-power">${card.power}</div>
-                `;
-
-                if (canPlay) {
-                    div.onclick = () => playCard(index);
-                }
-
-                container.appendChild(div);
-            });
-        }
-
-        // End turn
         async function endTurn() {
             const prevHp = battleState ? battleState.player.hp : 80;
-
             try {
                 const res = await fetch("/api/run/action", {
                     method: "POST",
@@ -771,49 +966,31 @@
                     body: JSON.stringify({ action: "end_turn" })
                 });
                 const data = await res.json();
-
-                // Проверяем смерть или завершение забега
-                if (checkRunFinished(data)) {
-                    return;
-                }
-
-                if (data.is_dead) {
-                    alert("Вы погибли! Кредиты обнулены. Возвращение к тележке.");
-                    window.location.href = "/";
-                    return;
-                }
-
+                if (checkRunFinished(data)) return;
                 if (data.run && data.run.battle) {
-                    battleState = data.run.battle;
-                    renderBattle(battleState);
-
-                    // Shake if player took damage
-                    if (battleState.player.hp < prevHp) {
-                        triggerShake("player-token");
+                    const newState = data.run.battle;
+                    if (newState.player.hp < prevHp) {
+                        triggerShake(document.getElementById("player-token"));
                     }
+                    battleState = newState;
+                    renderBattle(battleState);
                 }
-            } catch (e) {
-                console.error("Ошибка end_turn:", e);
-            }
+            } catch (e) { console.error("Ошибка end_turn:", e); }
         }
 
-        // Surrender
         async function surrender() {
             if (confirm("Сдаться и потерять забег?")) {
                 try {
-                    const res = await fetch("/api/run/action", {
+                    await fetch("/api/run/action", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ action: "abandon" })
                     });
                     window.location.href = "/";
-                } catch (e) {
-                    console.error("Ошибка surrender:", e);
-                }
+                } catch (e) { console.error(e); }
             }
         }
 
-        // Play card
         async function playCard(handIndex) {
             try {
                 const res = await fetch("/api/run/action", {
@@ -822,47 +999,32 @@
                     body: JSON.stringify({ action: "play_card", hand_index: handIndex })
                 });
                 const data = await res.json();
-
-                // Проверяем смерть или завершение забега
-                if (checkRunFinished(data)) {
-                    return;
-                }
-
-                // Отображаем сообщения о комбо
+                if (checkRunFinished(data)) return;
                 if (data.combo_messages && data.combo_messages.length > 0) {
-                    alert(data.combo_messages.join("\n"));
+                    data.combo_messages.forEach((m, i) => setTimeout(() => showComboToast(m), i * 500));
                 }
-
                 if (data.run && data.run.battle) {
                     battleState = data.run.battle;
                     renderBattle(battleState);
+                    // Shake врага при атаке
+                    const firstAlive = document.getElementById("enemy-token-0");
+                    triggerShake(firstAlive);
                 }
-            } catch (e) {
-                console.error("Ошибка play_card:", e);
-            }
+            } catch (e) { console.error("Ошибка play_card:", e); }
         }
 
-        // Initialize battle on load
         async function initBattle() {
             try {
                 const res = await fetch("/api/run/state");
                 const data = await res.json();
-
-                // Проверяем смерть или завершение забега
-                if (checkRunFinished(data)) {
-                    return;
-                }
-
+                if (checkRunFinished(data)) return;
                 if (data.run && data.run.battle) {
                     battleState = data.run.battle;
                     renderBattle(battleState);
                 }
-            } catch (e) {
-                console.error("Ошибка initBattle:", e);
-            }
+            } catch (e) { console.error("Ошибка initBattle:", e); }
         }
 
-        // Load battle on page load
         initBattle();
     </script>
 </body>

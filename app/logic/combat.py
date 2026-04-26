@@ -228,6 +228,12 @@ async def check_battle_end(state: BattleState) -> bool:
         for es in state.enemies:
             if es.fighter.hp <= 0:
                 es.alive = False
+                # Коллапс Аномалии: смерть босса убивает всех оставшихся Гаки
+                if "Нурарихён" in es.fighter.name:
+                    for gaki in state.enemies:
+                        if gaki is not es and "Гаки" in gaki.fighter.name:
+                            gaki.fighter.hp = 0
+                            gaki.alive = False
         alive = [es for es in state.enemies if es.alive]
         if not alive:
             state.finished = True

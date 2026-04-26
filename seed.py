@@ -45,7 +45,7 @@ CARDS: list[dict] = [
     {
         "name": "Укол вилкой",
         "cost": 1, "type": "attack", "power": 9,
-        "damage_type": "none", "tags": "SOUR",
+        "damage_type": "none", "tags": "HOT",
         "is_exhaust": False, "rarity": "common",
         "is_starting": False,
     },
