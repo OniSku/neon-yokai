@@ -490,61 +490,77 @@ ENEMIES: list[dict] = [
 
 
 SHOP_ITEMS: list[dict] = [
-    # === Ингредиенты ===
+    # === Ингредиенты (натуральные) ===
     {
-        "name": "Лемонграсс",
-        "description": "Чистый SOUR (уязвимость). +1 в инвентарь.",
+        "name": "Трава с рынка Асакуса",
+        "description": "Дикий лемонграсс. SOUR +2. Кислотный профиль.",
         "price": 20,
         "category": "ingredient",
-        "payload": '{"ingredient_name": "Лайм"}',
+        "payload": '{"ingredient_name": "Дикий лемонграсс"}',
     },
     {
-        "name": "Перец чили",
-        "description": "Сильный HOT. В инвентарь.",
+        "name": "Горский огонь",
+        "description": "Горный перец чили. HOT +2. Жгучий профиль.",
         "price": 20,
         "category": "ingredient",
-        "payload": '{"ingredient_name": "Перец чили"}',
+        "payload": '{"ingredient_name": "Горный перец чили"}',
     },
     {
-        "name": "Мисо-паста",
-        "description": "Смешанный SALTY+BITTER. В инвентарь.",
-        "price": 25,
+        "name": "Соль Тихого океана",
+        "description": "Морская соль из опреснителя. SALTY +2. Броня держится.",
+        "price": 20,
         "category": "ingredient",
-        "payload": '{"ingredient_name": "Мисо-паста"}',
+        "payload": '{"ingredient_name": "Морская соль из опреснителя"}',
     },
     {
-        "name": "Синтетический концентрат \'\u0423мами\'",
-        "description": "Много стаков, но дает -5 макс HP на 1 бой. Дёшево, но токсично.",
+        "name": "Сушняк из пагоды",
+        "description": "Сушеный гриб шиитаке. BITTER+SALTY. Смешанный профиль.",
+        "price": 22,
+        "category": "ingredient",
+        "payload": '{"ingredient_name": "Сушеный гриб шиитаке"}',
+    },
+    # === Ингредиенты (синтетика) ===
+    {
+        "name": "Контрабанда из лаборатории",
+        "description": "Синтетический Умами-порошок. Все вкусы +2, но готовка - дебафф.",
         "price": 15,
         "category": "ingredient",
-        "payload": '{"ingredient_name": "Синтетический концентрат \\"\u0423мами\\""}',
+        "payload": '{"ingredient_name": "Синтетический Умами-порошок"}',
     },
-    # === Услуги ===
     {
-        "name": "Аптечка повара",
-        "description": "Восстанавливает 20 HP немедленно.",
+        "name": "Корень из стока",
+        "description": "Глитч-корень. SOUR +2, синтетика. Дёшево, но токсично.",
+        "price": 12,
+        "category": "ingredient",
+        "payload": '{"ingredient_name": "Глитч-корень"}',
+    },
+    # === Расходники ===
+    {
+        "name": "Паёк коллектора",
+        "description": "Аптечка. Восстанавливает 20 HP немедленно.",
         "price": 30,
         "category": "consumable",
         "payload": '{"heal": 20}',
     },
     {
-        "name": "Перепрошивка чипа",
-        "description": "+1 энергии только на первый бой следующего забега.",
+        "name": "Прошивка чипа v.2",
+        "description": "+1 энергии на первый бой следующего забега.",
         "price": 40,
         "category": "consumable",
         "payload": '{"bonus_energy_first_fight": 1}',
     },
+    # === Услуги ===
     {
-        "name": "Чистка инвентаря",
-        "description": "Удалить карту из колоды. Цена растёт: 50, 75, 100...",
+        "name": "Забыть лишнее",
+        "description": "Сжечь карту из колоды. Цена растёт за забег: 50, 75, 100...",
         "price": 50,
         "category": "remove_card",
         "payload": '{"base_price": 50, "price_step": 25}',
     },
     # === Инструмент (артефакт) ===
     {
-        "name": "Случайный инструмент",
-        "description": "Случайный common-артефакт из запасов поставщика.",
+        "name": "Ящик с барахлом",
+        "description": "Случайный common-артефакт из склада поставщика.",
         "price": 60,
         "category": "artifact",
         "payload": '{"rarity": "common"}',
