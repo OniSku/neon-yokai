@@ -61,11 +61,15 @@ async def cook(
 
     craft_result = await craft_dish(ingredients, debt_level=user.debt_level)
 
-    profile = await sum_ingredient_weights(ingredients)
-    combos = await resolve_combo_effects(profile)
     run = await load_run_state(session, user.id)
     if run and not run.run_finished:
-        run.combo_effects = combos
+        if craft_result.void_result:
+            # - Безвкусная биомасса: сбрасываем баффы, не даём новых
+            run.combo_effects = []
+        else:
+            profile = await sum_ingredient_weights(ingredients)
+            combos = await resolve_combo_effects(profile)
+            run.combo_effects = combos
         await save_run_state(session, run)
 
     await session.commit()

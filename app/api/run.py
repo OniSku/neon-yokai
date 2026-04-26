@@ -1181,9 +1181,25 @@ async def rest_cook(
 
     # - Варим блюдо и заменяем combo_effects (сбрасываем старый бафф)
     craft_result = await craft_dish(ingredients, debt_level=user.debt_level)
-    profile = await sum_ingredient_weights(ingredients)
-    combos = await resolve_combo_effects(profile)
-    run.combo_effects = combos  # - замена, а не добавление
+
+    msg = f"Блюдо приготовлено! Доминанта: {craft_result.dominant_flavor or 'нет'}"
+
+    if craft_result.void_result:
+        # - Правило пустоты: Безвкусная биомасса - только +3 HP, никаких баффов
+        max_hp = 80 + await get_max_hp_bonus_async(session, user)
+        run.current_hp = min(run.current_hp + 3, max_hp)
+        run.combo_effects = []
+        msg = "Безвкусная биомасса. Вкусы не доминируют - получено +3 HP."
+    else:
+        profile = await sum_ingredient_weights(ingredients)
+        combos = await resolve_combo_effects(profile)
+        run.combo_effects = combos  # - замена, а не добавление
+
+        if craft_result.synthetic_debuff == "SYNTHETIC_CRITICAL":
+            # - Чистая синтетика: -5 max HP до конца забега
+            run.current_hp = max(1, run.current_hp - 5)
+        elif craft_result.synthetic_debuff == "SYNTHETIC_WEAK":
+            pass  # - Перегрузка: дебафф уже записан в craft_result, фронт применит
 
     node = _find_node(run)
     node.completed = True
@@ -1193,8 +1209,8 @@ async def rest_cook(
     await save_run_state(session, run)
 
     return {
-        "message": f"Блюдо приготовлено! Доминанта: {craft_result.dominant_flavor or 'нет'}",
+        "message": msg,
         "result": craft_result,
-        "combo_effects": [c.name for c in combos],
+        "combo_effects": [c.name for c in run.combo_effects] if not craft_result.void_result else [],
         "run": run,
     }

@@ -33,7 +33,7 @@ FLAVOR_DESCRIPTION: dict[str, str] = {
 SWEET_HEAL_AMOUNT: int = 8
 SOUR_DEBUFF: Buff = Buff(tag="SOUR_DEBUFF", duration=2, multiplier=0.75, flat_bonus=0)
 
-DOMINANCE_THRESHOLD: int = 5
+DOMINANCE_THRESHOLD: int = 3  # - при cap +2 достигается уже с 2 одинаковых ингредиента
 COMBO_THRESHOLD: int = 4
 
 COMBO_MAP: dict[str, ComboEffect] = {
@@ -109,6 +109,11 @@ async def resolve_dominant_flavor(profile: FlavorProfile) -> str | None:
     if top_value < DOMINANCE_THRESHOLD:
         return None
 
+    # - Правило пустоты: если два вкуса одинаково доминируют - ничья, доминанты нет
+    top_count = sum(1 for v in flavors.values() if v == top_value)
+    if top_count > 1:
+        return None
+
     return top_flavor
 
 
@@ -134,26 +139,63 @@ async def resolve_combo_effects(profile: FlavorProfile) -> list[ComboEffect]:
     return effects
 
 
+def _count_synth(ingredients: list[Ingredient]) -> tuple[int, int]:
+    synth = sum(1 for ing in ingredients if getattr(ing, "is_synthetic", False))
+    return synth, len(ingredients) - synth
+
+
 async def craft_dish(
     ingredients: list[Ingredient],
     debt_level: int = 0,
 ) -> CraftResult:
     profile = await sum_ingredient_weights(ingredients)
     dominant = await resolve_dominant_flavor(profile)
+
+    synth_count, nat_count = _count_synth(ingredients)
+    total = len(ingredients)
+
+    # - Правило пустоты: ничья без доминанты = Безвкусная биомасса
+    if dominant is None:
+        return CraftResult(
+            profile=profile,
+            buffs=[],
+            dominant_flavor=None,
+            combo_effects=[],
+            synthetic_debuff=None,
+            void_result=True,  # - сигнал фронту: показать "Безвкусная биомасса, +3 HP"
+        )
+
     buffs = await profile_to_buffs(profile, dominant)
-    buffs = await nerf_buffs(buffs, debt_level)
     combos = await resolve_combo_effects(profile)
 
-    # - Если хотя бы один ингредиент синтетический - добавить дебафф SYNTHETIC
-    has_synthetic = any(getattr(ing, "is_synthetic", False) for ing in ingredients)
-    synthetic_debuff: Buff | None = None
-    if has_synthetic:
-        synthetic_debuff = Buff(tag="SYNTHETIC_WEAK", duration=1, multiplier=0.75, flat_bonus=0)
+    synthetic_debuff: str | None = None
+
+    if synth_count == 0:
+        # - Чисто натуральное: полный бафф, никакого штрафа
+        pass
+    elif nat_count >= synth_count:
+        # - 2 натур / 1 синт (Стабилизация): штраф аннулируется, бафф полный
+        pass
+    elif synth_count > nat_count and nat_count > 0:
+        # - 2 синт / 1 натур (Перегрузка): штраф + сокращение баффов на 1 ход
+        synthetic_debuff = "SYNTHETIC_WEAK"
+        for b in buffs:
+            b.duration = max(1, b.duration - 1)
+        for c in combos:
+            c.buff.duration = max(1, c.buff.duration - 1)
+    else:
+        # - Чистая синтетика: критический штраф двойной
+        synthetic_debuff = "SYNTHETIC_CRITICAL"
+        for b in buffs:
+            b.duration = max(1, b.duration - 2)
+
+    buffs = await nerf_buffs(buffs, debt_level)
 
     return CraftResult(
         profile=profile,
         buffs=[b.tag for b in buffs],
         dominant_flavor=dominant,
         combo_effects=[c.name for c in combos],
-        synthetic_debuff=synthetic_debuff.tag if synthetic_debuff else None,
+        synthetic_debuff=synthetic_debuff,
+        void_result=False,
     )
