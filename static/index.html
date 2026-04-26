@@ -371,6 +371,41 @@
             box-shadow: inset 0 0 30px #ff4500, inset 0 0 60px rgba(255,69,0,0.15);
         }
 
+        /* Слоты выбранных ингредиентов */
+        .craft-slot {
+            flex: 1; min-height: 44px; border: 1.5px dashed rgba(255,255,255,0.15);
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; color: var(--muted); position: relative;
+        }
+        .craft-slot.filled { border-style: solid; border-color: var(--neon); background: rgba(0,255,245,0.06); color: var(--text); }
+        .craft-slot .cs-name { font-size: 0.68rem; font-weight: 700; text-align: center; padding: 4px; }
+        .craft-slot .cs-remove { position: absolute; top: 2px; right: 4px; font-size: 0.6rem; color: var(--accent); cursor: pointer; opacity: 0.7; }
+
+        /* Строка ингредиента в инвентаре */
+        .ingredient-row {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--surface2); border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 8px; padding: 8px 12px; cursor: pointer; transition: all 0.15s;
+        }
+        .ingredient-row:hover, .ingredient-row.selected { border-color: var(--neon); background: rgba(0,255,245,0.06); }
+        .ingredient-row.selected { border-color: var(--neon); }
+        .ingredient-row.maxed { opacity: 0.4; cursor: not-allowed; }
+        .ir-name { font-weight: 700; font-size: 0.85rem; flex: 1; }
+        .ir-qty { font-size: 0.7rem; color: var(--muted); }
+        .ir-flavors { display: flex; gap: 4px; }
+        .ir-pip { width: 8px; height: 8px; border-radius: 2px; }
+        .pip-spicy  { background: #ff4444; }
+        .pip-sour   { background: #44ff44; }
+        .pip-sweet  { background: #ff69b4; }
+        .pip-bitter { background: #9944ff; }
+        .pip-salty  { background: #4488ff; }
+
+        /* Бар вкуса в превью */
+        .flavor-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .flavor-bar-label { font-size: 0.68rem; width: 52px; color: var(--muted); }
+        .flavor-bar-track { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+        .flavor-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
         /* Товар в магазине (run-shop) */
         .run-shop-item {
             display: flex;
@@ -834,20 +869,39 @@
         <div class="card-surface">
             <div class="row mb8"><span class="label">Агент</span><span class="val val-neon" id="menu-username">...</span></div>
             <div class="profile-grid">
-                <div class="profile-cell"><div class="label">Кредиты</div><div class="val val-gold" id="menu-credits">0</div></div>
-                <div class="profile-cell"><div class="label">Розыск Якудзы</div><div class="val val-red" id="menu-debt-amount">0</div></div>
-                <div class="profile-cell"><div class="label">Статус</div><div class="val val-red" id="menu-debt-name" style="font-size:0.8rem">Чисто</div></div>
-                <div class="profile-cell"><div class="label">Опыт</div><div class="val val-neon" id="menu-xp">0</div></div>
+                <div class="profile-cell"><div class="label">\ud83d\udcb0 Кредиты</div><div class="val val-gold" id="menu-credits">0</div></div>
+                <div class="profile-cell" onclick="showComboPopup('\ud83d\udc80 Розыск Якудзы','','Долг растёт когда берёшь продукты авансом. При высоком долге Якудза нападает во время забега. Выплачивай в Складе Поставщика.')" style="cursor:pointer">
+                    <div class="label">\ud83d\udc80 Розыск <span style="font-size:0.6rem;opacity:0.5">(?)</span></div>
+                    <div class="val val-red" id="menu-debt-amount">0</div>
+                </div>
+                <div class="profile-cell" onclick="showComboPopup('Статус долга','','Чисто - нет долга. Подозреваемый - Якудза следит. Разыскиваемый - атаки во время забега. Мертвец - постоянные штрафы.')" style="cursor:pointer">
+                    <div class="label">Статус <span style="font-size:0.6rem;opacity:0.5">(?)</span></div>
+                    <div class="val val-red" id="menu-debt-name" style="font-size:0.8rem">Чисто</div>
+                </div>
+                <div class="profile-cell"><div class="label">\u2b50 Опыт</div><div class="val val-neon" id="menu-xp">0</div></div>
             </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-            <button class="btn-square" style="width:100%;height:64px" onclick="goTo('shop')">Склад<br>Поставщика</button>
-            <button class="btn-square" style="width:100%;height:64px" onclick="goTo('cart')">Тележка<br>(Готовка)</button>
-            <button class="btn-square" style="width:100%;height:64px" onclick="goTo('upgrades')">Прокачка<br>Тележки</button>
-            <button class="btn-square" style="width:100%;height:64px" onclick="goTo('suture')">Шов<br>(Мета)</button>
+            <button class="btn-square" style="width:100%;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px" onclick="goTo('shop')">
+                <span style="font-size:0.85rem;font-weight:700">\ud83d\udce6 Склад</span>
+                <span style="font-size:0.6rem;color:var(--muted);font-weight:400">\u041a\u0443\u043f\u0438\u0442\u044c, \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u043a\u0430\u0440\u0442\u044b</span>
+            </button>
+            <button class="btn-square" style="width:100%;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px" onclick="goTo('cart')">
+                <span style="font-size:0.85rem;font-weight:700">\ud83c\udf73 \u0413\u043e\u0442\u043e\u0432\u043a\u0430</span>
+                <span style="font-size:0.6rem;color:var(--muted);font-weight:400">\u0411\u0430\u0444\u0444 \u043d\u0430 \u0441\u043b\u0435\u0434\u0443\u044e\u0449\u0438\u0439 \u0437\u0430\u0431\u0435\u0433</span>
+            </button>
+            <button class="btn-square" style="width:100%;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px" onclick="goTo('upgrades')">
+                <span style="font-size:0.85rem;font-weight:700">\u2b06\ufe0f \u041f\u0440\u043e\u043a\u0430\u0447\u043a\u0430</span>
+                <span style="font-size:0.6rem;color:var(--muted);font-weight:400">\u0422\u0440\u0430\u0442\u0438\u0442\u044c XP \u043d\u0430 \u0443\u043b\u0443\u0447\u0448\u0435\u043d\u0438\u044f</span>
+            </button>
+            <button class="btn-square" style="width:100%;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px" onclick="goTo('suture')">
+                <span style="font-size:0.85rem;font-weight:700">\ud83e\uddf5 \u0428\u043e\u0432</span>
+                <span style="font-size:0.6rem;color:var(--muted);font-weight:400">\u041c\u0435\u0442\u0430-\u0443\u043b\u0443\u0447\u0448\u0435\u043d\u0438\u044f</span>
+            </button>
         </div>
-        <div style="display:flex;justify-content:center;margin-top:8px">
-            <button class="btn-circle" onclick="startRun()">В ночную<br>смену</button>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:8px">
+            <button class="btn-circle" onclick="startRun()">\u0412 \u043d\u043e\u0447\u043d\u0443\u044e<br>\u0441\u043c\u0435\u043d\u0443</button>
+            <div style="font-size:0.65rem;color:var(--muted);text-align:center">\u041d\u0430\u0447\u0430\u0442\u044c \u0437\u0430\u0431\u0435\u0433 - \u0431\u043e\u0439, \u043a\u0430\u0440\u0442\u0430, \u0431\u043e\u0441\u0441</div>
         </div>
     </div>
 </div>
@@ -897,24 +951,48 @@
 <!-- ========== SCREEN: CART / CRAFT ========== -->
 <div id="screen-cart" class="screen">
     <div class="wrap cooking-heat">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
             <button class="btn-triangle" onclick="goTo('menu')">Назад</button>
-            <h2 style="margin:0">Тележка - Готовка</h2>
+            <div>
+                <h2 style="margin:0;font-size:1.1rem">Тележка - Готовка</h2>
+                <div style="font-size:0.7rem;color:var(--muted)">Выбери ингредиенты - получи бафф на забег</div>
+            </div>
         </div>
-        <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px">Выбери до 3 ингредиентов - получи комбо-бафф на следующий забег.</p>
-        <div class="card-surface">
-            <div class="label mb8">Ингредиенты <span id="inv-limit-text" style="color:var(--muted);font-size:0.7rem"></span></div>
-            <div id="cart-inventory" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+
+        <!-- Выбранные ингредиенты + превью -->
+        <div class="card-surface" style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span class="label">Выбрано: <span id="craft-count" style="color:var(--neon)">0</span>/3</span>
+                <span style="font-size:0.7rem;color:var(--muted)" id="inv-limit-text"></span>
+            </div>
+            <!-- Слоты выбранных -->
+            <div id="craft-slots" style="display:flex;gap:8px;margin-bottom:8px">
+                <div class="craft-slot" id="craft-slot-0"></div>
+                <div class="craft-slot" id="craft-slot-1"></div>
+                <div class="craft-slot" id="craft-slot-2"></div>
+            </div>
+            <!-- Превью профиля вкусов -->
+            <div id="craft-preview" style="display:none">
+                <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px">Профиль блюда:</div>
+                <div id="craft-preview-bars"></div>
+                <div id="craft-preview-hint" style="font-size:0.75rem;color:var(--energy);margin-top:6px"></div>
+            </div>
         </div>
-        <div id="craft-result" class="card-surface mt8" style="display:none">
-            <div class="label">Результат крафта</div>
-            <div id="craft-result-text"></div>
+
+        <!-- Инвентарь -->
+        <div class="card-surface" style="margin-bottom:10px">
+            <div class="label mb8">🧀 Ингредиенты в запасе</div>
+            <div id="cart-inventory" style="display:flex;flex-direction:column;gap:6px"></div>
         </div>
-        <div class="btn-diamond-wrap">
-            <button class="btn-diamond" id="btn-craft" onclick="doCraft()" disabled>
-                <span class="diamond-label">Сварить<br><span id="craft-count">0/3</span></span>
-            </button>
+
+        <div id="craft-result" class="card-surface" style="display:none;margin-bottom:10px;border-color:var(--neon)">
+            <div class="label" style="color:var(--neon)">&#9989; Приготовлено!</div>
+            <div id="craft-result-text" style="margin-top:6px"></div>
         </div>
+
+        <button class="btn btn-primary btn-block" id="btn-craft" onclick="doCraft()" disabled style="height:52px;font-size:1rem;font-weight:700">
+            🍳 Приготовить (<span id="craft-count-btn">0</span> ингр.)
+        </button>
     </div>
 </div>
 
@@ -1460,10 +1538,15 @@ async function doRemoveCard(cardId, cost) {
 }
 
 /* ===== CART / CRAFT ===== */
+let craftInventoryData = [];
+
 async function loadInventory() {
     selectedIngredients = [];
+    craftInventoryData = [];
     updateCraftBtn();
+    updateCraftSlots();
     document.getElementById("craft-result").style.display = "none";
+    document.getElementById("craft-preview").style.display = "none";
     try {
         const [res, profileRes] = await Promise.all([
             fetch(API + "/user/inventory", { headers: headers() }),
@@ -1472,42 +1555,134 @@ async function loadInventory() {
         if (!res.ok) return;
         const items = await res.json();
         const profile = profileRes.ok ? await profileRes.json() : null;
+        craftInventoryData = items;
         const totalQty = items.reduce((s, i) => s + i.quantity, 0);
         const limit = profile ? profile.inventory_limit : 5;
-        document.getElementById("inv-limit-text").textContent = "[" + totalQty + "/" + limit + "]";
+        document.getElementById("inv-limit-text").textContent = totalQty + "/" + limit + " в запасе";
         const el = document.getElementById("cart-inventory");
         el.innerHTML = "";
-        if (!items.length) { el.innerHTML = '<div style="color:var(--muted);font-size:0.8rem">Инвентарь пуст. Победите врагов для получения ингредиентов.</div>'; return; }
+        if (!items.length) {
+            el.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:8px">Пусто. Ингредиенты выпадают с врагов и за выполненные задания.</div>';
+            return;
+        }
+        const FLAVOR_COLORS = {spicy: "#ff4444", sour: "#44ff44", sweet: "#ff69b4", bitter: "#9944ff", salty: "#4488ff"};
+        const FLAVOR_EMOJI = {spicy: "🌶 Острота", sour: "🍋 Кислота", sweet: "🍯 Сладость", bitter: "☕ Горечь", salty: "🧂 Соль"};
         for (const item of items) {
-            const btn = document.createElement("button");
-            btn.className = "btn-square";
-            btn.dataset.id = item.ingredient_id;
-            btn.innerHTML = '<div style="font-size:0.7rem;font-weight:700">' + item.ingredient_name + '</div>' +
-                '<div style="font-size:0.65rem;color:var(--muted)">x' + item.quantity + '</div>';
-            btn.onclick = () => toggleIngredient(item.ingredient_id, btn);
-            el.appendChild(btn);
+            const row = document.createElement("div");
+            row.className = "ingredient-row";
+            row.dataset.id = item.ingredient_id;
+            // Точки вкусов
+            const profile = item.flavor_profile || {};
+            let pipsHtml = '<div class="ir-flavors">';
+            for (const [fl, val] of Object.entries(profile)) {
+                if (val > 0 && FLAVOR_COLORS[fl]) {
+                    const size = Math.min(4 + val * 2, 14);
+                    pipsHtml += '<span title="' + (FLAVOR_EMOJI[fl] || fl) + ': ' + val + '" style="display:inline-block;width:' + size + 'px;height:' + size + 'px;border-radius:3px;background:' + FLAVOR_COLORS[fl] + ';opacity:0.85"></span>';
+                }
+            }
+            pipsHtml += '</div>';
+            row.innerHTML =
+                '<div class="ir-name">' + item.ingredient_name + '</div>' +
+                pipsHtml +
+                '<div class="ir-qty">x' + item.quantity + '</div>';
+            row.onclick = () => toggleIngredient(item.ingredient_id, row);
+            el.appendChild(row);
         }
     } catch (e) { console.error(e); }
 }
 
-function toggleIngredient(id, btn) {
+function toggleIngredient(id, row) {
     const idx = selectedIngredients.indexOf(id);
     if (idx >= 0) {
         selectedIngredients.splice(idx, 1);
-        btn.classList.remove("selected");
+        row.classList.remove("selected");
     } else {
         if (selectedIngredients.length >= 3) return;
         selectedIngredients.push(id);
-        btn.classList.add("selected");
+        row.classList.add("selected");
     }
     updateCraftBtn();
+    updateCraftSlots();
+    updateCraftPreview();
 }
 
 function updateCraftBtn() {
     const btn = document.getElementById("btn-craft");
     const count = document.getElementById("craft-count");
-    if (count) count.textContent = selectedIngredients.length + "/3";
-    btn.disabled = selectedIngredients.length === 0;
+    const countBtn = document.getElementById("craft-count-btn");
+    const n = selectedIngredients.length;
+    if (count) count.textContent = n;
+    if (countBtn) countBtn.textContent = n;
+    btn.disabled = n === 0;
+}
+
+function updateCraftSlots() {
+    for (let i = 0; i < 3; i++) {
+        const slot = document.getElementById("craft-slot-" + i);
+        if (!slot) continue;
+        const ingId = selectedIngredients[i];
+        if (ingId) {
+            const item = craftInventoryData.find(x => x.ingredient_id === ingId);
+            slot.className = "craft-slot filled";
+            slot.innerHTML = '<span class="cs-name">' + (item ? item.ingredient_name : ingId) + '</span>' +
+                '<span class="cs-remove" onclick="removeSlot(' + i + ')">✕</span>';
+        } else {
+            slot.className = "craft-slot";
+            slot.textContent = (i + 1) + ". Пусто";
+        }
+    }
+}
+
+function removeSlot(idx) {
+    const ingId = selectedIngredients[idx];
+    if (!ingId) return;
+    selectedIngredients.splice(idx, 1);
+    // Снимаем выделение с строки
+    const row = document.querySelector('.ingredient-row[data-id="' + ingId + '"]');
+    if (row) row.classList.remove("selected");
+    updateCraftBtn();
+    updateCraftSlots();
+    updateCraftPreview();
+}
+
+function updateCraftPreview() {
+    const preview = document.getElementById("craft-preview");
+    const barsEl = document.getElementById("craft-preview-bars");
+    const hintEl = document.getElementById("craft-preview-hint");
+    if (!selectedIngredients.length) { preview.style.display = "none"; return; }
+    preview.style.display = "block";
+    // Суммируем вкусы
+    const totals = {spicy: 0, sour: 0, sweet: 0, bitter: 0, salty: 0};
+    for (const ingId of selectedIngredients) {
+        const item = craftInventoryData.find(x => x.ingredient_id === ingId);
+        if (!item || !item.flavor_profile) continue;
+        for (const [fl, val] of Object.entries(item.flavor_profile)) {
+            if (fl in totals) totals[fl] += val;
+        }
+    }
+    const FLAVOR_META = [
+        {key: "spicy",  label: "🌶 Острота",  color: "#ff4444", combo: "x4 - Ожог всех врагов (8 урона/ход)"},
+        {key: "sour",   label: "🍋 Кислота",  color: "#44ff44", combo: "x4 - Уязвимость всем врагам (2 хода)"},
+        {key: "sweet",  label: "🍯 Сладость", color: "#ff69b4", combo: "x4 - Исцеление +6 HP"},
+        {key: "bitter", label: "☕ Горечь",   color: "#9944ff", combo: "x4 - +2 энергии за ход"},
+        {key: "salty",  label: "🧂 Соль",     color: "#4488ff", combo: "x4 - Блок +8 мгновенно"},
+    ];
+    const maxVal = Math.max(...Object.values(totals), 1);
+    let barsHtml = "";
+    let dominant = null; let domVal = 0;
+    for (const fm of FLAVOR_META) {
+        const v = totals[fm.key];
+        if (!v) continue;
+        const pct = Math.min(Math.round(v / maxVal * 100), 100);
+        barsHtml += '<div class="flavor-bar-row">' +
+            '<span class="flavor-bar-label">' + fm.label + '</span>' +
+            '<div class="flavor-bar-track"><div class="flavor-bar-fill" style="width:' + pct + '%;background:' + fm.color + '"></div></div>' +
+            '<span style="font-size:0.65rem;color:var(--muted);min-width:16px;text-align:right">' + v + '</span>' +
+            '</div>';
+        if (v > domVal) { domVal = v; dominant = fm; }
+    }
+    barsEl.innerHTML = barsHtml || '<div style="color:var(--muted);font-size:0.75rem">Вкусы не определены</div>';
+    hintEl.textContent = dominant ? "Доминанта: " + dominant.label + " - " + dominant.combo : "";
 }
 
 async function doCraft() {
@@ -1519,12 +1694,22 @@ async function doCraft() {
         const r = data.result;
         const box = document.getElementById("craft-result");
         box.style.display = "block";
-        const FLAVOR_RU = {spicy: "Острый", sour: "Кислый", sweet: "Сладкий", bitter: "Горький"};
-        document.getElementById("craft-result-text").innerHTML =
-            '<div style="color:var(--neon);font-weight:700">' + (r.dominant_flavor ? "Доминантный: " + (FLAVOR_RU[r.dominant_flavor] || r.dominant_flavor) : "Нет доминантного вкуса") + '</div>' +
-            '<div style="font-size:0.75rem;color:var(--muted)">Баффы: ' + (r.buffs.length ? r.buffs.join(", ") : "нет") + '</div>' +
-            (r.combo_effects && r.combo_effects.length ? '<div style="font-size:0.8rem;color:var(--gold);margin-top:4px;font-weight:700">Комбо: ' + r.combo_effects.join(", ") + '</div>' : '') +
-            '<div style="font-size:0.7rem;color:var(--muted);margin-top:4px">Остр:' + r.profile.spicy + ' Кисл:' + r.profile.sour + ' Слад:' + r.profile.sweet + ' Горьк:' + r.profile.bitter + '</div>';
+        const FLAVOR_RU = {spicy: "🌶 Острота", sour: "🍋 Кислота", sweet: "🍯 Сладость", bitter: "☕ Горечь", salty: "🧂 Соль"};
+        const FLAVOR_EFFECTS = {spicy: "Ожог всех врагов (8 урона/ход)", sour: "Уязвимость всем (2 хода)", sweet: "Исцеление +6 HP за ход", bitter: "+2 энергии в ход", salty: "+8 блока мгновенно"};
+        const domFl = r.dominant_flavor;
+        const domLabel = domFl ? (FLAVOR_RU[domFl] || domFl) : null;
+        const domEffect = domFl ? (FLAVOR_EFFECTS[domFl] || "") : "";
+        let html = "";
+        if (domLabel) {
+            html += '<div style="font-weight:700;color:var(--neon);font-size:0.9rem;margin-bottom:4px">' + domLabel + ' - доминанта</div>';
+            html += '<div style="font-size:0.75rem;color:var(--energy)">Бафф: ' + domEffect + '</div>';
+        } else {
+            html += '<div style="color:var(--muted);font-size:0.8rem">Смешанный вкус - бафф не активирован</div>';
+        }
+        if (r.combo_effects && r.combo_effects.length) {
+            html += '<div style="margin-top:6px;font-size:0.8rem;color:var(--gold);font-weight:700">⚡ Комбо: ' + r.combo_effects.join(", ") + '</div>';
+        }
+        document.getElementById("craft-result-text").innerHTML = html;
         await loadInventory();
     } catch (e) { alert("Ошибка сети"); }
 }
