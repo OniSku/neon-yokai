@@ -1189,7 +1189,6 @@
         <!-- LAYER 2: PLAYER ZONE -->
         <div class="arena-player-zone">
             <div class="arena-token player-token" id="arena-player-token"></div>
-            <div class="buffs" id="player-buffs" style="justify-content:center"></div>
             <div class="arena-player-info">
                 <div class="arena-player-stats-row">
                     <div class="ap-stat hp"><span class="ap-val" id="player-hp-text">80/80</span><span class="ap-lbl">HP</span></div>
@@ -1198,6 +1197,7 @@
                 </div>
                 <div class="arena-player-hp-bar"><div class="arena-player-hp-bar-fill" id="player-hp-bar" style="width:100%"></div></div>
             </div>
+            <div class="buffs" id="player-buffs" style="justify-content:center;flex-wrap:wrap;max-width:320px"></div>
             <div class="arena-combo-row">
                 <div class="arena-combo-slot hot" id="cs-slot-hot" onclick="showFlavorPopup('HOT')"><span class="acs-num" id="cs-hot">0</span><span class="acs-icon">🌶</span><span class="acs-lbl">Острота</span></div>
                 <div class="arena-combo-slot sour" id="cs-slot-sour" onclick="showFlavorPopup('SOUR')"><span class="acs-num" id="cs-sour">0</span><span class="acs-icon">🍋</span><span class="acs-lbl">Кислота</span></div>
@@ -2195,7 +2195,7 @@ function renderArtifacts() {
 }
 
 const BUFF_LABELS = {
-    SPICY_BUFF:  {icon: "🔥", name: "Поджог",          desc: "Каждый ход наносит урон огнём"},
+    SPICY_BUFF:  {icon: "🔥", name: "Поджог",          desc: "HOT-атаки наносят больше урона: х1.25 +2 к каждой"},
     COMBO_BURN:  {icon: "🔥", name: "Ожог комбо",      desc: "Нанесён взрывом ОСТРОТЫ - урон каждый ход"},
     COMBO_REGEN: {icon: "💚", name: "Реген комбо",     desc: "Нанесён взрывом СЛАДОСТИ - восстановление HP каждый ход"},
     COMBO_VULN:  {icon: "🤢", name: "Уязв. комбо",    desc: "Получает на 50% больше урона"},
@@ -2203,7 +2203,7 @@ const BUFF_LABELS = {
     SWEET_BUFF:  {icon: "✨", name: "Сладость",         desc: "Восстанавливает HP в начале хода"},
     BITTER_BUFF: {icon: "🛡️", name: "Горечь",          desc: "Снижает входящий урон"},
     SOUR_BUFF:   {icon: "🤢", name: "Кислота",          desc: "Разъедает броню: -1 блок цели за ход"},
-    HOT_SAUCE:   {icon: "🌶", name: "Острый соус",     desc: "+2 к каждой атаке (артефакт)"},
+    HOT_SAUCE:   {icon: "🌶", name: "Острый соус",     desc: "+2 урона к каждой атаке (эффект артефакта)"},
     RAGE:        {icon: "💢", name: "Ярость",           desc: "Усиливает следующую атаку"},
     FRENZY:      {icon: "💢", name: "Безумие",          desc: "Атаки наносят повышенный урон"},
     STEALTH:     {icon: "👻", name: "Невидимость",      desc: "Цель недостижима для одиночных атак"},

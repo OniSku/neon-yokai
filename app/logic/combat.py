@@ -718,6 +718,20 @@ async def start_turn(state: BattleState) -> None:
         elif buff.tag == "COMBO_THORNS":
             state.player.block += buff.flat_bonus
 
+    # - BURN/POISON на врагах тикают в начале хода игрока
+    for es in state.enemies:
+        if not es.alive:
+            continue
+        for buff in es.fighter.buffs:
+            if buff.tag == "BURN":
+                es.fighter.hp = max(0, es.fighter.hp - buff.flat_bonus)
+            elif buff.tag == "POISON":
+                es.fighter.hp = max(0, es.fighter.hp - 1)
+            elif buff.tag == "TOXIC":
+                es.fighter.hp = max(0, es.fighter.hp - 2)
+        if es.fighter.hp <= 0:
+            es.alive = False
+
     await draw_cards(state)
 
     for card in state.hand[:]:
