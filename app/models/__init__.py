@@ -7,6 +7,7 @@ from app.models.ingredient import Ingredient
 from app.models.inventory_item import InventoryItem
 from app.models.shop_item import ShopItem
 from app.models.user import User
+from app.models.suture_relic import SutureRelic
 from app.models.user_deck_card import UserDeckCard
 
 __all__ = [
@@ -18,6 +19,7 @@ __all__ = [
     "Ingredient",
     "InventoryItem",
     "ShopItem",
+    "SutureRelic",
     "User",
     "UserDeckCard",
 ]

@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import delete, select, text
 
 from app.api.cart import router as cart_router
+from app.api.hub import router as hub_router
 from app.api.craft import router as craft_router
 from app.api.run import router as run_router
 from app.api.shop import router as shop_router
@@ -39,6 +40,15 @@ async def _migrate_schema() -> None:
         if not has_is_upgraded:
             print("[migrate] Missing 'is_upgraded' in user_deck_cards, dropping table...")
             await conn.execute(text("DROP TABLE IF EXISTS user_deck_cards CASCADE"))
+
+        result = await conn.execute(text("""
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = 'users' AND column_name = 'suture_relics'
+        """))
+        has_suture_relics = result.fetchone() is not None
+        if not has_suture_relics:
+            print("[migrate] Adding 'suture_relics' to users...")
+            await conn.execute(text("ALTER TABLE users ADD COLUMN suture_relics JSON DEFAULT '[]'"))
 
         if not has_salty or not has_is_upgraded:
             print("[migrate] Recreating tables...")
@@ -171,3 +181,4 @@ app.include_router(run_router)
 app.include_router(craft_router)
 app.include_router(shop_router)
 app.include_router(cart_router)
+app.include_router(hub_router)

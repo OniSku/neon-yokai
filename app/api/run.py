@@ -177,6 +177,7 @@ async def _start_node_battle(
     run: RunState,
     user_debt_level: int,
     max_hp: int = 80,
+    suture_relics: list[int] | None = None,
 ) -> None:
     node = _find_node(run)
 
@@ -227,6 +228,23 @@ async def _start_node_battle(
         else:
             battle.player.buffs.append(buff_copy)
     await on_combat_start(battle, run.artifacts)
+    # Применяем ON_COMBAT_START эффекты реликвий Шва
+    if suture_relics:
+        from app.models.suture_relic import SutureRelic
+        rel_result = await session.execute(select(SutureRelic).where(SutureRelic.id.in_(suture_relics)))
+        for relic in rel_result.scalars().all():
+            if relic.effect_tag == "ON_COMBAT_START_TOXIC_WRAP":
+                # 2 Уязвимости на всех врагов, 1 на игрока
+                vuln_enemy = Buff(tag="COMBO_VULN", duration=2, multiplier=1.5, flat_bonus=0)
+                if enemy_states:
+                    for es in enemy_states:
+                        es.fighter.buffs.append(vuln_enemy.model_copy())
+                else:
+                    battle.enemy.buffs.append(vuln_enemy.model_copy())
+                battle.player.buffs.append(Buff(tag="COMBO_VULN", duration=1, multiplier=1.5, flat_bonus=0))
+            elif relic.effect_tag == "ON_COMBAT_START_ROTTEN_FILTER":
+                # 1 стак Artifact (защита от дебаффа) игроку
+                battle.player.buffs.append(Buff(tag="ARTIFACT", duration=1, multiplier=1.0, flat_bonus=0))
     await start_turn(battle)
     run.battle = battle
 
@@ -281,7 +299,7 @@ async def run_start(
     )
 
     if first_node and first_node.node_type in ("combat", "boss", "ambush", "elite"):
-        await _start_node_battle(session, run, user.debt_level, max_hp=base_max_hp)
+        await _start_node_battle(session, run, user.debt_level, max_hp=base_max_hp, suture_relics=user.suture_relics or [])
 
     await save_run_state(session, run)
 
@@ -418,6 +436,65 @@ async def _handle_treasure(
     return f"Сокровище! Найдено {cr} кредитов" + (f" и {artifact.name}" if artifact else "")
 
 
+@router.get("/shop/items")
+async def run_shop_items(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> list[dict]:
+    """Сгенерировать ассортимент Поставщика в забеге: карты + 1 ингредиент + 1 артефакт."""
+    from app.models.shop_item import ShopItem
+    from app.logic.meta import get_shop_discount_async
+
+    discount = await get_shop_discount_async(session, user)
+
+    result = await session.execute(select(Card).where(Card.is_starting == False))
+    all_cards = list(result.scalars().all())
+
+    epic_pool = [c for c in all_cards if c.rarity == "epic"]
+    rare_pool = [c for c in all_cards if c.rarity == "rare"]
+    common_pool = [c for c in all_cards if c.rarity == "common"]
+
+    chosen_cards: list[Card] = []
+    if epic_pool:
+        chosen_cards += random.sample(epic_pool, k=1)
+    rare_count = min(2, len(rare_pool))
+    if rare_count:
+        chosen_cards += random.sample(rare_pool, k=rare_count)
+    common_needed = max(0, 4 - len(chosen_cards))
+    if common_pool and common_needed:
+        chosen_cards += random.sample(common_pool, k=min(common_needed, len(common_pool)))
+
+    items: list[dict] = []
+    for c in chosen_cards:
+        price = max(1, int(c.power * 5 * (1.0 - discount)))
+        items.append({
+            "id": c.id,
+            "name": c.name,
+            "description": f"{c.type.capitalize()}: {c.power} {'урона' if c.type == 'attack' else 'блока'}",
+            "price": price,
+            "category": "card",
+            "payload": None,
+        })
+
+    # 1 ингредиент
+    ing_result = await session.execute(select(ShopItem).where(ShopItem.category == "ingredient"))
+    ing_pool = list(ing_result.scalars().all())
+    if ing_pool:
+        ing = random.choice(ing_pool)
+        final_price = max(1, int(ing.price * (1.0 - discount)))
+        items.append({"id": ing.id, "name": ing.name, "description": ing.description or "", "price": final_price, "category": "ingredient", "payload": ing.payload})
+
+    # 1 артефакт
+    art_result = await session.execute(select(Artifact).where(Artifact.is_active == True))
+    art_pool = list(art_result.scalars().all())
+    if art_pool:
+        art = random.choice(art_pool)
+        art_price = max(1, int(60 * (1.0 - discount)))
+        items.append({"id": art.id, "name": art.name, "description": art.description, "price": art_price, "category": "artifact", "payload": None})
+
+    return items
+
+
 @router.post("/next_node", response_model=NextNodeResponse)
 async def next_node(
     body: NextNodeRequest,
@@ -474,7 +551,7 @@ async def next_node(
 
     if node.node_type in ("combat", "boss", "ambush", "elite"):
         hp_bonus = await get_max_hp_bonus_async(session, user)
-        await _start_node_battle(session, run, user.debt_level, max_hp=80 + hp_bonus)
+        await _start_node_battle(session, run, user.debt_level, max_hp=80 + hp_bonus, suture_relics=user.suture_relics or [])
         tag = "☠ ЭЛИТА: " if node.node_type == "elite" else ""
         enemy_count = len(node.enemies) if node.enemies else 1
         msg = f"Бой: {tag}{node.enemy_name}" + (f" (+{enemy_count - 1} ещё)" if enemy_count > 1 else "")
@@ -602,7 +679,7 @@ async def event_choice_endpoint(
         node.enemy_hp = 100
         node.enemies = [EnemySlot(enemy_id=None, name="Коллектор-Элита", hp=100, max_hp=100)]
         run.active_event = None
-        await _start_node_battle(session, run, user.debt_level, max_hp=max_hp)
+        await _start_node_battle(session, run, user.debt_level, max_hp=max_hp, suture_relics=user.suture_relics or [])
         await save_run_state(session, run)
         return EventChoiceResponse(
             message="Коллекторы нападают! Бой с Элитой!",
@@ -618,7 +695,7 @@ async def event_choice_endpoint(
         node.enemy_hp = 250
         node.enemies = [EnemySlot(enemy_id=None, name="Нурарихён", hp=250, max_hp=250)]
         run.active_event = None
-        await _start_node_battle(session, run, user.debt_level, max_hp=max_hp)
+        await _start_node_battle(session, run, user.debt_level, max_hp=max_hp, suture_relics=user.suture_relics or [])
         leg_art = await _random_artifact(session, rarity="legendary")
         if leg_art:
             run.artifacts.append(leg_art)

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, Integer, String, Text
+from sqlalchemy import BigInteger, Integer, String, Text, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -22,6 +22,7 @@ class User(Base):
     meta_progress: Mapped[str | None] = mapped_column(Text, nullable=True)
     slime: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     cores: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    suture_relics: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")
 
     # Связи
     cart_upgrade: Mapped["CartUpgrade"] = relationship(back_populates="user")

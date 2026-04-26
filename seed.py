@@ -9,6 +9,7 @@ from app.models.card import Card
 from app.models.enemy import Enemy
 from app.models.ingredient import Ingredient
 from app.models.shop_item import ShopItem
+from app.models.suture_relic import SutureRelic
 
 
 CARDS: list[dict] = [
@@ -414,6 +415,34 @@ INGREDIENTS: list[dict] = [
 ]
 
 
+SUTURE_RELICS: list[dict] = [
+    {
+        "id": 1,
+        "name": "Токсичная оплетка",
+        "description": "В начале боя накладывает 2 Уязвимости на всех врагов и 1 на Повара.",
+        "effect_tag": "ON_COMBAT_START_TOXIC_WRAP",
+        "currency": "slime",
+        "price": 5,
+    },
+    {
+        "id": 2,
+        "name": "Гнилой фильтр",
+        "description": "В начале боя дает 1 стак защиты от дебаффа (Artifact).",
+        "effect_tag": "ON_COMBAT_START_ROTTEN_FILTER",
+        "currency": "cores",
+        "price": 2,
+    },
+    {
+        "id": 3,
+        "name": "Хватка Каппы",
+        "description": "При взрыве HOT-комбо лечит 1 HP.",
+        "effect_tag": "ON_HOT_COMBO_KAPPA_GRIP",
+        "currency": "slime",
+        "price": 10,
+    },
+]
+
+
 async def seed() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -477,7 +506,20 @@ async def seed() -> None:
 
         await session.commit()
 
-    print("Seed completed: cards, enemies, ingredients, shop items, artifacts loaded.")
+    async with async_session_factory() as session:
+        for relic_data in SUTURE_RELICS:
+            result = await session.execute(
+                select(SutureRelic).where(SutureRelic.id == relic_data["id"])
+            )
+            existing = result.scalar_one_or_none()
+            if existing is None:
+                session.add(SutureRelic(**relic_data))
+            else:
+                for key, value in relic_data.items():
+                    setattr(existing, key, value)
+        await session.commit()
+
+    print("Seed completed: cards, enemies, ingredients, shop items, artifacts, suture relics loaded.")
 
 
 if __name__ == "__main__":
