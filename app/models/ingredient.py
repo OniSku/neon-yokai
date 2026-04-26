@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String
+from sqlalchemy import Boolean, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -15,3 +15,4 @@ class Ingredient(Base):
     bitter: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     salty: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     rarity: Mapped[str] = mapped_column(String(32), default="common", server_default="common")
+    is_synthetic: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")

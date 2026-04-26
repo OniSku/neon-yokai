@@ -672,20 +672,28 @@ ARTIFACTS: list[dict] = [
 
 
 INGREDIENTS: list[dict] = [
-    {"name": "Перец чили", "spicy": 5, "sour": 0, "sweet": 0, "bitter": 1, "salty": 0, "rarity": "common"},
-    {"name": "Лайм", "spicy": 0, "sour": 5, "sweet": 1, "bitter": 0, "salty": 0, "rarity": "common"},
-    {"name": "Мед", "spicy": 0, "sour": 0, "sweet": 6, "bitter": 0, "salty": 0, "rarity": "common"},
-    {"name": "Горький корень", "spicy": 0, "sour": 1, "sweet": 0, "bitter": 5, "salty": 0, "rarity": "common"},
-    {"name": "Васаби", "spicy": 7, "sour": 0, "sweet": 0, "bitter": 2, "salty": 0, "rarity": "uncommon"},
-    {"name": "Тамаринд", "spicy": 1, "sour": 4, "sweet": 3, "bitter": 0, "salty": 0, "rarity": "uncommon"},
-    {"name": "Нефритовый чай", "spicy": 0, "sour": 0, "sweet": 2, "bitter": 7, "salty": 0, "rarity": "rare"},
-    {"name": "Кровавый апельсин", "spicy": 2, "sour": 6, "sweet": 3, "bitter": 0, "salty": 0, "rarity": "rare"},
-    {"name": "Соевый соус", "spicy": 0, "sour": 0, "sweet": 0, "bitter": 0, "salty": 6, "rarity": "common"},
-    {"name": "Морская соль", "spicy": 0, "sour": 0, "sweet": 0, "bitter": 0, "salty": 8, "rarity": "common"},
-    {"name": "Мисо-паста", "spicy": 0, "sour": 0, "sweet": 1, "bitter": 1, "salty": 6, "rarity": "uncommon"},
-    {"name": "Лемонграсс", "spicy": 0, "sour": 4, "sweet": 1, "bitter": 0, "salty": 0, "rarity": "common"},
-    # - \u0421\u0438\u043d\u0442\u0435\u0442\u0438\u043a\u0430: \u043c\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043a\u043e\u0432, \u043d\u043e \u0434\u0435\u0431\u0430\u0444\u0444 -5 \u043c\u0430\u043a\u0441 HP
-    {"name": "Синтетический концентрат \"Умами\"", "spicy": 2, "sour": 2, "sweet": 2, "bitter": 2, "salty": 4, "rarity": "common"},
+    # === Натуральные (чистые, без дебаффов) ===
+    {"name": "Дикий лемонграсс", "spicy": 0, "sour": 2, "sweet": 0, "bitter": 0, "salty": 0, "rarity": "common", "is_synthetic": False},
+    {"name": "Морская соль из опреснителя", "spicy": 0, "sour": 0, "sweet": 0, "bitter": 0, "salty": 2, "rarity": "common", "is_synthetic": False},
+    {"name": "Горный перец чили", "spicy": 2, "sour": 0, "sweet": 0, "bitter": 0, "salty": 0, "rarity": "common", "is_synthetic": False},
+    {"name": "Сушеный гриб шиитаке", "spicy": 0, "sour": 0, "sweet": 0, "bitter": 1, "salty": 1, "rarity": "common", "is_synthetic": False},
+    {"name": "Тростниковый сироп", "spicy": 0, "sour": 0, "sweet": 2, "bitter": 0, "salty": 0, "rarity": "common", "is_synthetic": False},
+    {"name": "Корень хрена", "spicy": 2, "sour": 1, "sweet": 0, "bitter": 0, "salty": 0, "rarity": "uncommon", "is_synthetic": False},
+    {"name": "Зеленый чай высшего сорта", "spicy": 0, "sour": 0, "sweet": 0, "bitter": 2, "salty": 0, "rarity": "uncommon", "is_synthetic": False},
+    {"name": "Ферментированные бобы", "spicy": 0, "sour": 0, "sweet": 0, "bitter": 0, "salty": 2, "rarity": "uncommon", "is_synthetic": False},
+    {"name": "Сушеная цедра юдзу", "spicy": 0, "sour": 2, "sweet": 0, "bitter": 0, "salty": 0, "rarity": "rare", "is_synthetic": False},
+    {"name": "Мед диких пчел", "spicy": 0, "sour": 0, "sweet": 2, "bitter": 0, "salty": 0, "rarity": "rare", "is_synthetic": False},
+    # === Синтетика (дебафф SYNTHETIC_WEAK при готовке) ===
+    {"name": "Неоновый соевый соус", "spicy": 0, "sour": 0, "sweet": 0, "bitter": 0, "salty": 2, "rarity": "common", "is_synthetic": True},
+    {"name": "Глитч-корень", "spicy": 0, "sour": 2, "sweet": 0, "bitter": 0, "salty": 0, "rarity": "common", "is_synthetic": True},
+    {"name": "Пластиковый имбирь", "spicy": 2, "sour": 0, "sweet": 0, "bitter": 1, "salty": 0, "rarity": "common", "is_synthetic": True},
+    {"name": "Синтетический Умами-порошок", "spicy": 2, "sour": 2, "sweet": 2, "bitter": 2, "salty": 2, "rarity": "common", "is_synthetic": True},
+    {"name": "Цифровой сахар", "spicy": 0, "sour": 0, "sweet": 2, "bitter": 0, "salty": 0, "rarity": "common", "is_synthetic": True},
+    {"name": "Жидкий хлор-лайм", "spicy": 0, "sour": 2, "sweet": 0, "bitter": 0, "salty": 0, "rarity": "uncommon", "is_synthetic": True},
+    {"name": "Био-масло Элита", "spicy": 2, "sour": 0, "sweet": 0, "bitter": 0, "salty": 2, "rarity": "uncommon", "is_synthetic": True},
+    {"name": "Эссенция Синий дракон", "spicy": 0, "sour": 0, "sweet": 0, "bitter": 2, "salty": 0, "rarity": "uncommon", "is_synthetic": True},
+    {"name": "Порошок васаби v.2.0", "spicy": 2, "sour": 0, "sweet": 0, "bitter": 0, "salty": 0, "rarity": "uncommon", "is_synthetic": True},
+    {"name": "Текстурированный белок Якудза", "spicy": 2, "sour": 2, "sweet": 2, "bitter": 2, "salty": 2, "rarity": "rare", "is_synthetic": True},
 ]
 
 

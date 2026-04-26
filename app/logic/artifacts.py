@@ -54,6 +54,12 @@ async def on_combat_start(
             _use_charge(art)
             log.append(f"[{art.name}] player +2 SALTY stacks")
 
+        elif art.name == "Старый респиратор":
+            # - Активируем щит от первого дебаффа за бой
+            state.debuff_shield_active = True
+            _use_charge(art)
+            log.append(f"[{art.name}] debuff shield activated")
+
     _cleanup(artifacts)
     return log
 

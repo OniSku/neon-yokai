@@ -466,6 +466,8 @@ def _build_intent(action: EnemyAction, turn: int) -> EnemyIntent:
         return EnemyIntent(type="buff", value=0, description="Собирается усилиться")
     if action.action == "debuff":
         return EnemyIntent(type="debuff", value=0, description="Собирается наложить дебафф")
+    if action.action == "charge":
+        return EnemyIntent(type="buff", value=0, description="Заряжается для мощного удара!")
     if action.action == "flee":
         return EnemyIntent(type="buff", value=0, description="Собирается сбежать!")
     if action.action == "summon_gaki":
@@ -578,9 +580,13 @@ async def _do_enemy_action(
             es.stolen_credits = getattr(es, "stolen_credits", 0) + action.steal
 
         if getattr(action, "apply_debuff", None):
-            state.player.buffs.append(
-                Buff(tag=action.apply_debuff, duration=getattr(action, "debuff_duration", 2), flat_bonus=0)
-            )
+            # - Старый респиратор: поглощает первый дебафф за бой
+            if getattr(state, "debuff_shield_active", False):
+                state.debuff_shield_active = False
+            else:
+                state.player.buffs.append(
+                    Buff(tag=action.apply_debuff, duration=getattr(action, "debuff_duration", 2), flat_bonus=0)
+                )
 
     elif action.action == "block":
         enemy_fighter.block += action.block
@@ -626,6 +632,14 @@ async def _do_enemy_action(
                             Buff(tag=action.buff_tag, duration=action.duration, multiplier=action.multiplier)
                         )
         enemy_fighter.block += getattr(action, "self_block", 0)
+
+    elif action.action == "charge":
+        # - Они пропускает ход, вешает себе бафф CHARGED
+        existing = next((b for b in enemy_fighter.buffs if b.tag == "CHARGED"), None)
+        if existing:
+            existing.flat_bonus += 1
+        else:
+            enemy_fighter.buffs.append(Buff(tag="CHARGED", duration=2, multiplier=2.0, flat_bonus=1))
 
     elif action.action == "debuff_self":
         if action.debuff_tag == "FEAR":

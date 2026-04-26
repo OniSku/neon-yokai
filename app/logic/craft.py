@@ -70,6 +70,9 @@ COMBO_MAP: dict[str, ComboEffect] = {
 }
 
 
+FLAVOR_CAP_PER_INGREDIENT: int = 2  # - макс вклад одного ингредиента в каждый вкус
+
+
 async def sum_ingredient_weights(
     ingredients: list[Ingredient],
 ) -> FlavorProfile:
@@ -80,11 +83,13 @@ async def sum_ingredient_weights(
     salty = 0
 
     for ing in ingredients:
-        spicy += ing.spicy
-        sour += ing.sour
-        sweet += ing.sweet
-        bitter += ing.bitter
-        salty += getattr(ing, "salty", 0)
+        # - Каждый ингредиент дает не больше FLAVOR_CAP_PER_INGREDIENT за каждый вкус
+        cap = FLAVOR_CAP_PER_INGREDIENT
+        spicy += min(ing.spicy, cap)
+        sour += min(ing.sour, cap)
+        sweet += min(ing.sweet, cap)
+        bitter += min(ing.bitter, cap)
+        salty += min(getattr(ing, "salty", 0), cap)
 
     return FlavorProfile(spicy=spicy, sour=sour, sweet=sweet, bitter=bitter, salty=salty)
 
@@ -139,9 +144,16 @@ async def craft_dish(
     buffs = await nerf_buffs(buffs, debt_level)
     combos = await resolve_combo_effects(profile)
 
+    # - Если хотя бы один ингредиент синтетический - добавить дебафф SYNTHETIC
+    has_synthetic = any(getattr(ing, "is_synthetic", False) for ing in ingredients)
+    synthetic_debuff: Buff | None = None
+    if has_synthetic:
+        synthetic_debuff = Buff(tag="SYNTHETIC_WEAK", duration=1, multiplier=0.75, flat_bonus=0)
+
     return CraftResult(
         profile=profile,
         buffs=[b.tag for b in buffs],
         dominant_flavor=dominant,
         combo_effects=[c.name for c in combos],
+        synthetic_debuff=synthetic_debuff.tag if synthetic_debuff else None,
     )
