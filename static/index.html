@@ -869,39 +869,39 @@
         <div class="card-surface">
             <div class="row mb8"><span class="label">Агент</span><span class="val val-neon" id="menu-username">...</span></div>
             <div class="profile-grid">
-                <div class="profile-cell"><div class="label">\ud83d\udcb0 Кредиты</div><div class="val val-gold" id="menu-credits">0</div></div>
-                <div class="profile-cell" onclick="showComboPopup('\ud83d\udc80 Розыск Якудзы','','Долг растёт когда берёшь продукты авансом. При высоком долге Якудза нападает во время забега. Выплачивай в Складе Поставщика.')" style="cursor:pointer">
-                    <div class="label">\ud83d\udc80 Розыск <span style="font-size:0.6rem;opacity:0.5">(?)</span></div>
+                <div class="profile-cell"><div class="label">💰 Кредиты</div><div class="val val-gold" id="menu-credits">0</div></div>
+                <div class="profile-cell" onclick="showComboPopup('💀 Розыск Якудзы','','Долг растёт когда берёшь продукты авансом. При высоком долге Якудза нападает во время забега. Выплачивай в Складе Поставщика.')" style="cursor:pointer">
+                    <div class="label">💀 Розыск <span style="font-size:0.6rem;opacity:0.5">(?)</span></div>
                     <div class="val val-red" id="menu-debt-amount">0</div>
                 </div>
                 <div class="profile-cell" onclick="showComboPopup('Статус долга','','Чисто - нет долга. Подозреваемый - Якудза следит. Разыскиваемый - атаки во время забега. Мертвец - постоянные штрафы.')" style="cursor:pointer">
                     <div class="label">Статус <span style="font-size:0.6rem;opacity:0.5">(?)</span></div>
                     <div class="val val-red" id="menu-debt-name" style="font-size:0.8rem">Чисто</div>
                 </div>
-                <div class="profile-cell"><div class="label">\u2b50 Опыт</div><div class="val val-neon" id="menu-xp">0</div></div>
+                <div class="profile-cell"><div class="label">⭐ Опыт</div><div class="val val-neon" id="menu-xp">0</div></div>
             </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
             <button class="btn-square" style="width:100%;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px" onclick="goTo('shop')">
-                <span style="font-size:0.85rem;font-weight:700">\ud83d\udce6 Склад</span>
-                <span style="font-size:0.6rem;color:var(--muted);font-weight:400">\u041a\u0443\u043f\u0438\u0442\u044c, \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u043a\u0430\u0440\u0442\u044b</span>
+                <span style="font-size:0.85rem;font-weight:700">📦 Склад</span>
+                <span style="font-size:0.6rem;color:var(--muted);font-weight:400">Купить, удалить карты</span>
             </button>
             <button class="btn-square" style="width:100%;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px" onclick="goTo('cart')">
-                <span style="font-size:0.85rem;font-weight:700">\ud83c\udf73 \u0413\u043e\u0442\u043e\u0432\u043a\u0430</span>
-                <span style="font-size:0.6rem;color:var(--muted);font-weight:400">\u0411\u0430\u0444\u0444 \u043d\u0430 \u0441\u043b\u0435\u0434\u0443\u044e\u0449\u0438\u0439 \u0437\u0430\u0431\u0435\u0433</span>
+                <span style="font-size:0.85rem;font-weight:700">🍳 Готовка</span>
+                <span style="font-size:0.6rem;color:var(--muted);font-weight:400">Бафф на следующий забег</span>
             </button>
             <button class="btn-square" style="width:100%;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px" onclick="goTo('upgrades')">
-                <span style="font-size:0.85rem;font-weight:700">\u2b06\ufe0f \u041f\u0440\u043e\u043a\u0430\u0447\u043a\u0430</span>
-                <span style="font-size:0.6rem;color:var(--muted);font-weight:400">\u0422\u0440\u0430\u0442\u0438\u0442\u044c XP \u043d\u0430 \u0443\u043b\u0443\u0447\u0448\u0435\u043d\u0438\u044f</span>
+                <span style="font-size:0.85rem;font-weight:700">⬆️ Прокачка</span>
+                <span style="font-size:0.6rem;color:var(--muted);font-weight:400">Тратить XP на улучшения</span>
             </button>
             <button class="btn-square" style="width:100%;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px" onclick="goTo('suture')">
-                <span style="font-size:0.85rem;font-weight:700">\ud83e\uddf5 \u0428\u043e\u0432</span>
-                <span style="font-size:0.6rem;color:var(--muted);font-weight:400">\u041c\u0435\u0442\u0430-\u0443\u043b\u0443\u0447\u0448\u0435\u043d\u0438\u044f</span>
+                <span style="font-size:0.85rem;font-weight:700">🧵 Шов</span>
+                <span style="font-size:0.6rem;color:var(--muted);font-weight:400">Мета-улучшения</span>
             </button>
         </div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:8px">
-            <button class="btn-circle" onclick="startRun()">\u0412 \u043d\u043e\u0447\u043d\u0443\u044e<br>\u0441\u043c\u0435\u043d\u0443</button>
-            <div style="font-size:0.65rem;color:var(--muted);text-align:center">\u041d\u0430\u0447\u0430\u0442\u044c \u0437\u0430\u0431\u0435\u0433 - \u0431\u043e\u0439, \u043a\u0430\u0440\u0442\u0430, \u0431\u043e\u0441\u0441</div>
+            <button class="btn-circle" onclick="startRun()">В ночную<br>смену</button>
+            <div style="font-size:0.65rem;color:var(--muted);text-align:center">Начать забег - бой, карта, босс</div>
         </div>
     </div>
 </div>
@@ -1075,7 +1075,7 @@
 <!-- ========== SCREEN: REST ========== -->
 <div id="screen-rest" class="screen">
     <div class="wrap">
-        <h2 style="color:var(--neon3)">\ud83d\uded6 Тележка повара</h2>
+        <h2 style="color:var(--neon3)">🛖 Тележка повара</h2>
         <div class="card-surface mb8">
             <p style="font-size:0.85rem;color:var(--muted);line-height:1.6">Привал. Выберите одно действие:</p>
         </div>
@@ -1083,13 +1083,13 @@
         <!-- Основные кнопки выбора -->
         <div id="rest-choices" style="display:flex;flex-direction:column;gap:8px">
             <button class="btn btn-primary btn-block" onclick="restSleep()" style="height:56px">
-                \ud83d\udca4 <b>Сон</b> - восстановить 30% HP
+                💤 <b>Сон</b> - восстановить 30% HP
             </button>
             <button class="btn btn-secondary btn-block" onclick="restUpgrade()" style="height:56px">
-                \u2694\ufe0f <b>Заточка ножей</b> - улучшить карту колоды
+                ⚔️ <b>Заточка ножей</b> - улучшить карту колоды
             </button>
             <button class="btn btn-block" onclick="restCook()" style="height:56px;background:rgba(255,150,0,0.15);border:1px solid rgba(255,150,0,0.4);color:#ffaa44">
-                \ud83c\udf73 <b>Готовка</b> - сварить блюдо для следующего боя
+                🍳 <b>Готовка</b> - сварить блюдо для следующего боя
             </button>
         </div>
 
@@ -1104,7 +1104,7 @@
         <div id="rest-cook-ui" style="display:none">
             <div class="card-surface" style="margin-bottom:10px">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-                    <span class="label">\ud83e\uddc0 Ингредиенты</span>
+                    <span class="label">🧀 Ингредиенты</span>
                     <span style="font-size:0.7rem;color:var(--muted)">Выбрано: <span id="rest-cook-count" style="color:var(--neon)">0</span>/3</span>
                 </div>
                 <div id="rest-cook-slots" style="display:flex;gap:6px;margin-bottom:10px">
@@ -1119,12 +1119,12 @@
                 <div id="rest-cook-list" style="display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto"></div>
             </div>
             <div id="rest-cook-active-buff" style="display:none;margin-bottom:8px" class="card-surface">
-                <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px">\u26a1 Текущий бафф (будет заменён):</div>
+                <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px">⚡ Текущий бафф (будет заменён):</div>
                 <div id="rest-cook-active-buff-text" style="font-size:0.8rem;color:var(--accent)"></div>
             </div>
             <button class="btn btn-block mt8" id="btn-rest-cook" onclick="doRestCook()" disabled
                 style="height:52px;font-size:1rem;font-weight:700;background:rgba(255,150,0,0.2);border:1px solid rgba(255,150,0,0.5);color:#ffaa44">
-                \ud83c\udf73 Приготовить блюдо
+                🍳 Приготовить блюдо
             </button>
             <button class="btn btn-muted btn-block mt8" onclick="restCancelCook()">Отмена</button>
         </div>
@@ -1413,7 +1413,7 @@ async function loadProfile() {
 }
 
 /* ===== UPGRADES ===== */
-const BRANCH_ICONS = { kitchen: "\uD83C\uDF73", fridge: "\u2744\uFE0F", ads: "\uD83D\uDCE3" };
+const BRANCH_ICONS = { kitchen: "🍳", fridge: "❄️", ads: "📣" };
 
 async function loadUpgrades() {
     try {
@@ -1490,7 +1490,7 @@ async function loadShop() {
             div.innerHTML =
                 '<div class="shop-item-info"><div class="shop-item-name">' + item.name + '</div><div class="shop-item-desc">' + (item.description || "") + '</div></div>' +
                 '<div class="shop-item-price">' + item.price + ' кр</div>' +
-                '<button class="btn btn-secondary" style="margin-left:10px;padding:6px 12px;font-size:0.75rem" onclick="buyItem(' + item.id + ')">\u041a\u0443\u043f\u0438\u0442\u044c</button>';
+                '<button class="btn btn-secondary" style="margin-left:10px;padding:6px 12px;font-size:0.75rem" onclick="buyItem(' + item.id + ')">Купить</button>';
             el.appendChild(div);
         }
     } catch (e) { console.error(e); }
@@ -2240,7 +2240,7 @@ function showFlavorPopup(flavor) {
     const csEl = document.getElementById("cs-" + flavor.toLowerCase());
     const current = csEl ? parseInt(csEl.textContent) || 0 : 0;
     const threshold = 4;
-    const progress = current + "/" + threshold + " \u0441\u0442\u0430\u043a\u043e\u0432 (\u0432\u0437\u0440\u044b\u0432 \u043f\u0440\u0438 " + threshold + ")";
+    const progress = current + "/" + threshold + " стаков (взрыв при " + threshold + ")";
     showComboPopup(f.emoji + " " + f.ru, progress, f.effect);
 }
 
@@ -2459,7 +2459,7 @@ function _updatePileBtn(countId, btnId, newVal) {
 function showPileModal(type) {
     if (!currentRun || !currentRun.battle) return;
     const battle = currentRun.battle;
-    const titles = { draw: "&#128218; \u041a\u043e\u043b\u043e\u0434\u0430 \u0434\u043e\u0431\u043e\u0440\u0430", discard: "&#128465; \u0421\u0431\u0440\u043e\u0441", exhaust: "&#128293; \u0421\u043e\u0436\u0436\u0451\u043d\u043d\u044b\u0435" };
+    const titles = { draw: "&#128218; Колода добора", discard: "&#128465; Сброс", exhaust: "&#128293; Сожжённые" };
     const piles = { draw: battle.draw_pile || [], discard: battle.discard_pile || [], exhaust: battle.exhaust_pile || [] };
     let cards = [...piles[type]];
     if (type === "draw") cards = cards.sort((a, b) => a.name.localeCompare(b.name, "ru"));
@@ -2468,20 +2468,20 @@ function showPileModal(type) {
     const list = document.getElementById("pile-modal-list");
     list.innerHTML = "";
     if (!cards.length) {
-        list.innerHTML = '<div style="color:var(--muted);text-align:center;padding:16px">\u041f\u0443\u0441\u0442\u043e</div>';
+        list.innerHTML = '<div style="color:var(--muted);text-align:center;padding:16px">Пусто</div>';
     } else {
         for (const card of cards) {
             const row = document.createElement("div");
             row.className = "pile-card-row";
             const rawTags = Array.isArray(card.tags) ? card.tags : (card.tags ? String(card.tags).split(",") : []);
             const flavor = rawTags.filter(t => ["HOT","SOUR","SWEET","BITTER","SALTY"].includes(t.trim())).join(" ");
-            const typeLabel = card.type === "attack" ? "\u0410\u0422\u041a " + card.power : card.type === "skill" ? "\u0417\u0410\u0429 " + card.power : card.type;
+            const typeLabel = card.type === "attack" ? "АТК " + card.power : card.type === "skill" ? "ЗАЩ " + card.power : card.type;
             row.innerHTML =
                 '<div>' +
                     '<div class="pile-card-name">' + card.name + (card.is_upgraded ? " +" : "") + '</div>' +
-                    '<div class="pile-card-meta">' + typeLabel + (flavor ? " \u2022 " + flavor : "") + '</div>' +
+                    '<div class="pile-card-meta">' + typeLabel + (flavor ? " • " + flavor : "") + '</div>' +
                 '</div>' +
-                '<div style="font-size:0.8rem;color:var(--energy);font-weight:700">' + card.cost + ' \u042d</div>';
+                '<div style="font-size:0.8rem;color:var(--energy);font-weight:700">' + card.cost + ' Э</div>';
             list.appendChild(row);
         }
     }
@@ -2616,19 +2616,19 @@ async function loadRewards() {
                 const row = document.createElement("div");
                 row.className = "reward-row";
                 row.innerHTML =
-                    '<div class="reward-icon">\ud83e\uddc0</div>' +
-                    '<div class="reward-label">' + (l.ingredient_name || l.name) + '<div style="font-size:0.65rem;color:var(--energy)">\u2605 \u0432 \u0440\u044e\u043a\u0437\u0430\u043a \u0437\u0430\u0431\u0435\u0433\u0430</div></div>' +
+                    '<div class="reward-icon">🧀</div>' +
+                    '<div class="reward-label">' + (l.ingredient_name || l.name) + '<div style="font-size:0.65rem;color:var(--energy)">★ в рюкзак забега</div></div>' +
                     '<div class="reward-value">x' + l.quantity + '</div>';
                 row.onclick = function() {
                     if (row.classList.contains("claimed")) return;
                     row.classList.add("claimed");
-                    row.querySelector(".reward-value").textContent = "\u0412\u0437\u044f\u0442\u043e";
+                    row.querySelector(".reward-value").textContent = "Взято";
                     _checkAllRewardsClaimed();
                 };
                 list.appendChild(row);
             }
         } else {
-            // - \u041d\u0435\u0442 \u043b\u0443\u0442\u0430 - \u0432\u0440\u0430\u0433 \u043d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u0443\u0440\u043e\u043d\u0438\u043b
+            // - Нет лута - враг ничего не уронил
         }
 
         // --- Ряд: выбор карты ---
