@@ -436,6 +436,23 @@
         .card-tooltip .tt-name { font-weight: 700; font-size: 0.85rem; color: var(--neon); margin-bottom: 4px; }
         .card-tooltip .tt-type { font-size: 0.7rem; color: var(--muted); }
         .card-tooltip .tt-desc { margin-top: 6px; line-height: 1.4; }
+        .card-tooltip .tt-flavor { margin-top: 6px; font-size: 0.7rem; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px; }
+        .card-tooltip .tt-combo { margin-top: 4px; font-size: 0.7rem; color: var(--energy); }
+
+        /* Комбо-попап */
+        .combo-popup {
+            position: fixed; z-index: 300;
+            background: var(--surface); border: 1px solid var(--neon);
+            border-radius: 12px; padding: 14px 16px; max-width: 240px;
+            font-size: 0.8rem; color: var(--text);
+            box-shadow: 0 0 20px rgba(0,255,245,0.4);
+            top: 50%; left: 50%; transform: translate(-50%,-50%);
+        }
+        .combo-popup .cp-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; }
+        .combo-popup .cp-progress { font-size: 0.75rem; opacity: 0.7; margin-bottom: 8px; }
+        .combo-popup .cp-effect { line-height: 1.5; }
+        .combo-popup .cp-close { display: block; margin-top: 10px; text-align: center; font-size: 0.7rem; opacity: 0.6; cursor: pointer; }
+        .combo-popup-overlay { position: fixed; inset: 0; z-index: 299; background: rgba(0,0,0,0.5); }
 
         /* Buff icons */
         .buff-icon {
@@ -724,6 +741,7 @@
         .arena-combo-slot.salty { border-color: #4488ff; color: #4488ff; }
         .arena-combo-slot .acs-num { font-size: 0.85rem; line-height: 1; }
         .arena-combo-slot .acs-icon { font-size: 0.55rem; }
+        .arena-combo-slot { cursor: pointer; }
         /* Hand zone */
         .arena-hand-zone {
             background: linear-gradient(0deg, rgba(0,0,0,0.92) 60%, transparent 100%);
@@ -1028,11 +1046,11 @@
                 <div class="ap-stat energy"><span class="ap-val" id="player-energy-text">3/3</span><span class="ap-lbl">Энергия</span></div>
             </div>
             <div class="arena-combo-row">
-                <div class="arena-combo-slot hot"><span class="acs-num" id="cs-hot">0</span><span class="acs-icon">🌶</span></div>
-                <div class="arena-combo-slot sour"><span class="acs-num" id="cs-sour">0</span><span class="acs-icon">🍋</span></div>
-                <div class="arena-combo-slot sweet"><span class="acs-num" id="cs-sweet">0</span><span class="acs-icon">🍯</span></div>
-                <div class="arena-combo-slot bitter"><span class="acs-num" id="cs-bitter">0</span><span class="acs-icon">☕</span></div>
-                <div class="arena-combo-slot salty"><span class="acs-num" id="cs-salty">0</span><span class="acs-icon">🧂</span></div>
+                <div class="arena-combo-slot hot" onclick="showFlavorPopup('HOT')"><span class="acs-num" id="cs-hot">0</span><span class="acs-icon">🌶</span></div>
+                <div class="arena-combo-slot sour" onclick="showFlavorPopup('SOUR')"><span class="acs-num" id="cs-sour">0</span><span class="acs-icon">🍋</span></div>
+                <div class="arena-combo-slot sweet" onclick="showFlavorPopup('SWEET')"><span class="acs-num" id="cs-sweet">0</span><span class="acs-icon">🍯</span></div>
+                <div class="arena-combo-slot bitter" onclick="showFlavorPopup('BITTER')"><span class="acs-num" id="cs-bitter">0</span><span class="acs-icon">☕</span></div>
+                <div class="arena-combo-slot salty" onclick="showFlavorPopup('SALTY')"><span class="acs-num" id="cs-salty">0</span><span class="acs-icon">🧂</span></div>
             </div>
         </div>
 
@@ -1140,20 +1158,73 @@ function headers() {
 const RARITY_RU = { common: "Обычная", rare: "Редкая", epic: "Эпическая", legendary: "Легендарная" };
 const CTYPE_RU = { attack: "Атака", skill: "Навык", curse: "Проклятие" };
 
+const FLAVOR_DESC = {
+    HOT:    { emoji: "🌶", ru: "ОСТРОТА",  effect: "x4 - Поджигает всех врагов: наносит 8 урона каждому" },
+    SOUR:   { emoji: "🍋", ru: "КИСЛОТА",  effect: "x4 - Разъедает защиту: все враги получают Уязвимость (2 хода)" },
+    SWEET:  { emoji: "🍯", ru: "СЛАДОСТЬ", effect: "x4 - Восстановление: игрок исцеляется на 6 HP" },
+    BITTER: { emoji: "☕", ru: "ГОРЕЧЬ",   effect: "x4 - Прилив энергии: +2 энергии на этот ход" },
+    SALTY:  { emoji: "🧂", ru: "СОЛЬ",     effect: "x4 - Панцирь: +8 блока мгновенно" },
+};
+const TAG_DESC = {
+    AOE:           "Удар по всем врагам одновременно",
+    DRAW_1:        "Немедленно добрать 1 карту из колоды",
+    DRAW_2:        "Немедленно добрать 2 карты из колоды",
+    RETAIN:        "Карта не сбрасывается в конце хода",
+    ENERGY_1:      "+1 энергия в этот ход",
+    AOE_WEAK:      "Все враги получают Слабость (1 ход) - их атаки на 25% слабее",
+    AOE_VULNERABLE:"Все враги получают Уязвимость (1 ход) - получают на 50% больше урона",
+    BURN:          "Поджигает цель: +3 урона в следующем ходу",
+    UNIQUE:        "Уникальный прием: игнорирует до 10 единиц блока",
+};
+
 function buildCardDesc(card) {
-    const t = CTYPE_RU[card.type] || card.type;
-    let desc = t;
-    if (card.type === "attack") desc += ": наносит " + card.power + " урона";
-    else if (card.type === "skill") desc += ": +" + card.power + " блок";
-    else if (card.type === "curse") desc = "Проклятие: нельзя разыграть, засоряет руку";
-    if (card.tags && card.tags.length) {
-        const vis = card.tags.filter(t => !t.startsWith("DRAW_") && !t.startsWith("DISCARD_") && t !== "AOE");
-        if (card.tags.includes("AOE")) desc += "\nПоражает всех врагов";
-        const draws = card.tags.filter(t => t.startsWith("DRAW_"));
-        if (draws.length) desc += "\nДобор: +" + draws[0].split("_")[1] + " карт";
+    const tags = card.tags || [];
+    let lines = [];
+
+    // Основной эффект
+    if (card.type === "attack") {
+        if (tags.includes("UNIQUE")) lines.push("Урон " + card.power + " (игнорирует до 10 блока)");
+        else if (tags.includes("AOE") || tags.includes("AOE_WEAK") || tags.includes("AOE_VULNERABLE")) lines.push("Урон " + card.power + " всем врагам");
+        else lines.push("Урон: " + card.power);
+    } else if (card.type === "skill") {
+        if (card.power > 0) lines.push("Блок: +" + card.power);
+    } else if (card.type === "curse") {
+        lines.push("Проклятие - нельзя разыграть, засоряет руку");
     }
-    if (card.is_exhaust) desc += "\nСжигание: удаляется после использования";
-    return desc;
+
+    // Дополнительные теги
+    const extraTags = ["AOE_WEAK","AOE_VULNERABLE","AOE","RETAIN","DRAW_1","DRAW_2","ENERGY_1","BURN"];
+    for (const t of extraTags) {
+        if (tags.includes(t) && TAG_DESC[t]) lines.push(TAG_DESC[t]);
+    }
+    if (card.is_exhaust) lines.push("Сжигание - исчезает после использования");
+
+    // Теги вкуса
+    const flavorLine = tags.filter(t => FLAVOR_DESC[t]).map(t => {
+        const f = FLAVOR_DESC[t];
+        return f.emoji + " " + f.ru;
+    }).join("  ");
+    if (flavorLine) lines.push(flavorLine);
+
+    return lines.join("\n");
+}
+
+function buildCardTooltipHTML(card) {
+    const tags = card.tags || [];
+    let html = "";
+    // Основной блок
+    html += "<div class='tt-desc'>" + buildCardDesc(card).replace(/\n/g, "<br>") + "</div>";
+    // Блок вкусов с описанием комбо
+    const flavors = tags.filter(t => FLAVOR_DESC[t]);
+    if (flavors.length) {
+        html += "<div class='tt-combo'>";
+        for (const t of flavors) {
+            const f = FLAVOR_DESC[t];
+            html += "<div>" + f.emoji + " " + f.effect + "</div>";
+        }
+        html += "</div>";
+    }
+    return html;
 }
 
 let tooltipTimer = null;
@@ -1161,7 +1232,7 @@ function showCardTooltip(card, e) {
     const tt = document.getElementById("card-tooltip");
     tt.querySelector(".tt-name").textContent = card.name;
     tt.querySelector(".tt-type").textContent = (CTYPE_RU[card.type] || card.type) + " | " + (RARITY_RU[card.rarity] || card.rarity) + " | " + card.cost + " энергии";
-    tt.querySelector(".tt-desc").textContent = buildCardDesc(card);
+    tt.querySelector(".tt-desc").innerHTML = buildCardTooltipHTML(card);
     tt.style.display = "block";
     const x = Math.min(e.clientX + 10, window.innerWidth - 240);
     const y = Math.max(e.clientY - 100, 10);
@@ -1863,27 +1934,29 @@ function renderArtifacts() {
 }
 
 const BUFF_LABELS = {
-    SPICY_BUFF: {icon: "\uD83D\uDD25", name: "Поджог"},
-    COMBO_BURN: {icon: "\uD83D\uDD25", name: "Ожог"},
-    COMBO_REGEN: {icon: "\uD83D\uDC9A", name: "Реген"},
-    COMBO_VULN: {icon: "\uD83E\uDD22", name: "Уязвимость"},
-    COMBO_THORNS: {icon: "\uD83C\uDF35", name: "Шипы"},
-    SWEET_BUFF: {icon: "\u2728", name: "Сладость"},
-    BITTER_BUFF: {icon: "\uD83D\uDEE1\uFE0F", name: "Горечь"},
-    SOUR_BUFF: {icon: "\uD83E\uDD22", name: "Кислота"},
-    RAGE: {icon: "\uD83D\uDCA2", name: "Ярость"},
-    FRENZY: {icon: "\uD83D\uDCA2", name: "Безумие"},
-    STEALTH: {icon: "\uD83D\uDC7B", name: "Невидимость"},
-    POISON: {icon: "\u2620\uFE0F", name: "Яд"},
-    TOXIC: {icon: "\u2620\uFE0F", name: "Токсин"},
-    BLEED: {icon: "\uD83E\uDE78", name: "Кровотечение"},
-    ARMOR_BREAK: {icon: "\uD83D\uDD28", name: "Пробивание брони"},
-    SLOW: {icon: "\uD83D\uDC22", name: "Замедление"},
-    SHARPEN: {icon: "\uD83D\uDDE1\uFE0F", name: "Заточка"},
-    BURN: {icon: "\uD83D\uDD25", name: "Ожог"},
-    POWER: {icon: "\u2B50", name: "Мощь"},
-    VULNERABLE: {icon: "\uD83D\uDCA5", name: "Уязвимость"},
-    FEAR: {icon: "\uD83D\uDE28", name: "Страх"},
+    SPICY_BUFF:  {icon: "🔥", name: "Поджог",          desc: "Каждый ход наносит урон огнём"},
+    COMBO_BURN:  {icon: "🔥", name: "Ожог комбо",      desc: "Нанесён взрывом ОСТРОТЫ - урон каждый ход"},
+    COMBO_REGEN: {icon: "💚", name: "Реген комбо",     desc: "Нанесён взрывом СЛАДОСТИ - восстановление HP каждый ход"},
+    COMBO_VULN:  {icon: "🤢", name: "Уязв. комбо",    desc: "Получает на 50% больше урона"},
+    COMBO_THORNS:{icon: "🌵", name: "Шипы комбо",      desc: "Отражает часть урона атакующему"},
+    SWEET_BUFF:  {icon: "✨", name: "Сладость",         desc: "Восстанавливает HP в начале хода"},
+    BITTER_BUFF: {icon: "🛡️", name: "Горечь",          desc: "Снижает входящий урон"},
+    SOUR_BUFF:   {icon: "🤢", name: "Кислота",          desc: "Разъедает броню: -1 блок цели за ход"},
+    HOT_SAUCE:   {icon: "🌶", name: "Острый соус",     desc: "+2 к каждой атаке (артефакт)"},
+    RAGE:        {icon: "💢", name: "Ярость",           desc: "Усиливает следующую атаку"},
+    FRENZY:      {icon: "💢", name: "Безумие",          desc: "Атаки наносят повышенный урон"},
+    STEALTH:     {icon: "👻", name: "Невидимость",      desc: "Цель недостижима для одиночных атак"},
+    POISON:      {icon: "☠️", name: "Яд",              desc: "Наносит 1 урон в начале каждого хода"},
+    TOXIC:       {icon: "☠️", name: "Токсин",          desc: "Усиленный яд: 2 урона в ход"},
+    BLEED:       {icon: "🩸", name: "Кровотечение",    desc: "Теряет HP при движении"},
+    ARMOR_BREAK: {icon: "🔨", name: "Пробитая броня",  desc: "Блок не накапливается до снятия"},
+    SLOW:        {icon: "🐢", name: "Замедление",       desc: "Следующее действие пропускается"},
+    SHARPEN:     {icon: "🗡️", name: "Заточка",         desc: "Следующая атака усилена (+3 урона)"},
+    BURN:        {icon: "🔥", name: "Ожог",             desc: "Наносит 3 урона в начале следующего хода"},
+    POWER:       {icon: "⭐", name: "Мощь",             desc: "Все атаки усилены на множитель"},
+    VULNERABLE:  {icon: "💥", name: "Уязвимость",      desc: "Получает на 50% больше урона"},
+    WEAK:        {icon: "🍂", name: "Слабость",         desc: "Атаки наносят на 25% меньше урона"},
+    FEAR:        {icon: "😨", name: "Страх",            desc: "Пропускает ход с вероятностью 50%"},
 };
 
 function renderBuffs(containerId, buffs) {
@@ -1894,14 +1967,52 @@ function renderBuffs(containerId, buffs) {
         const tag = document.createElement("span");
         const info = BUFF_LABELS[b.tag];
         tag.className = "buff-icon buff-" + b.tag;
+        const durStr = b.duration > 0 ? b.duration : "∞";
         if (info) {
-            tag.innerHTML = info.icon + " " + info.name + ' <span class="buff-dur">' + b.duration + '</span>';
+            tag.innerHTML = info.icon + " " + info.name + ' <span class="buff-dur">' + durStr + '</span>';
         } else {
-            tag.innerHTML = b.tag + ' <span class="buff-dur">' + b.duration + '</span>';
+            tag.innerHTML = b.tag + ' <span class="buff-dur">' + durStr + '</span>';
         }
-        tag.title = b.tag + " - " + b.duration + " ходов" + (b.multiplier !== 1 ? " (x" + b.multiplier + ")" : "") + (b.flat_bonus ? " (+" + b.flat_bonus + ")" : "");
+        // Тап = всплывашка с описанием
+        const descText = info ? info.desc : "";
+        const extraInfo = (b.multiplier && b.multiplier !== 1 ? " (х" + b.multiplier + ")" : "") + (b.flat_bonus ? " (+" + b.flat_bonus + " урона)" : "");
+        tag.onclick = (ev) => {
+            ev.stopPropagation();
+            showComboPopup(
+                (info ? info.icon + " " + info.name : b.tag),
+                "Осталось: " + durStr + " ход(ов)" + extraInfo,
+                descText || "Активный эффект"
+            );
+        };
         el.appendChild(tag);
     }
+}
+
+function showComboPopup(title, progress, effect) {
+    document.querySelectorAll(".combo-popup-overlay, .combo-popup").forEach(e => e.remove());
+    const ov = document.createElement("div");
+    ov.className = "combo-popup-overlay";
+    const pop = document.createElement("div");
+    pop.className = "combo-popup";
+    pop.innerHTML =
+        '<div class="cp-title">' + title + '</div>' +
+        (progress ? '<div class="cp-progress">' + progress + '</div>' : "") +
+        '<div class="cp-effect">' + effect + '</div>' +
+        '<span class="cp-close">Закрыть</span>';
+    pop.querySelector(".cp-close").onclick = () => { ov.remove(); pop.remove(); };
+    ov.onclick = () => { ov.remove(); pop.remove(); };
+    document.body.appendChild(ov);
+    document.body.appendChild(pop);
+}
+
+function showFlavorPopup(flavor) {
+    const f = FLAVOR_DESC[flavor];
+    if (!f) return;
+    const csEl = document.getElementById("cs-" + flavor.toLowerCase());
+    const current = csEl ? parseInt(csEl.textContent) || 0 : 0;
+    const threshold = 4;
+    const progress = current + "/" + threshold + " \u0441\u0442\u0430\u043a\u043e\u0432 (\u0432\u0437\u0440\u044b\u0432 \u043f\u0440\u0438 " + threshold + ")";
+    showComboPopup(f.emoji + " " + f.ru, progress, f.effect);
 }
 
 function spawnDamagePopup(targetId, amount, type) {
@@ -1929,7 +2040,7 @@ let prevPlayerHp = null;
 const prevEnemiesHp = new Map();
 
 const FLAVOR_TAGS_LIST = ["HOT", "SOUR", "SWEET", "BITTER", "SALTY"];
-const INTENT_ICONS = {attack: "⚔", defend: "🛡", buff: "✨", debuff: "✨", steal: "💰"};
+const INTENT_ICONS = {attack: "⚔", defend: "🛡", buff: "✨", debuff: "💀", steal: "💰", apply_debuff: "💀"};
 
 function _buildEnemyBuffsHtml(buffs) {
     if (!buffs || !buffs.length) return "";
@@ -1945,7 +2056,7 @@ function updateBattleUI(state) {
     if (!state) return;
 
     document.getElementById("turn").textContent = state.turn;
-    document.getElementById("phase").textContent = state.phase === "player_turn" ? "PLAYER_TURN" : "ENEMY_TURN";
+    document.getElementById("phase").textContent = state.phase === "player_turn" ? "Ход игрока" : "Ход врага";
 
     const p = state.player;
 
@@ -1964,9 +2075,29 @@ function updateBattleUI(state) {
         const isDead = !es.alive || f.hp <= 0;
         const hpPct = f.max_hp > 0 ? Math.max(0, f.hp / f.max_hp * 100) : 0;
         let intentStr = "";
+        let intentFull = "";
         if (es.intent) {
             const itype = es.intent.type || "attack";
-            intentStr = (INTENT_ICONS[itype] || "?") + (itype === "attack" ? " " + es.intent.value : "");
+            const ico = INTENT_ICONS[itype] || "?";
+            if (itype === "attack") {
+                intentStr = ico + " " + es.intent.value + " урона";
+                intentFull = "Атака: " + es.intent.value + " урона";
+            } else if (itype === "defend") {
+                intentStr = ico + " Защита";
+                intentFull = "Накапливает блок";
+            } else if (itype === "buff") {
+                intentStr = ico + " Бафф";
+                intentFull = "Накладывает усиление на себя";
+            } else if (itype === "debuff" || itype === "apply_debuff") {
+                intentStr = ico + " Дебафф";
+                intentFull = "Накладывает ослабление на игрока";
+            } else if (itype === "steal") {
+                intentStr = ico + " Кража";
+                intentFull = "крадёт кредиты";
+            } else {
+                intentStr = ico + " ?";
+                intentFull = "";
+            }
         }
 
         // Инфо-карточка
@@ -1975,11 +2106,12 @@ function updateBattleUI(state) {
         if (es.alive) {
             card.onclick = () => { selectedTarget = aliveEnemies.indexOf(es); updateBattleUI(state); };
         }
+        const intentClick = intentFull ? ' onclick="event.stopPropagation();showComboPopup(\'' + intentStr.replace(/'/g,'') + '\',\'\',\'' + intentFull + '\')" style="cursor:pointer"' : '';
         card.innerHTML =
             '<div class="aec-name">' + f.name + (isTargeted ? " [ЦЕЛЬ]" : "") + '</div>' +
             '<div class="aec-hp">' + f.hp + "/" + f.max_hp + (f.block ? " 🛡" + f.block : "") + '</div>' +
             '<div class="aec-bar"><div class="aec-bar-fill" style="width:' + hpPct + '%"></div></div>' +
-            (intentStr ? '<div class="aec-intent">' + intentStr + '</div>' : '') +
+            (intentStr ? '<div class="aec-intent"' + intentClick + '>' + intentStr + '</div>' : '') +
             _buildEnemyBuffsHtml(f.buffs);
         infoRow.appendChild(card);
 
