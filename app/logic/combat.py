@@ -343,6 +343,27 @@ async def execute_card(
             if state.hand:
                 state.discard_pile.append(state.hand.pop(0))
 
+    # - \u0413\u043e\u0440\u044c\u043a\u0438\u0439 \u0444\u0438\u043d\u0430\u043b: \u0443\u0440\u043e\u043d = 3 \u0445 BITTER \u0441\u0442\u0430\u043a\u043e\u0432
+    if "BITTER_SCALE" in card.tags and state.enemy:
+        bitter_stacks = state.combo_stacks.get("BITTER", 0)
+        bonus_dmg = bitter_stacks * 3
+        if bonus_dmg > 0:
+            await apply_damage(state.enemy.fighter, bonus_dmg)
+
+    # - \u041f\u0435\u0440\u0435\u0441\u043e\u043b\u0435\u043d\u043d\u044b\u0439 \u0431\u0443\u043b\u044c\u043e\u043d: Exhaust \u0441\u043b\u0443\u0447\u0430\u0439\u043d\u0443\u044e \u043a\u0430\u0440\u0442\u0443 \u0438\u0437 \u0440\u0443\u043a\u0438
+    if "EXHAUST_RANDOM" in card.tags and state.hand:
+        victim = random.choice(state.hand)
+        state.hand.remove(victim)
+        state.exhaust_pile.append(victim)
+
+    # - \u0421\u0430\u0445\u0430\u0440\u043d\u044b\u0439 \u0448\u043e\u043a: +2 \u044d\u043d\u0435\u0440\u0433\u0438\u0438
+    if "ENERGY_2" in card.tags:
+        state.player.energy = min(state.player.energy + 2, state.player.max_energy + 2)
+
+    # - \u0421\u0430\u0445\u0430\u0440\u043d\u044b\u0439 \u0448\u043e\u043a: \u043d\u0430\u043b\u0438\u0447\u0438\u0435 SELF_VULNERABLE - \u0438\u0433\u0440\u043e\u043a \u043f\u043e\u043b\u0443\u0447\u0430\u0435\u0442 Vulnerable 1 \u0445\u043e\u0434
+    if "SELF_VULNERABLE" in card.tags:
+        state.player.buffs.append(Buff(tag="VULNERABLE", duration=1, multiplier=1.25, flat_bonus=0))
+
     # Система Комбо Вкусов - добавляем стаки и проверяем взрыв
     state.last_combo_messages = []
     exploded = await _add_combo_stack(state, card.tags)

@@ -82,6 +82,14 @@ async def on_card_played(
                 _use_charge(art)
                 log.append(f"[{art.name}] +1 block after attack")
 
+        elif art.name == "Заточка из арматуры":
+            if card.type == "attack":
+                # - Считаем атаки через meta артефакта (stacks_used как счётчик)
+                art.stacks_used = getattr(art, "stacks_used", 0) + 1
+                if art.stacks_used % 3 == 0 and state.enemy:
+                    state.enemy.fighter.hp = max(0, state.enemy.fighter.hp - 5)
+                    log.append(f"[{art.name}] 3rd attack bonus: +5 damage")
+
     _cleanup(artifacts)
     return log
 
@@ -105,7 +113,14 @@ async def on_damage_taken(
                 log.append(f"[{art.name}] prevented death! HP set to 1")
 
         elif art.name == "Шипованный фартук":
-            state.enemy.hp = max(state.enemy.hp - 3, 0)
+            if state.enemy:
+                state.enemy.fighter.hp = max(state.enemy.fighter.hp - 3, 0)
+            _use_charge(art)
+            log.append(f"[{art.name}] reflected 3 damage to enemy")
+
+        elif art.name == "Грязный фартук":
+            if state.enemy:
+                state.enemy.fighter.hp = max(state.enemy.fighter.hp - 3, 0)
             _use_charge(art)
             log.append(f"[{art.name}] reflected 3 damage to enemy")
 

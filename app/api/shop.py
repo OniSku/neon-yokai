@@ -10,6 +10,7 @@ from app.logic.debt import can_buy, get_debt_level_info
 from app.logic.loot import get_total_ingredient_count
 from app.logic.meta import get_inventory_limit, get_shop_discount_async
 from app.logic.economy import pay_debt as do_pay_debt, take_ingredient_kit
+from app.models.ingredient import Ingredient
 from app.models.inventory_item import InventoryItem
 from app.models.shop_item import ShopItem
 from app.models.user import User
@@ -78,31 +79,49 @@ async def buy_item(
     user.credits -= final_price
 
     if item.category == "ingredient" and item.payload:
+        # - Ищем ингредиент по имени из payload
         payload = json.loads(item.payload)
+        ing_name = payload.get("ingredient_name")
         inv_limit = get_inventory_limit(user)
         current_count = await get_total_ingredient_count(session, user.id)
-        for ing_id in payload.get("ingredient_ids", []):
-            if current_count >= inv_limit:
-                break
-            result_inv = await session.execute(
-                select(InventoryItem).where(
-                    InventoryItem.user_id == user.id,
-                    InventoryItem.ingredient_id == ing_id,
-                )
+        if current_count < inv_limit and ing_name:
+            ing_result = await session.execute(
+                select(Ingredient).where(Ingredient.name == ing_name)
             )
-            inv = result_inv.scalar_one_or_none()
-            if inv is None:
-                inv = InventoryItem(user_id=user.id, ingredient_id=ing_id, quantity=1)
-                session.add(inv)
-            else:
-                inv.quantity += 1
-            current_count += 1
+            ingredient = ing_result.scalar_one_or_none()
+            if ingredient:
+                inv_result = await session.execute(
+                    select(InventoryItem).where(
+                        InventoryItem.user_id == user.id,
+                        InventoryItem.ingredient_id == ingredient.id,
+                    )
+                )
+                inv = inv_result.scalar_one_or_none()
+                if inv is None:
+                    session.add(InventoryItem(user_id=user.id, ingredient_id=ingredient.id, quantity=1))
+                else:
+                    inv.quantity += 1
+
+    elif item.category == "consumable" and item.payload:
+        # - Расходник: лечение или бонус энергии
+        payload = json.loads(item.payload)
+        if "heal" in payload:
+            from app.logic.meta import get_max_hp_bonus_async
+            max_hp = 80 + await get_max_hp_bonus_async(session, user)
+            user.current_hp = min(getattr(user, "current_hp", max_hp) + payload["heal"], max_hp)
+        if "bonus_energy_first_fight" in payload:
+            # - Сохраняем бонус энергии в RunState если есть активный забег
+            from app.logic.persistence import load_run_state, save_run_state
+            run = await load_run_state(session, user.id)
+            if run and not run.run_finished:
+                run.bonus_energy_first_fight = getattr(run, "bonus_energy_first_fight", 0) + payload["bonus_energy_first_fight"]
+                await save_run_state(session, run)
 
     await session.commit()
     await session.refresh(user)
 
     return ShopBuyResponse(
-        message=f"Purchased {item.name}",
+        message=f"Куплено: {item.name}",
         credits=user.credits,
         item=ShopItemOut(
             id=item.id,

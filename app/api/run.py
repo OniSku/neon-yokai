@@ -917,6 +917,38 @@ async def event_choice_endpoint(
             card_reward=None, artifact_reward=None, run=run,
         )
 
+    if msg == "VEND_DROP_INGREDIENT":
+        # - \u0414\u0430\u0451\u043c \u0441\u043b\u0443\u0447\u0430\u0439\u043d\u044b\u0439 \u0438\u043d\u0433\u0440\u0435\u0434\u0438\u0435\u043d\u0442 \u0432 run_ingredients
+        from app.models.ingredient import Ingredient as IngModel
+        ing_result = await session.execute(select(IngModel))
+        all_ings = list(ing_result.scalars().all())
+        if all_ings:
+            import random as _rnd
+            dropped = _rnd.choice(all_ings)
+            if not run.run_ingredients:
+                run.run_ingredients = []
+            existing = next((r for r in run.run_ingredients if r.get("ingredient_id") == dropped.id), None)
+            if existing:
+                existing["quantity"] = existing.get("quantity", 0) + 1
+            else:
+                run.run_ingredients.append({
+                    "ingredient_id": dropped.id,
+                    "ingredient_name": dropped.name,
+                    "quantity": 1,
+                    "flavor_profile": {"spicy": dropped.spicy, "sour": dropped.sour, "sweet": dropped.sweet, "bitter": dropped.bitter, "salty": dropped.salty},
+                })
+        node = _find_node(run)
+        node.completed = True
+        run.active_event = None
+        await session.commit()
+        await save_run_state(session, run)
+        drop_name = dropped.name if all_ings else "?"
+        return EventChoiceResponse(
+            message=f"\u0418\u043d\u0433\u0440\u0435\u0434\u0438\u0435\u043d\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d: {drop_name}. \u0414\u043e\u0431\u0430\u0432\u043b\u0435\u043d \u0432 \u0440\u044e\u043a\u0437\u0430\u043a \u0437\u0430\u0431\u0435\u0433\u0430.",
+            hp_delta=0, credits_delta=credits_delta,
+            card_reward=None, artifact_reward=None, run=run,
+        )
+
     if msg == "IMPLANT_MAX_HP_10":
         meta = parse_meta(user)
         meta["implant_hp"] = meta.get("implant_hp", 0) + 10

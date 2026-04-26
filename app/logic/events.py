@@ -256,6 +256,56 @@ SCENARIOS.extend([
             },
         ],
     },
+    # === ШАГ 52: Новые ивенты ===
+    {
+        "event_id": "elite_patrol",
+        "title": "Патруль Элиты",
+        "description": "Трое бойцов якудзы перекрывают дорогу. Можно откупиться, а можно - рискнуть и украсть Ядра.",
+        "choices": [
+            {
+                "choice_id": "bribe",
+                "label": "Откупиться",
+                "description": "-50 кредитов. Патруль пропускает.",
+                "cost_type": "credits",
+                "cost_value": 50,
+            },
+            {
+                "choice_id": "steal",
+                "label": "Рискнуть (50/50)",
+                "description": "Удача: +40 кредитов. Провал: элитный бой.",
+                "cost_type": "none",
+                "cost_value": 0,
+            },
+        ],
+    },
+    {
+        "event_id": "broken_vend",
+        "title": "Сломанный торговый автомат",
+        "description": "Автомат мигает неоном и гудит. Внутри - ингредиенты по ценам вчерашнего дня.",
+        "choices": [
+            {
+                "choice_id": "smash",
+                "label": "Ударить",
+                "description": "50%% - случайный ингредиент. 50%% - -8 HP от разряда.",
+                "cost_type": "none",
+                "cost_value": 0,
+            },
+            {
+                "choice_id": "hack",
+                "label": "Взломать (-20 кр)",
+                "description": "Гарантированно даёт ингредиент.",
+                "cost_type": "credits",
+                "cost_value": 20,
+            },
+            {
+                "choice_id": "ignore",
+                "label": "Пройти мимо",
+                "description": "Уйти без последствий.",
+                "cost_type": "none",
+                "cost_value": 0,
+            },
+        ],
+    },
 ])
 
 
@@ -491,6 +541,36 @@ async def resolve_event_choice(
             msg = "STREET_ALTAR_HEAL"
         elif choice_id == "ignore":
             msg = "Вы не задержались у алтаря."
+
+    # ---- Патруль Элиты ----
+    elif eid == "elite_patrol":
+        if choice_id == "bribe":
+            if user_credits < 50:
+                raise ValueError("Недостаточно кредитов")
+            credits_delta = -50
+            msg = "Патруль пропустил. -50 кредитов."
+        elif choice_id == "steal":
+            if random.random() < 0.5:
+                credits_delta = 40
+                msg = "Удача! Вы выскользнули Ядра. +40 кредитов."
+            else:
+                msg = "FIGHT_ELITE"  # - сигнал для run.py
+
+    # ---- Сломанный торговый автомат ----
+    elif eid == "broken_vend":
+        if choice_id == "smash":
+            if random.random() < 0.5:
+                msg = "VEND_DROP_INGREDIENT"  # - сигнал для run.py - дроп в run_ingredients
+            else:
+                hp_delta = -8
+                msg = "Электрический разряд! -8 HP."
+        elif choice_id == "hack":
+            if user_credits < 20:
+                raise ValueError("Недостаточно кредитов")
+            credits_delta = -20
+            msg = "VEND_DROP_INGREDIENT"  # - гарантированный дроп
+        elif choice_id == "ignore":
+            msg = "Вы прошли мимо."
 
     else:
         msg = "Вы ушли без последствий."

@@ -340,6 +340,56 @@ CARDS: list[dict] = [
         "is_exhaust": True, "rarity": "legendary",
         "is_starting": False,
     },
+    # === ШАГ 50: Новые карты ===
+    {
+        "name": "Уксусный туман",
+        "cost": 1, "type": "skill", "power": 0,
+        "damage_type": "none", "tags": "SOUR,AOE_WEAK",
+        "is_exhaust": False, "rarity": "common",
+        "is_starting": False,
+    },
+    {
+        "name": "Горький финал",
+        "cost": 2, "type": "attack", "power": 0,
+        "damage_type": "none", "tags": "BITTER,BITTER_SCALE",
+        "is_exhaust": True, "rarity": "epic",
+        "is_starting": False,
+    },
+    {
+        "name": "Пересоленный бульон",
+        "cost": 2, "type": "skill", "power": 12,
+        "damage_type": "none", "tags": "SALTY,EXHAUST_RANDOM",
+        "is_exhaust": False, "rarity": "rare",
+        "is_starting": False,
+    },
+    {
+        "name": "Сахарный шок",
+        "cost": 1, "type": "skill", "power": 0,
+        "damage_type": "none", "tags": "SWEET,ENERGY_2,SELF_VULNERABLE",
+        "is_exhaust": True, "rarity": "rare",
+        "is_starting": False,
+    },
+    {
+        "name": "Двойная перегонка",
+        "cost": 1, "type": "attack", "power": 6,
+        "damage_type": "none", "tags": "HOT,SOUR",
+        "is_exhaust": False, "rarity": "rare",
+        "is_starting": False,
+    },
+    {
+        "name": "Ферментированный яд",
+        "cost": 1, "type": "skill", "power": 0,
+        "damage_type": "none", "tags": "SOUR,BITTER,DRAW_1",
+        "is_exhaust": False, "rarity": "rare",
+        "is_starting": False,
+    },
+    {
+        "name": "Солёная карамель",
+        "cost": 2, "type": "skill", "power": 6,
+        "damage_type": "none", "tags": "SALTY,SWEET,DRAW_1",
+        "is_exhaust": False, "rarity": "rare",
+        "is_starting": False,
+    },
     # === CURSE ===
     {
         "name": "Мертвый груз",
@@ -362,6 +412,36 @@ ENEMIES: list[dict] = [
             {"action": "attack", "damage": 5, "damage_type": "none", "steal": 3},
             {"action": "attack", "damage": 5, "damage_type": "none", "steal": 3},
             {"action": "flee", "condition": "stolen_gte_9"},
+        ]),
+    },
+    # === ШАГ 51: СТАДИЯ 3 ===
+    {
+        "name": "Тэнгу",
+        "hp": 45,
+        "base_damage": 7,
+        "damage_type": "none",
+        "ai_pattern": json.dumps([
+            {"action": "attack", "damage": 5},
+            {"action": "attack", "damage": 5},
+            {"action": "attack", "damage": 5},
+            {"action": "block", "amount": 8},
+            {"action": "attack", "damage": 5},
+            {"action": "attack", "damage": 5},
+            {"action": "attack", "damage": 5},
+        ]),
+    },
+    {
+        "name": "Они",
+        "hp": 60,
+        "base_damage": 12,
+        "damage_type": "none",
+        "ai_pattern": json.dumps([
+            {"action": "block", "amount": 10},
+            {"action": "charge"},
+            {"action": "attack", "damage": 28},
+            {"action": "block", "amount": 10},
+            {"action": "charge"},
+            {"action": "attack", "damage": 28},
         ]),
     },
     # === СТАДИЯ 2 ===
@@ -410,40 +490,64 @@ ENEMIES: list[dict] = [
 
 
 SHOP_ITEMS: list[dict] = [
+    # === Ингредиенты ===
     {
-        "name": "Набор острых специй",
-        "description": "Пакет из 3 редких специй для готовки",
-        "price": 30,
+        "name": "Лемонграсс",
+        "description": "Чистый SOUR (уязвимость). +1 в инвентарь.",
+        "price": 20,
         "category": "ingredient",
-        "payload": '{"ingredient_ids": [5, 6, 7]}',
+        "payload": '{"ingredient_name": "Лайм"}',
     },
     {
-        "name": "Заточка тесака",
-        "description": "Увеличивает урон slashing-карт на 2 до конца забега",
-        "price": 50,
-        "category": "upgrade",
-        "payload": '{"buff_tag": "SHARPEN", "flat_bonus": 2}',
+        "name": "Перец чили",
+        "description": "Сильный HOT. В инвентарь.",
+        "price": 20,
+        "category": "ingredient",
+        "payload": '{"ingredient_name": "Перец чили"}',
     },
     {
-        "name": "Аптечка",
-        "description": "Восстанавливает 20 HP в начале следующего боя",
+        "name": "Мисо-паста",
+        "description": "Смешанный SALTY+BITTER. В инвентарь.",
         "price": 25,
+        "category": "ingredient",
+        "payload": '{"ingredient_name": "Мисо-паста"}',
+    },
+    {
+        "name": "Синтетический концентрат \'\u0423мами\'",
+        "description": "Много стаков, но дает -5 макс HP на 1 бой. Дёшево, но токсично.",
+        "price": 15,
+        "category": "ingredient",
+        "payload": '{"ingredient_name": "Синтетический концентрат \\"\u0423мами\\""}',
+    },
+    # === Услуги ===
+    {
+        "name": "Аптечка повара",
+        "description": "Восстанавливает 20 HP немедленно.",
+        "price": 30,
         "category": "consumable",
         "payload": '{"heal": 20}',
     },
     {
-        "name": "Дополнительная энергия",
-        "description": "+1 к максимальной энергии на один бой",
-        "price": 80,
-        "category": "upgrade",
-        "payload": '{"extra_energy": 1}',
+        "name": "Перепрошивка чипа",
+        "description": "+1 энергии только на первый бой следующего забега.",
+        "price": 40,
+        "category": "consumable",
+        "payload": '{"bonus_energy_first_fight": 1}',
     },
     {
-        "name": "Карта: Двойной удар",
-        "description": "Добавляет карту Двойной удар (ATK 12, slashing, exhaust) в колоду",
+        "name": "Чистка инвентаря",
+        "description": "Удалить карту из колоды. Цена растёт: 50, 75, 100...",
+        "price": 50,
+        "category": "remove_card",
+        "payload": '{"base_price": 50, "price_step": 25}',
+    },
+    # === Инструмент (артефакт) ===
+    {
+        "name": "Случайный инструмент",
+        "description": "Случайный common-артефакт из запасов поставщика.",
         "price": 60,
-        "category": "card",
-        "payload": '{"card_name": "Двойной удар", "type": "attack", "power": 12, "damage_type": "none", "cost": 2, "is_exhaust": true}',
+        "category": "artifact",
+        "payload": '{"rarity": "common"}',
     },
 ]
 
@@ -539,6 +643,31 @@ ARTIFACTS: list[dict] = [
         "charges": -1,
         "is_active": True,
     },
+    # === ШАГ 51: Новые артефакты ===
+    {
+        "name": "Старый респиратор",
+        "rarity": "rare",
+        "description": "Первый дебафф в каждом бою автоматически отменяется. Один раз за бой.",
+        "trigger": "on_combat_start",
+        "charges": -1,
+        "is_active": True,
+    },
+    {
+        "name": "Заточка из арматуры",
+        "rarity": "common",
+        "description": "Каждая 3-я атака за бой наносит +5 урона.",
+        "trigger": "on_card_played",
+        "charges": -1,
+        "is_active": True,
+    },
+    {
+        "name": "Грязный фартук",
+        "rarity": "common",
+        "description": "После получения урона - отражает 3 урона врагу.",
+        "trigger": "on_damage_taken",
+        "charges": -1,
+        "is_active": True,
+    },
 ]
 
 
@@ -554,6 +683,9 @@ INGREDIENTS: list[dict] = [
     {"name": "Соевый соус", "spicy": 0, "sour": 0, "sweet": 0, "bitter": 0, "salty": 6, "rarity": "common"},
     {"name": "Морская соль", "spicy": 0, "sour": 0, "sweet": 0, "bitter": 0, "salty": 8, "rarity": "common"},
     {"name": "Мисо-паста", "spicy": 0, "sour": 0, "sweet": 1, "bitter": 1, "salty": 6, "rarity": "uncommon"},
+    {"name": "Лемонграсс", "spicy": 0, "sour": 4, "sweet": 1, "bitter": 0, "salty": 0, "rarity": "common"},
+    # - \u0421\u0438\u043d\u0442\u0435\u0442\u0438\u043a\u0430: \u043c\u043d\u043e\u0433\u043e \u0441\u0442\u0430\u043a\u043e\u0432, \u043d\u043e \u0434\u0435\u0431\u0430\u0444\u0444 -5 \u043c\u0430\u043a\u0441 HP
+    {"name": "Синтетический концентрат \"Умами\"", "spicy": 2, "sour": 2, "sweet": 2, "bitter": 2, "salty": 4, "rarity": "common"},
 ]
 
 
