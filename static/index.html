@@ -491,6 +491,231 @@
         .result-box { background: var(--surface); border: 2px solid var(--neon); border-radius: 16px; padding: 32px 48px; text-align: center; }
         .result-box h2 { font-size: 1.8rem; text-shadow: 0 0 20px var(--neon); margin-bottom: 8px; }
         .result-loot { font-size: 0.8rem; color: var(--green); margin-bottom: 12px; }
+
+        /* ===== ARENA BATTLE LAYOUT ===== */
+        #screen-battle {
+            background: url('/static/img/market_bg.jpg') center/cover no-repeat;
+            position: relative;
+        }
+        #screen-battle::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            pointer-events: none;
+            z-index: 0;
+        }
+        #screen-battle .arena-wrap {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 100vh;
+            padding: 0;
+        }
+        /* Top bar */
+        .arena-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+        }
+        /* Enemy zone */
+        .arena-enemy-zone {
+            padding: 6px 12px 0;
+        }
+        .arena-enemy-info-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .arena-enemy-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            min-width: 80px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(233,69,96,0.35);
+            border-radius: 8px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .arena-enemy-card.targeted { border-color: var(--neon); box-shadow: 0 0 8px rgba(0,255,245,0.4); }
+        .arena-enemy-card.dead { opacity: 0.3; filter: grayscale(1); cursor: default; }
+        .aec-name { font-size: 0.65rem; font-weight: 700; color: var(--accent); text-transform: uppercase; }
+        .aec-hp { font-size: 0.7rem; color: var(--text); }
+        .aec-bar { width: 64px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; }
+        .aec-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+        .aec-intent { font-size: 0.6rem; color: var(--energy); margin-top: 2px; }
+        /* Enemy tokens row */
+        .arena-tokens-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+        /* Player zone */
+        .arena-player-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 12px;
+        }
+        /* Token circle */
+        .arena-token {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            border: 3px solid;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .arena-token.player-token {
+            background-image: url('/static/img/chef_token.jpg');
+            border-color: rgba(0,255,245,0.7);
+            box-shadow: 0 0 16px rgba(0,255,245,0.35);
+        }
+        .arena-token.enemy-token {
+            width: 80px;
+            height: 80px;
+            background-image: url('/static/img/gaki_token.jpg');
+            border-color: rgba(233,69,96,0.7);
+            box-shadow: 0 0 12px rgba(233,69,96,0.3);
+        }
+        .arena-token.enemy-token.dead { opacity: 0.25; filter: grayscale(1); }
+        /* Player info block */
+        .arena-player-info {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(0,255,245,0.2);
+            border-radius: 12px;
+            padding: 8px 18px;
+        }
+        .ap-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+        .ap-stat .ap-val { font-size: 0.95rem; font-weight: 700; }
+        .ap-stat .ap-lbl { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; }
+        .ap-stat.hp .ap-val { color: var(--neon); }
+        .ap-stat.block .ap-val { color: var(--block); }
+        .ap-stat.energy .ap-val { color: var(--energy); }
+        /* Combo row */
+        .arena-combo-row {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+        .arena-combo-slot {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 2px solid;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.65);
+            font-weight: 700;
+        }
+        .arena-combo-slot.hot { border-color: #ff4444; color: #ff4444; }
+        .arena-combo-slot.sour { border-color: #44ff44; color: #44ff44; }
+        .arena-combo-slot.sweet { border-color: #ff69b4; color: #ff69b4; }
+        .arena-combo-slot.bitter { border-color: #9944ff; color: #9944ff; }
+        .arena-combo-slot.salty { border-color: #4488ff; color: #4488ff; }
+        .arena-combo-slot .acs-num { font-size: 0.85rem; line-height: 1; }
+        .arena-combo-slot .acs-icon { font-size: 0.55rem; }
+        /* Hand zone */
+        .arena-hand-zone {
+            background: linear-gradient(0deg, rgba(0,0,0,0.92) 60%, transparent 100%);
+            padding: 8px 10px 16px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+        .arena-cards {
+            display: flex;
+            gap: 6px;
+            flex: 1;
+            justify-content: center;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            padding-bottom: 2px;
+        }
+        .arena-card {
+            width: 72px;
+            min-width: 72px;
+            background: var(--surface);
+            border: 2px solid var(--accent2);
+            border-radius: 10px;
+            padding: 6px 4px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            transition: transform 0.15s, box-shadow 0.15s;
+            flex-shrink: 0;
+        }
+        .arena-card:hover { transform: translateY(-8px); box-shadow: 0 0 16px rgba(0,255,245,0.35); }
+        .arena-card.disabled { opacity: 0.4; cursor: not-allowed; }
+        .arena-card.disabled:hover { transform: none; box-shadow: none; }
+        .arena-card .ac-cost { position: absolute; top: -7px; left: 50%; transform: translateX(-50%); background: var(--energy); color: #000; font-size: 0.65rem; font-weight: 800; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .arena-card .ac-name { font-size: 0.6rem; font-weight: 700; text-align: center; margin-top: 12px; line-height: 1.2; color: var(--text); }
+        .arena-card .ac-type { font-size: 0.55rem; color: var(--muted); margin-top: 2px; }
+        .arena-card .ac-power { font-size: 0.85rem; font-weight: 700; color: var(--accent); margin-top: 4px; }
+        /* Flavor card borders */
+        .arena-card.hot { border-color: #ff4444; }
+        .arena-card.sour { border-color: #44ff44; }
+        .arena-card.sweet { border-color: #ff69b4; }
+        .arena-card.bitter { border-color: #9944ff; }
+        .arena-card.salty { border-color: #4488ff; }
+        /* End turn diamond button */
+        .arena-end-turn {
+            flex-shrink: 0;
+            width: 56px;
+            height: 56px;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            background: var(--accent);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.5rem;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+            transition: filter 0.2s;
+            align-self: center;
+            line-height: 1.2;
+        }
+        .arena-end-turn:hover { filter: brightness(1.3); }
+        /* Attack jump */
+        @keyframes attack-jump-down {
+            0%   { transform: translateY(0); }
+            40%  { transform: translateY(22px); }
+            100% { transform: translateY(0); }
+        }
+        @keyframes attack-jump-up {
+            0%   { transform: translateY(0); }
+            40%  { transform: translateY(-22px); }
+            100% { transform: translateY(0); }
+        }
+        .attack-jump-down { animation: attack-jump-down 0.32s ease-out; }
+        .attack-jump-up { animation: attack-jump-up 0.32s ease-out; }
     </style>
 </head>
 <body>
@@ -682,40 +907,57 @@
 
 <!-- ========== SCREEN: BATTLE ========== -->
 <div id="screen-battle" class="screen">
-    <div class="wrap">
-        <div class="row mb8">
-            <span class="label">Ход <span id="turn">0</span></span>
-            <span class="label">Фаза: <span id="phase" style="color:var(--neon)">-</span></span>
-        </div>
-        <div class="enemies-container" id="enemies-container"></div>
-        <div class="fighter-row" id="enemy-row" style="display:none">
-            <div><div class="fighter-name" id="enemy-name">Враг</div><div class="enemy-intent" id="enemy-single-intent"></div><div class="buffs" id="enemy-buffs"></div></div>
-            <div>
-                <div class="fighter-stats"><span class="stat-enemy-hp" id="enemy-hp-text">50/50</span><span class="stat-block" id="enemy-block-text">Блок: 0</span></div>
-                <div class="bar-bg"><div class="bar-fill enemy-hp" id="enemy-hp-bar" style="width:100%"></div></div>
+    <div class="arena-wrap">
+
+        <!-- TOP BAR -->
+        <div class="arena-topbar">
+            <div style="display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:0.85rem;color:var(--neon);font-weight:700;text-transform:uppercase;letter-spacing:2px">ХОД <span id="turn">0</span></span>
+                <span style="font-size:0.7rem;color:var(--muted)">ФАЗА: <span id="phase" style="color:var(--neon)">-</span></span>
+            </div>
+            <div style="display:flex;gap:8px">
+                <div class="artifacts-row" id="artifacts-row" style="margin:0"></div>
+                <button class="btn btn-muted" style="padding:6px 12px;font-size:0.75rem" onclick="abandonRun()">Сдаться</button>
             </div>
         </div>
-        <div class="fighter-row" id="player-row">
-            <div><div class="fighter-name">Игрок</div><div class="buffs" id="player-buffs"></div></div>
-            <div>
-                <div class="fighter-stats"><span class="stat-hp" id="player-hp-text">80/80</span><span class="stat-energy" id="player-energy-text">Энергия: 3</span><span class="stat-block" id="player-block-text">Блок: 0</span></div>
-                <div class="bar-bg"><div class="bar-fill hp" id="player-hp-bar" style="width:100%"></div></div>
+
+        <!-- LAYER 1: ENEMY ZONE -->
+        <div class="arena-enemy-zone">
+            <div class="arena-enemy-info-row" id="arena-enemy-info-row"></div>
+            <div class="arena-tokens-row" id="arena-tokens-row"></div>
+        </div>
+
+        <!-- LAYER 2: PLAYER ZONE -->
+        <div class="arena-player-zone">
+            <div class="arena-token player-token" id="arena-player-token"></div>
+            <div class="buffs" id="player-buffs" style="justify-content:center"></div>
+            <div class="arena-player-info">
+                <div class="ap-stat hp"><span class="ap-val" id="player-hp-text">80/80</span><span class="ap-lbl">HP</span></div>
+                <div class="ap-stat block"><span class="ap-val" id="player-block-text">0</span><span class="ap-lbl">Блок</span></div>
+                <div class="ap-stat energy"><span class="ap-val" id="player-energy-text">3/3</span><span class="ap-lbl">Энергия</span></div>
+            </div>
+            <div class="arena-combo-row">
+                <div class="arena-combo-slot hot"><span class="acs-num" id="cs-hot">0</span><span class="acs-icon">🌶</span></div>
+                <div class="arena-combo-slot sour"><span class="acs-num" id="cs-sour">0</span><span class="acs-icon">🍋</span></div>
+                <div class="arena-combo-slot sweet"><span class="acs-num" id="cs-sweet">0</span><span class="acs-icon">🍯</span></div>
+                <div class="arena-combo-slot bitter"><span class="acs-num" id="cs-bitter">0</span><span class="acs-icon">☕</span></div>
+                <div class="arena-combo-slot salty"><span class="acs-num" id="cs-salty">0</span><span class="acs-icon">🧂</span></div>
             </div>
         </div>
-        <div class="buffs mt8" id="combo-effects" style="margin-bottom:6px"></div>
-        <div class="artifacts-row" id="artifacts-row"></div>
-        <div class="label mt8">Рука</div>
-        <div class="hand" id="hand"></div>
-        <div class="row mt8" style="font-size:0.75rem;color:var(--muted)">
-            <span>Колода: <span id="draw-count" class="val-neon">0</span></span>
-            <span>Сброс: <span id="discard-count" style="color:var(--accent)">0</span></span>
-            <span>Удалено: <span id="exhaust-count" style="color:#666">0</span></span>
+
+        <!-- LAYER 3: HAND ZONE -->
+        <div class="arena-hand-zone">
+            <div class="arena-cards" id="hand"></div>
+            <button class="arena-end-turn" id="btn-end-turn" onclick="endTurn()">КОНЕЦ<br>ХОДА</button>
         </div>
-        <div class="battle-actions">
-            <button class="btn btn-danger" id="btn-end-turn" onclick="endTurn()">Завершить ход</button>
-            <button class="btn btn-muted" id="btn-abandon" onclick="abandonRun()">Бросить</button>
-        </div>
-        <div id="log"></div>
+
+        <!-- LOG (скрытый - для совместимости) -->
+        <div id="log" style="display:none"></div>
+        <!-- Скрытые элементы для совместимости со старым JS -->
+        <span id="draw-count" style="display:none">0</span>
+        <span id="discard-count" style="display:none">0</span>
+        <span id="exhaust-count" style="display:none">0</span>
+        <div id="combo-effects" style="display:none"></div>
     </div>
 </div>
 
@@ -1452,135 +1694,142 @@ function triggerShake() {
 let prevPlayerHp = null;
 let prevEnemyHp = null;
 
+const FLAVOR_TAGS_LIST = ["HOT", "SOUR", "SWEET", "BITTER", "SALTY"];
+const INTENT_ICONS = {attack: "⚔", defend: "🛡", buff: "✨", debuff: "✨", steal: "💰"};
+
+function _buildEnemyBuffsHtml(buffs) {
+    if (!buffs || !buffs.length) return "";
+    let h = '<div class="buffs" style="justify-content:center;margin-top:3px">';
+    for (const b of buffs) {
+        const info = BUFF_LABELS[b.tag];
+        h += '<span class="buff-icon buff-' + b.tag + '">' + (info ? info.icon + " " + info.name : b.tag) + ' <span class="buff-dur">' + b.duration + '</span></span>';
+    }
+    return h + '</div>';
+}
+
 function updateBattleUI(state) {
     if (!state) return;
+
     document.getElementById("turn").textContent = state.turn;
-    document.getElementById("phase").textContent = state.phase;
+    document.getElementById("phase").textContent = state.phase === "player_turn" ? "PLAYER_TURN" : "ENEMY_TURN";
 
     const p = state.player;
-    const e = state.enemy;
 
-    // Multi-enemy rendering
-    const container = document.getElementById("enemies-container");
-    const singleRow = document.getElementById("enemy-row");
-    if (state.enemies && state.enemies.length > 0) {
-        singleRow.style.display = "none";
-        container.innerHTML = "";
-        const alive = state.enemies.filter(es => es.alive);
-        state.enemies.forEach((es, idx) => {
-            const slot = document.createElement("div");
-            let cls = "enemy-slot";
-            if (!es.alive) cls += " dead";
-            const aliveIdx = alive.indexOf(es);
-            if (es.alive && aliveIdx === (selectedTarget % alive.length)) cls += " targeted";
-            slot.className = cls;
-            if (es.alive) {
-                slot.onclick = () => { selectedTarget = alive.indexOf(es); updateBattleUI(state); };
-            }
-            const f = es.fighter;
-            const hpPct = f.max_hp > 0 ? (f.hp / f.max_hp * 100) : 0;
-            let buffsHtml = "";
-            if (f.buffs && f.buffs.length) {
-                buffsHtml = '<div class="buffs" style="margin-top:4px">';
-                for (const b of f.buffs) {
-                    const info = BUFF_LABELS[b.tag];
-                    buffsHtml += '<span class="buff-icon buff-' + b.tag + '">' + (info ? info.icon + " " + info.name : b.tag) + ' <span class="buff-dur">' + b.duration + '</span></span>';
-                }
-                buffsHtml += '</div>';
-            }
-            let intentHtml = "";
-            if (es.alive && es.intent) {
-                const itype = es.intent.type || "attack";
-                const INTENT_ICONS = {attack: "\uD83D\uDDE1\uFE0F", defend: "\uD83D\uDEE1\uFE0F", buff: "\u2728", debuff: "\u2728"};
-                const icon = INTENT_ICONS[itype] || "\u2753";
-                const valText = itype === "attack" ? " " + es.intent.value : "";
-                intentHtml = '<div class="enemy-intent intent-' + itype + '" title="' + (es.intent.description || "") + '">' + icon + valText + '</div>';
-            }
-            slot.innerHTML =
-                '<div><div class="fighter-name" style="font-size:0.9rem">' + f.name + (es.alive && aliveIdx === (selectedTarget % alive.length) ? ' <span class="target-label">[\u0426\u0415\u041b\u042c]</span>' : '') + '</div>' + intentHtml + buffsHtml + '</div>' +
-                '<div><div class="fighter-stats"><span class="stat-enemy-hp">' + f.hp + '/' + f.max_hp + '</span><span class="stat-block">\u0411\u043b\u043e\u043a: ' + f.block + '</span></div>' +
-                '<div class="bar-bg"><div class="bar-fill enemy-hp" style="width:' + hpPct + '%"></div></div></div>';
-            container.appendChild(slot);
-        });
-    } else {
-        container.innerHTML = "";
-        singleRow.style.display = "flex";
-        if (prevEnemyHp !== null && e.hp < prevEnemyHp) {
-            spawnDamagePopup("enemy-row", prevEnemyHp - e.hp, "enemy");
-        }
-        document.getElementById("enemy-name").textContent = e.name;
-        document.getElementById("enemy-hp-text").textContent = e.hp + "/" + e.max_hp;
-        document.getElementById("enemy-block-text").textContent = "Блок: " + e.block;
-        document.getElementById("enemy-hp-bar").style.width = (e.hp / e.max_hp * 100) + "%";
-        renderBuffs("enemy-buffs", e.buffs);
-        const singleIntent = document.getElementById("enemy-single-intent");
-        const intentSrc = (state.enemies && state.enemies.length > 0 && state.enemies[0].intent) ? state.enemies[0].intent : null;
-        if (intentSrc) {
-            const INTENT_ICONS = {attack: "\uD83D\uDDE1\uFE0F", defend: "\uD83D\uDEE1\uFE0F", buff: "\u2728", debuff: "\u2728"};
-            const itype = intentSrc.type || "attack";
-            const icon = INTENT_ICONS[itype] || "\u2753";
-            const valText = itype === "attack" ? " " + intentSrc.value : "";
-            singleIntent.className = "enemy-intent intent-" + itype;
-            singleIntent.title = intentSrc.description || "";
-            singleIntent.innerHTML = icon + valText;
-        } else {
-            singleIntent.innerHTML = "";
-        }
-    }
-    prevEnemyHp = e.hp;
+    // --- Враги: инфо-панели + жетоны ---
+    const infoRow = document.getElementById("arena-enemy-info-row");
+    const tokensRow = document.getElementById("arena-tokens-row");
+    infoRow.innerHTML = "";
+    tokensRow.innerHTML = "";
 
+    const enemies = (state.enemies && state.enemies.length) ? state.enemies : (state.enemy ? [{fighter: state.enemy, alive: state.enemy.hp > 0, intent: null}] : []);
+    const aliveEnemies = enemies.filter(es => es.alive);
+
+    enemies.forEach((es, idx) => {
+        const f = es.fighter;
+        const isTargeted = es.alive && aliveEnemies.indexOf(es) === (selectedTarget % (aliveEnemies.length || 1));
+        const isDead = !es.alive || f.hp <= 0;
+        const hpPct = f.max_hp > 0 ? Math.max(0, f.hp / f.max_hp * 100) : 0;
+        let intentStr = "";
+        if (es.intent) {
+            const itype = es.intent.type || "attack";
+            intentStr = (INTENT_ICONS[itype] || "?") + (itype === "attack" ? " " + es.intent.value : "");
+        }
+
+        // Инфо-карточка
+        const card = document.createElement("div");
+        card.className = "arena-enemy-card" + (isDead ? " dead" : "") + (isTargeted ? " targeted" : "");
+        if (es.alive) {
+            card.onclick = () => { selectedTarget = aliveEnemies.indexOf(es); updateBattleUI(state); };
+        }
+        card.innerHTML =
+            '<div class="aec-name">' + f.name + (isTargeted ? " [ЦЕЛЬ]" : "") + '</div>' +
+            '<div class="aec-hp">' + f.hp + "/" + f.max_hp + (f.block ? " 🛡" + f.block : "") + '</div>' +
+            '<div class="aec-bar"><div class="aec-bar-fill" style="width:' + hpPct + '%"></div></div>' +
+            (intentStr ? '<div class="aec-intent">' + intentStr + '</div>' : '') +
+            _buildEnemyBuffsHtml(f.buffs);
+        infoRow.appendChild(card);
+
+        // Жетон
+        const tok = document.createElement("div");
+        tok.className = "arena-token enemy-token" + (isDead ? " dead" : "");
+        tok.id = "arena-enemy-token-" + idx;
+        tokensRow.appendChild(tok);
+    });
+
+    // --- Игрок ---
     if (prevPlayerHp !== null && p.hp < prevPlayerHp) {
-        const dmg = prevPlayerHp - p.hp;
-        spawnDamagePopup("player-row", dmg, "enemy");
-        if (dmg > 10) triggerShake();
-    }
-    if (prevPlayerHp !== null && p.hp > prevPlayerHp) {
-        spawnDamagePopup("player-row", p.hp - prevPlayerHp, "heal");
+        const playerTok = document.getElementById("arena-player-token");
+        if (playerTok) {
+            playerTok.classList.remove("attack-jump-up");
+            void playerTok.offsetWidth;
+            playerTok.classList.add("attack-jump-up");
+            setTimeout(() => playerTok.classList.remove("attack-jump-up"), 340);
+        }
+        if (prevPlayerHp - p.hp > 10) triggerShake();
     }
     prevPlayerHp = p.hp;
 
     document.getElementById("player-hp-text").textContent = p.hp + "/" + p.max_hp;
-    document.getElementById("player-energy-text").textContent = "Энергия: " + p.energy;
-    document.getElementById("player-block-text").textContent = "Блок: " + p.block;
-    document.getElementById("player-hp-bar").style.width = (p.hp / p.max_hp * 100) + "%";
-    renderBuffs("player-buffs", p.buffs);
+    document.getElementById("player-block-text").textContent = p.block || 0;
+    document.getElementById("player-energy-text").textContent = p.energy + "/" + p.max_energy;
+    renderBuffs("player-buffs", p.buffs || []);
 
+    // --- Комбо счётчики ---
+    if (state.combo_stacks) {
+        document.getElementById("cs-hot").textContent = state.combo_stacks.HOT || 0;
+        document.getElementById("cs-sour").textContent = state.combo_stacks.SOUR || 0;
+        document.getElementById("cs-sweet").textContent = state.combo_stacks.SWEET || 0;
+        document.getElementById("cs-bitter").textContent = state.combo_stacks.BITTER || 0;
+        document.getElementById("cs-salty").textContent = state.combo_stacks.SALTY || 0;
+    }
+
+    // --- Рука: arena-card ---
     const handEl = document.getElementById("hand");
     handEl.innerHTML = "";
-    state.hand.forEach((card, idx) => {
-        const btn = document.createElement("button");
-        const rarity = card.rarity || "common";
+    (state.hand || []).forEach((card, idx) => {
         const canPlay = card.type !== "curse" && card.cost <= p.energy && !state.finished;
-        btn.className = "card-btn rarity-" + rarity + (canPlay ? " card-playable" : " card-unplayable");
-        if (card.type === "curse") { btn.style.cursor = "not-allowed"; }
-        else { btn.onclick = () => playCard(idx); }
-
-        const dtype = card.damage_type !== "none" ? (DTYPE_RU[card.damage_type] || card.damage_type) : "";
+        let flavorClass = "";
+        if (card.tags) {
+            const tags = Array.isArray(card.tags) ? card.tags : card.tags.split(",");
+            for (const t of tags) {
+                const clean = t.trim().toLowerCase();
+                if (["hot","sour","sweet","bitter","salty"].includes(clean)) { flavorClass = " " + clean; break; }
+            }
+        }
         const displayPower = card.is_upgraded ? Math.ceil(card.power * 1.5) : card.power;
-        const typeLabel = card.type === "attack" ? "АТК " + displayPower : card.type === "curse" ? "ПРОКЛЯТИЕ" : "ЗАЩ " + displayPower;
-        const tags = card.tags.length ? card.tags.filter(t => !t.startsWith("DRAW_") && !t.startsWith("DISCARD_")).join(", ") : "";
-        const rarityRu = RARITY_RU[rarity] || rarity;
-        const upgradedMark = card.is_upgraded ? "+" : "";
+        const upgMark = card.is_upgraded ? "+" : "";
+        const typeShort = card.type === "attack" ? "АТК" : card.type === "skill" ? "ЗАЩ" : "ПРОКЛЯТИЕ";
 
-        btn.innerHTML =
-            '<div class="card-cost">' + card.cost + '</div>' +
-            '<div class="card-name">' + card.name + upgradedMark + '</div>' +
-            '<div class="card-info">' + typeLabel + '</div>' +
-            (dtype ? '<div class="card-dtype">' + dtype + '</div>' : '') +
-            (tags ? '<div class="card-info">' + tags + '</div>' : '') +
-            '<div class="card-rarity">' + rarityRu + '</div>';
-        btn.addEventListener("mouseenter", (e) => showCardTooltip(card, e));
-        btn.addEventListener("mouseleave", () => hideCardTooltip());
-        btn.addEventListener("touchstart", (e) => { tooltipTimer = setTimeout(() => showCardTooltip(card, e.touches[0]), 400); }, {passive: true});
-        btn.addEventListener("touchend", () => hideCardTooltip());
-        handEl.appendChild(btn);
+        const div = document.createElement("div");
+        div.className = "arena-card" + flavorClass + (canPlay ? "" : " disabled");
+        div.innerHTML =
+            '<div class="ac-cost">' + card.cost + '</div>' +
+            '<div class="ac-name">' + card.name + upgMark + '</div>' +
+            '<div class="ac-type">' + typeShort + '</div>' +
+            '<div class="ac-power">' + displayPower + '</div>';
+        if (canPlay) {
+            div.onclick = () => {
+                const playerTok = document.getElementById("arena-player-token");
+                if (playerTok) {
+                    playerTok.classList.remove("attack-jump-down");
+                    void playerTok.offsetWidth;
+                    playerTok.classList.add("attack-jump-down");
+                    setTimeout(() => playerTok.classList.remove("attack-jump-down"), 340);
+                }
+                playCard(idx);
+            };
+        }
+        div.addEventListener("mouseenter", (e) => showCardTooltip(card, e));
+        div.addEventListener("mouseleave", () => hideCardTooltip());
+        div.addEventListener("touchstart", (e) => { tooltipTimer = setTimeout(() => showCardTooltip(card, e.touches[0]), 400); }, {passive: true});
+        div.addEventListener("touchend", () => hideCardTooltip());
+        handEl.appendChild(div);
     });
 
     document.getElementById("draw-count").textContent = (state.draw_pile || []).length;
     document.getElementById("discard-count").textContent = (state.discard_pile || []).length;
     document.getElementById("exhaust-count").textContent = (state.exhaust_pile || []).length;
     document.getElementById("btn-end-turn").disabled = state.finished;
-    document.getElementById("btn-abandon").disabled = state.finished;
 }
 
 function handleBattleResult(data) {
@@ -1588,6 +1837,25 @@ function handleBattleResult(data) {
     const state = data.run.battle;
     if (!state) return;
     updateBattleUI(state);
+
+    // Победа над боссом - забег завершен
+    if (currentRun.run_finished && state.winner === "player") {
+        const overlay = document.getElementById("result-overlay");
+        const text = document.getElementById("result-text");
+        const lootEl = document.getElementById("result-loot");
+        const rewardSection = document.getElementById("reward-section");
+        const closeBtn = document.getElementById("btn-close-result");
+        rewardSection.style.display = "none";
+        text.textContent = "АКТ I ЗАВЕРШЕН";
+        text.style.color = "var(--neon)";
+        lootEl.textContent = "+100 XP. Нурарихён повержен!";
+        closeBtn.style.display = "block";
+        closeBtn.textContent = "Вернуться в Хаб";
+        closeBtn.onclick = () => { currentRun = null; goTo("menu"); overlay.classList.remove("active"); };
+        overlay.classList.add("active");
+        return;
+    }
+
     if (state.finished) {
         const overlay = document.getElementById("result-overlay");
         const text = document.getElementById("result-text");
@@ -1607,7 +1875,7 @@ function handleBattleResult(data) {
         } else {
             text.textContent = "ПОРАЖЕНИЕ";
             text.style.color = "var(--accent)";
-            lootEl.textContent = "";
+            lootEl.textContent = "50% кредитов сожжено";
         }
         overlay.classList.add("active");
     }
@@ -1795,6 +2063,6 @@ if (window.Telegram && window.Telegram.WebApp) {
 }
 loadProfile();
 </script>
-<script src="map.js?v=40.7"></script>
+<script src="map.js?v=40.7_final"></script>
 </body>
 </html>
