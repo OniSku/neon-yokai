@@ -67,16 +67,26 @@ async def sync_database_schema() -> None:
                     elif "TEXT" in type_str:
                         type_str = "TEXT"
 
-                    nullable = "NULL" if column.nullable else "NOT NULL"
-                    default = ""
-                    if column.default and hasattr(column.default, 'arg'):
-                        default_arg = column.default.arg
-                        if isinstance(default_arg, str):
-                            default = f" DEFAULT '{default_arg}'"
-                        elif isinstance(default_arg, bool):
-                            default = f" DEFAULT {str(default_arg).lower()}"
-                        elif isinstance(default_arg, int):
-                            default = f" DEFAULT {default_arg}"
+                    # JSON-колонки всегда добавляем с DEFAULT '[]' чтобы не нарушить NOT NULL
+                    is_json = "JSON" in type_str.upper()
+                    if is_json:
+                        type_str = "JSON"
+                        nullable = "NOT NULL"
+                        default = " DEFAULT '[]'"
+                    else:
+                        nullable = "NULL" if column.nullable else "NOT NULL"
+                        default = ""
+                        if column.default and hasattr(column.default, 'arg'):
+                            default_arg = column.default.arg
+                            if isinstance(default_arg, str):
+                                default = f" DEFAULT '{default_arg}'"
+                            elif isinstance(default_arg, bool):
+                                default = f" DEFAULT {str(default_arg).lower()}"
+                            elif isinstance(default_arg, int):
+                                default = f" DEFAULT {default_arg}"
+                        # Если NOT NULL без default - добавляем как NULL чтобы не ломать существующие строки
+                        if nullable == "NOT NULL" and not default:
+                            nullable = "NULL"
 
                     alter_sql = f"ALTER TABLE {table_name} ADD COLUMN {col_name} {type_str} {nullable}{default}"
                     print(f"[db-sync] Adding column: {table_name}.{col_name}")

@@ -49,6 +49,8 @@ async def _migrate_schema() -> None:
         if not has_suture_relics:
             print("[migrate] Adding 'suture_relics' to users...")
             await conn.execute(text("ALTER TABLE users ADD COLUMN suture_relics JSON DEFAULT '[]'"))
+        # Исправляем NULL в suture_relics у существующих пользователей
+        await conn.execute(text("UPDATE users SET suture_relics = '[]' WHERE suture_relics IS NULL"))
 
         if not has_salty or not has_is_upgraded:
             print("[migrate] Recreating tables...")
