@@ -13,6 +13,15 @@ ELITE_HP_MULT: float = 1.5
 ELITE_ENEMY_NAMES: set[str] = {
     "Они-Обжора",
     "Тэнгу-Курьер",
+    "Тэнгу",
+    "Они",
+}
+STAGE2_ENEMY_NAMES: set[str] = {
+    "Каппа",
+    "Рокурокуби",
+}
+STAGE1_ENEMY_NAMES: set[str] = {
+    "Голодный Гаки",
 }
 BOSS_ENEMY_NAMES: set[str] = {"Нурарихён"}
 
@@ -61,6 +70,22 @@ def _pick_enemy(
         return sorted(enemies, key=lambda e: e.hp, reverse=True)[0]
     normal = [e for e in enemies if e.name not in ELITE_ENEMY_NAMES and e.name not in BOSS_ENEMY_NAMES]
     return random.choice(normal) if normal else random.choice(enemies)
+
+
+def _pick_enemy_for_floor(
+    enemies: list[Enemy],
+    floor_idx: int,
+) -> Enemy | None:
+    # - Стадии по этажам: 1-3 Гаки, 4-6 Стадия 2, 7+ элиты
+    if not enemies:
+        return None
+    if floor_idx in (1, 2, 3):
+        pool = [e for e in enemies if e.name in STAGE1_ENEMY_NAMES]
+    elif floor_idx in (4, 5, 6):
+        pool = [e for e in enemies if e.name in STAGE2_ENEMY_NAMES]
+    else:
+        pool = [e for e in enemies if e.name not in ELITE_ENEMY_NAMES and e.name not in BOSS_ENEMY_NAMES]
+    return random.choice(pool) if pool else _pick_enemy(enemies)
 
 
 def _make_enemy_slots(
@@ -247,7 +272,13 @@ async def generate_map(
             )]
         elif nt in ("combat", "ambush"):
             group_size = _roll_group_size()
-            enemy_slots = _make_enemy_slots(all_enemies, group_size)
+            # - Выбираем врагов по стадии этажа
+            slots: list[EnemySlot] = []
+            for _ in range(group_size):
+                e = _pick_enemy_for_floor(all_enemies, floor_idx)
+                if e:
+                    slots.append(EnemySlot(enemy_id=e.id, name=e.name, hp=e.hp, max_hp=e.hp))
+            enemy_slots = slots
             if enemy_slots:
                 enemy = None
         # event, rest, treasure -> no enemies

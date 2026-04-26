@@ -2349,7 +2349,10 @@ function updateBattleUI(state) {
         tok.className = "arena-token enemy-token" + (isDead ? " dead" : "");
         tok.id = "arena-enemy-token-" + idx;
         tokensRow.appendChild(tok);
-        const tokenBase = f.name.includes("Нурарихён") ? "nurarihyon_token" : "gaki_token";
+        const tokenBase = f.name.includes("Нурарихён") ? "nurarihyon_token"
+            : (f.name.includes("Каппа") || f.name.includes("Рокурокуби")) ? "kappa_token"
+            : (f.name.includes("Они") || f.name.includes("Тэнгу")) ? "oni_token"
+            : "gaki_token";
         applyMedia(tok, tokenBase);
         // Shake при уроне > 10
         const prevHp = prevEnemiesHp.get(idx);
@@ -2897,7 +2900,11 @@ function restToggleIngredient(item, row) {
         row.classList.remove("selected");
     } else {
         if (restCookSelected.length >= 3) return;
-        restCookSelected.push({ key, ingredient_id: item.ingredient_id, source: item.source, name: item.ingredient_name, flavor_profile: item.flavor_profile });
+        // - нельзя добавить один и тот же ингредиент из того же источника дважды
+        const alreadyUsed = restCookSelected.filter(s => s.source === item.source && s.ingredient_id === item.ingredient_id).length;
+        const available = item.quantity || 1;
+        if (alreadyUsed >= available) return;
+        restCookSelected.push({ key: item.source + "_" + item.ingredient_id + "_" + alreadyUsed, ingredient_id: item.ingredient_id, source: item.source, name: item.ingredient_name, flavor_profile: item.flavor_profile });
         row.classList.add("selected");
     }
     restUpdateCookSlots();

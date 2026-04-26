@@ -1097,7 +1097,7 @@ async def get_run_ingredients(
                 "ingredient_id": ing.id,
                 "ingredient_name": ing.name,
                 "quantity": item.quantity,
-                "flavor_profile": ing.flavor_profile,
+                "flavor_profile": {"spicy": ing.spicy, "sour": ing.sour, "sweet": ing.sweet, "bitter": ing.bitter, "salty": ing.salty},
                 "source": "hub",
             })
 
