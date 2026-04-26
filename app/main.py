@@ -152,6 +152,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+_static_dir = Path(__file__).resolve().parent.parent / "static"
+app.mount("/static", StaticFiles(directory=str(_static_dir), html=False), name="static")
+
+
 @app.get("/")
 async def root() -> RedirectResponse:
     return RedirectResponse(url="/static/index.html")
@@ -167,6 +171,3 @@ app.include_router(run_router)
 app.include_router(craft_router)
 app.include_router(shop_router)
 app.include_router(cart_router)
-
-_static_dir = Path(__file__).resolve().parent.parent / "static"
-app.mount("/static", StaticFiles(directory=str(_static_dir), html=True), name="static")
