@@ -494,7 +494,9 @@
 
         /* ===== ARENA BATTLE LAYOUT ===== */
         #screen-battle {
-            background: url('/static/img/market_bg.jpg') center/cover no-repeat;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             position: relative;
         }
         #screen-battle::before {
@@ -582,16 +584,23 @@
             flex-shrink: 0;
         }
         .arena-token.player-token {
-            background-image: url('/static/img/chef_token.jpg');
             border-color: rgba(0,255,245,0.7);
             box-shadow: 0 0 16px rgba(0,255,245,0.35);
         }
         .arena-token.enemy-token {
             width: 80px;
             height: 80px;
-            background-image: url('/static/img/gaki_token.jpg');
             border-color: rgba(233,69,96,0.7);
             box-shadow: 0 0 12px rgba(233,69,96,0.3);
+        }
+        /* Видео-жетон */
+        .arena-token video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
         }
         .arena-token.enemy-token.dead { opacity: 0.25; filter: grayscale(1); }
         /* Player info block */
@@ -1586,6 +1595,74 @@ function eventContinue() {
 /* ===== BATTLE ===== */
 let selectedTarget = 0;
 
+const ARENA_MEDIA_BASE = "/static/img/";
+const ARENA_IMG_EXTS = ["png", "jpg", "webp"];
+const ARENA_VID_EXTS = ["mp4", "webm"];
+
+const _mediaCache = {};
+async function _probeMedia(base) {
+    if (_mediaCache[base] !== undefined) return _mediaCache[base];
+    for (const ext of ARENA_VID_EXTS) {
+        const url = ARENA_MEDIA_BASE + base + "." + ext;
+        try {
+            const r = await fetch(url, {method: "HEAD"});
+            if (r.ok) { _mediaCache[base] = {url, type: "video"}; return _mediaCache[base]; }
+        } catch (_) {}
+    }
+    for (const ext of ARENA_IMG_EXTS) {
+        const url = ARENA_MEDIA_BASE + base + "." + ext;
+        try {
+            const r = await fetch(url, {method: "HEAD"});
+            if (r.ok) { _mediaCache[base] = {url, type: "image"}; return _mediaCache[base]; }
+        } catch (_) {}
+    }
+    _mediaCache[base] = null;
+    return null;
+}
+
+async function applyMedia(el, baseName) {
+    const media = await _probeMedia(baseName);
+    el.style.backgroundImage = "";
+    el.querySelectorAll("video").forEach(v => v.remove());
+    if (!media) return;
+    if (media.type === "video") {
+        const vid = document.createElement("video");
+        vid.src = media.url;
+        vid.autoplay = true;
+        vid.loop = true;
+        vid.muted = true;
+        vid.playsInline = true;
+        el.appendChild(vid);
+    } else {
+        el.style.backgroundImage = "url('" + media.url + "')";
+    }
+}
+
+async function _applyArenaMedia() {
+    const battleScreen = document.getElementById("screen-battle");
+    const playerTok = document.getElementById("arena-player-token");
+
+    const bg = await _probeMedia("market_bg");
+    if (bg && battleScreen) {
+        if (bg.type === "video") {
+            battleScreen.querySelectorAll(".arena-bg-video").forEach(v => v.remove());
+            const vid = document.createElement("video");
+            vid.className = "arena-bg-video";
+            vid.src = bg.url;
+            vid.autoplay = true;
+            vid.loop = true;
+            vid.muted = true;
+            vid.playsInline = true;
+            vid.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none";
+            battleScreen.insertBefore(vid, battleScreen.firstChild);
+        } else {
+            battleScreen.style.backgroundImage = "url('" + bg.url + "')";
+        }
+    }
+
+    if (playerTok) await applyMedia(playerTok, "chef_token");
+}
+
 function initBattleUI() {
     document.getElementById("log").innerHTML = "";
     if (!currentRun || !currentRun.battle) return;
@@ -1604,8 +1681,9 @@ function initBattleUI() {
     }
     renderArtifacts();
     prevPlayerHp = currentRun.battle.player.hp;
-    prevEnemyHp = currentRun.battle.enemy.hp;
+    prevEnemyHp = currentRun.battle.enemy ? currentRun.battle.enemy.hp : 0;
     log("Бой начался", "log-system");
+    _applyArenaMedia();
     updateBattleUI(currentRun.battle);
 }
 
@@ -1754,6 +1832,8 @@ function updateBattleUI(state) {
         tok.className = "arena-token enemy-token" + (isDead ? " dead" : "");
         tok.id = "arena-enemy-token-" + idx;
         tokensRow.appendChild(tok);
+        const tokenBase = f.name.includes("Нурарихён") ? "nurarihyon_token" : "gaki_token";
+        applyMedia(tok, tokenBase);
     });
 
     // --- Игрок ---
