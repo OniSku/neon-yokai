@@ -338,6 +338,31 @@ async def execute_card(
             else:
                 state.player.buffs.append(Buff(tag="THORNS", duration=3, multiplier=1.0, flat_bonus=3))
 
+    # - AOE-дебаффы: вешают статус на всех живых врагов
+    tags_set = set(card.tags) if card.tags else set()
+    if ("AOE_VULNERABLE" in tags_set or "AOE_WEAK" in tags_set or "AOE_BURN" in tags_set) and state.enemies:
+        for es in state.enemies:
+            if not es.alive:
+                continue
+            if "AOE_VULNERABLE" in tags_set:
+                existing = next((b for b in es.fighter.buffs if b.tag == "VULNERABLE"), None)
+                if existing:
+                    existing.duration += 2
+                else:
+                    es.fighter.buffs.append(Buff(tag="VULNERABLE", duration=2, multiplier=1.5, flat_bonus=0))
+            if "AOE_WEAK" in tags_set:
+                existing = next((b for b in es.fighter.buffs if b.tag == "WEAK"), None)
+                if existing:
+                    existing.duration += 2
+                else:
+                    es.fighter.buffs.append(Buff(tag="WEAK", duration=2, multiplier=0.75, flat_bonus=0))
+            if "AOE_BURN" in tags_set:
+                existing = next((b for b in es.fighter.buffs if b.tag == "BURN"), None)
+                if existing:
+                    existing.duration += 2
+                else:
+                    es.fighter.buffs.append(Buff(tag="BURN", duration=2, multiplier=1.0, flat_bonus=3))
+
     if artifacts:
         await on_card_played(state, artifacts, card)
 
