@@ -277,7 +277,59 @@ async def generate_map(
         )
         nodes.append(node)
 
-    if debt_level >= 4 and nodes:
+    # Засада Якудзы: при debt_level >= 2 сужаем depth=7 до одного AMBUSH узла
+    if debt_level >= 2:
+        # Собираем узлы depth=7 (floor_idx=7, lanes 0,1,2)
+        floor7_indices = [i for i, n in enumerate(nodes) if n.floor == 7]
+
+        # Громила Якудзы - Гаки с баффом +5 к Силе
+        yakuza_hp = 55
+        yakuza_slot = EnemySlot(
+            enemy_id=None,
+            name="Громила Якудзы",
+            hp=yakuza_hp,
+            max_hp=yakuza_hp,
+        )
+
+        if floor7_indices:
+            # Оставляем только средний узел (lane=1), остальные помечаем как недоступные
+            # Находим узел lane=1 на floor=7
+            center_idx = next(
+                (i for i, n in enumerate(nodes) if n.floor == 7 and n.lane == 1),
+                floor7_indices[0]
+            )
+            center_node = nodes[center_idx]
+            center_node.node_type = "ambush"
+            center_node.enemy_name = "Громила Якудзы"
+            center_node.enemy_hp = yakuza_hp
+            center_node.enemies = [yakuza_slot]
+
+            # Узлы lane=0 и lane=2 на floor=7 - перенаправляем их next_nodes на center
+            for i, n in enumerate(nodes):
+                if n.floor == 7 and n.lane != 1:
+                    # Заменяем тип на пустой/недоступный, убираем врагов
+                    nodes[i] = MapNode(
+                        index=n.index,
+                        floor=n.floor,
+                        lane=n.lane,
+                        node_type="ambush",
+                        enemy_name="Громила Якудзы",
+                        enemy_hp=yakuza_hp,
+                        enemies=[yakuza_slot],
+                        next_nodes=center_node.next_nodes,
+                    )
+
+            # Перенаправляем все узлы с floor=6, у которых next_nodes включает боковые узлы floor=7,
+            # чтобы они вели только к center_node
+            for i, n in enumerate(nodes):
+                if n.floor == 6:
+                    # Заменяем все ссылки на floor=7 узлы -> только center_idx
+                    floor7_node_indices = {nd.index for nd in nodes if nd.floor == 7}
+                    new_next = [center_node.index if ni in floor7_node_indices else ni for ni in n.next_nodes]
+                    # Убираем дубли
+                    nodes[i].next_nodes = list(dict.fromkeys(new_next))
+
+    elif debt_level >= 4 and nodes:
         first = nodes[0]
         if first.node_type == "hub":
             ambush = AMBUSH_NODE.model_copy()

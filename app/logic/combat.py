@@ -1,3 +1,4 @@
+import math
 import random
 
 from app.logic.artifacts import on_card_played, on_damage_taken
@@ -36,8 +37,9 @@ async def _add_combo_stack(state: BattleState, tags: list[str]) -> str | None:
 
 async def _explode_combo(state: BattleState, flavor: str) -> str:
     """Активировать эффект комбо. Возвращает сообщение о эффекте."""
-    # Сбрасываем стаки этого вкуса
-    state.combo_stacks[flavor] = 0
+    # Вычитаем порог - остаток переносится на следующий круг
+    threshold = COMBO_THRESHOLD_WITH_CHARGE if state.combo_charges > 0 else COMBO_THRESHOLD
+    state.combo_stacks[flavor] = max(0, state.combo_stacks[flavor] - threshold)
 
     # Тратим заряд если был
     if state.combo_charges > 0:
@@ -275,7 +277,7 @@ async def execute_card(
     await apply_buffs_for_tags(state.player, card.tags)
 
     if card.type == "attack":
-        power_with_upgrade = card.power + (3 if card.is_upgraded else 0)
+        power_with_upgrade = math.ceil(card.power * 1.5) if card.is_upgraded else card.power
         damage = await calculate_damage(state.player, power_with_upgrade, card.tags)
         is_vyparivanie = card.name == "Выпаривание" or "UNIQUE" in card.tags
         if _is_aoe(card) and state.enemies:
@@ -297,7 +299,7 @@ async def execute_card(
             await apply_damage(target, damage)
 
     elif card.type == "skill":
-        block_amount = card.power + (3 if card.is_upgraded else 0)
+        block_amount = math.ceil(card.power * 1.5) if card.is_upgraded else card.power
         state.player.block += block_amount
         if card.damage_type != "none":
             state.player.parry_type = card.damage_type

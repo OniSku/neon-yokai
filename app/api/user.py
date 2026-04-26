@@ -62,6 +62,8 @@ async def get_profile(
         debt_level_name=info["name"],
         inventory_limit=get_inventory_limit(user),
         meta=_build_meta(user),
+        slime=user.slime,
+        cores=user.cores,
     )
 
 

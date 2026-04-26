@@ -503,16 +503,18 @@
             <div class="row mb8"><span class="label">Агент</span><span class="val val-neon" id="menu-username">...</span></div>
             <div class="profile-grid">
                 <div class="profile-cell"><div class="label">Кредиты</div><div class="val val-gold" id="menu-credits">0</div></div>
-                <div class="profile-cell"><div class="label">Долг</div><div class="val val-red" id="menu-debt-amount">0</div></div>
+                <div class="profile-cell"><div class="label">Розыск Якудзы</div><div class="val val-red" id="menu-debt-amount">0</div></div>
                 <div class="profile-cell"><div class="label">Статус</div><div class="val val-red" id="menu-debt-name" style="font-size:0.8rem">Чисто</div></div>
                 <div class="profile-cell"><div class="label">Опыт</div><div class="val val-neon" id="menu-xp">0</div></div>
             </div>
         </div>
-        <button class="btn btn-primary btn-block" onclick="goTo('shop')">Склад Поставщика</button>
-        <button class="btn btn-secondary btn-block" onclick="goTo('cart')">Тележка (крафт)</button>
-        <button class="btn btn-secondary btn-block" onclick="goTo('upgrades')">Прокачка Тележки</button>
-        <button class="btn btn-secondary btn-block" onclick="goTo('suture')">Шов (мета)</button>
-        <div style="display:flex;justify-content:center;margin-top:20px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+            <button class="btn-square" style="width:100%;height:64px" onclick="goTo('shop')">Склад<br>Поставщика</button>
+            <button class="btn-square" style="width:100%;height:64px" onclick="goTo('cart')">Тележка<br>(Готовка)</button>
+            <button class="btn-square" style="width:100%;height:64px" onclick="goTo('upgrades')">Прокачка<br>Тележки</button>
+            <button class="btn-square" style="width:100%;height:64px" onclick="goTo('suture')">Шов<br>(Мета)</button>
+        </div>
+        <div style="display:flex;justify-content:center;margin-top:8px">
             <button class="btn-circle" onclick="startRun()">В ночную<br>смену</button>
         </div>
     </div>
@@ -1199,8 +1201,15 @@ async function abandonRun() {
 
 /* ===== SUTURE ===== */
 async function loadSuture() {
-    // Заглушка - в разработке
-    // Здесь будет загрузка мета-валюты (Слизь, Ядра)
+    try {
+        const res = await fetch(API + "/user/profile", { headers: headers() });
+        if (!res.ok) return;
+        const p = await res.json();
+        const slimeEl = document.getElementById("suture-slime");
+        const coresEl = document.getElementById("suture-cores");
+        if (slimeEl) slimeEl.textContent = p.slime || 0;
+        if (coresEl) coresEl.textContent = p.cores || 0;
+    } catch (e) { console.error(e); }
 }
 
 /* ===== RUN-SHOP (Магазин на Карте) ===== */
@@ -1546,8 +1555,8 @@ function updateBattleUI(state) {
         else { btn.onclick = () => playCard(idx); }
 
         const dtype = card.damage_type !== "none" ? (DTYPE_RU[card.damage_type] || card.damage_type) : "";
-        const upgradedPower = card.power + (card.is_upgraded ? 3 : 0);
-        const typeLabel = card.type === "attack" ? "АТК " + upgradedPower : card.type === "curse" ? "ПРОКЛЯТИЕ" : "ЗАЩ " + upgradedPower;
+        const displayPower = card.is_upgraded ? Math.ceil(card.power * 1.5) : card.power;
+        const typeLabel = card.type === "attack" ? "АТК " + displayPower : card.type === "curse" ? "ПРОКЛЯТИЕ" : "ЗАЩ " + displayPower;
         const tags = card.tags.length ? card.tags.filter(t => !t.startsWith("DRAW_") && !t.startsWith("DISCARD_")).join(", ") : "";
         const rarityRu = RARITY_RU[rarity] || rarity;
         const upgradedMark = card.is_upgraded ? "+" : "";
@@ -1749,14 +1758,14 @@ async function renderUpgradeCards() {
                 div.className = "card-item";
                 const upgradedMark = c.is_upgraded ? "+" : "";
                 div.innerHTML = `<b>${c.name}${upgradedMark}</b> (${c.type}, ${c.power} сила)`;
-                div.onclick = () => doUpgrade(c.card_id);
+                div.onclick = () => doCardUpgrade(c.card_id);
                 container.appendChild(div);
             }
         }
     } catch (e) { console.error("Ошибка загрузки колоды:", e); }
 }
 
-async function doUpgrade(cardId) {
+async function doCardUpgrade(cardId) {
     try {
         const res = await fetch(API + "/run/rest/upgrade?card_id=" + cardId, { method: "POST", headers: headers() });
         if (!res.ok) { const err = await res.json(); alert(err.detail || "Ошибка"); return; }
@@ -1785,6 +1794,6 @@ if (window.Telegram && window.Telegram.WebApp) {
 }
 loadProfile();
 </script>
-<script src="map.js?v=39"></script>
+<script src="map.js?v=40"></script>
 </body>
 </html>

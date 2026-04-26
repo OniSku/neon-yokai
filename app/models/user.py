@@ -20,6 +20,8 @@ class User(Base):
     debt: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     debt_level: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     meta_progress: Mapped[str | None] = mapped_column(Text, nullable=True)
+    slime: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    cores: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     # Связи
     cart_upgrade: Mapped["CartUpgrade"] = relationship(back_populates="user")

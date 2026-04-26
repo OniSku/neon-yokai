@@ -28,7 +28,7 @@ from app.models.card import Card
 from app.models.enemy import Enemy
 from app.models.user import User
 from app.models.user_deck_card import UserDeckCard
-from app.schemas.battle import ArtifactInstance, BattleState, CardInstance, EnemyAction, EnemyState, EnemySlot, Fighter, MapNode, PendingRewards, RunState
+from app.schemas.battle import ArtifactInstance, BattleState, Buff, CardInstance, EnemyAction, EnemyState, EnemySlot, Fighter, MapNode, PendingRewards, RunState
 from app.schemas.requests import (
     ActionType,
     ClaimRewardRequest,
@@ -192,8 +192,12 @@ async def _start_node_battle(
             pattern = await _load_enemy_pattern(session, slot.enemy_id, damage_mult=dmg_mult)
             alive = slot.hp > 0
             start_block = 25 if "Каппа" in slot.name else 0
+            fighter = Fighter(name=slot.name, hp=slot.hp, max_hp=slot.max_hp, block=start_block)
+            # Громила Якудзы получает бафф RAGE (+5 урона) - постоянный
+            if slot.name == "Громила Якудзы":
+                fighter.buffs.append(Buff(tag="RAGE", duration=99, multiplier=1.0, flat_bonus=5))
             enemy_states.append(EnemyState(
-                fighter=Fighter(name=slot.name, hp=slot.hp, max_hp=slot.max_hp, block=start_block),
+                fighter=fighter,
                 ai_pattern=pattern,
                 alive=alive,
             ))
@@ -323,7 +327,9 @@ async def run_action(
                 run.reward_phase = True
                 run.pending_rewards = rewards
             else:
+                # Игрок умер - сжигаем 50% кредитов, долг и мета-валюта не трогаются
                 run.run_finished = True
+                user.credits = user.credits // 2
                 await apply_interest(session, user)
         await save_run_state(session, run)
 
@@ -351,10 +357,10 @@ async def run_action(
                 run.reward_phase = True
                 run.pending_rewards = rewards
             else:
-                # Player died - zero credits per GDD
+                # Игрок умер - сжигаем 50% кредитов, долг и мета-валюта не трогаются
                 run.run_finished = True
                 is_dead = True
-                user.credits = 0
+                user.credits = user.credits // 2
                 await apply_interest(session, user)
         await save_run_state(session, run)
         return RunActionResponse(

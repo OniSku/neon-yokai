@@ -37,6 +37,8 @@ class UserProfileResponse(BaseModel):
     debt_level_name: str = "Чисто"
     inventory_limit: int = 5
     meta: MetaProgress | None = None
+    slime: int = 0
+    cores: int = 0
 
 
 class InventoryItemOut(BaseModel):
